@@ -28,7 +28,7 @@ pub struct Module {
   pub functions: Vec<Function>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum PoolEntry {
   String(String),
   Integer(i32),

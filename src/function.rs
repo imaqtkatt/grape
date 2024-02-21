@@ -30,7 +30,7 @@ type NativeFn = dyn Fn(&Local) -> Option<Value>;
 
 pub enum Code {
   Bytecode(Vec<u8>),
-  Native(&'static Rc<NativeFn>),
+  Native(Rc<NativeFn>),
 }
 
 impl Function {
@@ -59,6 +59,17 @@ impl fmt::Debug for Code {
     match self {
       Code::Native(..) => write!(f, "<native>"),
       Code::Bytecode(code) => write!(f, "{code:?}"),
+    }
+  }
+}
+
+impl Function {
+  pub fn native(name: &str, args: u8, f: impl Fn(&Local) -> Option<Value> + 'static) -> Self {
+    Self {
+      name: Box::from(name),
+      locals: args as u16,
+      arguments: args,
+      code: Code::Native(Rc::new(f)),
     }
   }
 }

@@ -1,4 +1,4 @@
-use crate::value::Value;
+use crate::value::{gint_t, Value};
 
 pub struct Stack {
   stack: Vec<Value>,
@@ -38,20 +38,34 @@ impl Stack {
   }
 
   pub fn push_byte(&mut self, byte: u8) {
-    self.push(Value::Integer(byte as i32));
+    self.push(Value::Integer(byte as gint_t));
   }
 
   pub fn push_short(&mut self, short: u16) {
-    self.push(Value::Integer(short as i32));
+    self.push(Value::Integer(short as gint_t));
   }
 
   pub fn iadd(&mut self) {
-    let Value::Integer(value2) = self.pop() else {
-      panic!()
-    };
-    let Value::Integer(value1) = self.pop() else {
-      panic!()
-    };
+    let value2: gint_t = self.pop().into();
+    let value1: gint_t = self.pop().into();
     self.push(Value::Integer(value1 + value2));
+  }
+
+  pub fn isub(&mut self) {
+    let value2: gint_t = self.pop().into();
+    let value1: gint_t = self.pop().into();
+    self.push(Value::Integer(value1 - value2));
+  }
+
+  pub fn imul(&mut self) {
+    let value2: gint_t = self.pop().into();
+    let value1: gint_t = self.pop().into();
+    self.push(Value::Integer(value1 * value2));
+  }
+
+  pub fn idiv(&mut self) {
+    let value2: gint_t = self.pop().into();
+    let value1: gint_t = self.pop().into();
+    self.push(Value::Integer(value1 / value2));
   }
 }

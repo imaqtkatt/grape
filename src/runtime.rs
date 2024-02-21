@@ -1,6 +1,6 @@
 use crate::{
   context::Context, function::Code, local::Local, module::Module, opcode, stack::Stack,
-  value::Value,
+  value::{gint_t, Value},
 };
 
 pub struct Runtime<'ctx> {
@@ -66,6 +66,7 @@ impl<'ctx> Runtime<'ctx> {
     loop {
       let instruction = self.fetch(ip);
 
+      // println!("{}", opcode::TO_STR[instruction as usize]);
       match instruction {
         opcode::RET => break None,
         opcode::RETURN => break Some(stack.pop()),
@@ -105,7 +106,13 @@ impl<'ctx> Runtime<'ctx> {
             stack.push(value);
           }
         }
-        opcode::LOADCONST => todo!(),
+        opcode::LOADCONST => {
+          let index = self.fetch(ip) as usize;
+          match self.module.constants[index].clone() {
+            crate::module::PoolEntry::String(_) => todo!(),
+            crate::module::PoolEntry::Integer(i) => stack.push(Value::Integer(i)),
+          }
+        }
         opcode::NEW_OBJECT => todo!(),
         opcode::SET_FIELD => todo!(),
         opcode::GET_FIELD => todo!(),
@@ -120,9 +127,40 @@ impl<'ctx> Runtime<'ctx> {
         opcode::IFNEQ => todo!(),
         opcode::IFGT => todo!(),
         opcode::IFGE => todo!(),
-        opcode::IFLT => todo!(),
-        opcode::IFLE => todo!(),
+        opcode::IFLT => {
+          let value2: gint_t = stack.pop().into();
+          let value1: gint_t = stack.pop().into();
+          if value1 < value2 {
+            let branchbyte1 = self.fetch(ip) as usize;
+            let branchbyte2 = self.fetch(ip) as usize;
+            *ip = branchbyte1 << 8 | branchbyte2;
+          } else {
+            *ip += 2;
+          }
+        },
+        opcode::IFLE => {
+          let value2: gint_t = stack.pop().into();
+          let value1: gint_t = stack.pop().into();
+          if value1 <= value2 {
+            let branchbyte1 = self.fetch(ip) as usize;
+            let branchbyte2 = self.fetch(ip) as usize;
+            *ip = branchbyte1 << 8 | branchbyte2;
+          } else {
+            *ip += 2;
+          }
+        },
         opcode::IADD => stack.iadd(),
+        opcode::ISUB => stack.isub(),
+        opcode::IMUL => stack.imul(),
+        opcode::IDIV => stack.idiv(),
+        opcode::IREM => todo!(),
+        opcode::IAND => todo!(),
+        opcode::IOR => todo!(),
+        opcode::IXOR => todo!(),
+        opcode::ISHL => todo!(),
+        opcode::ISHR => todo!(),
+        opcode::IUSHR => todo!(),
+        opcode::INEG => todo!(),
         _ => panic!(),
       }
     }
