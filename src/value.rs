@@ -38,6 +38,16 @@ impl From<Value> for gint_t {
   }
 }
 
+impl From<Value> for gfloat_t {
+  fn from(value: Value) -> Self {
+    if let Value::Float(i) = value {
+      i
+    } else {
+      panic!("Expected integer, found {value:?}")
+    }
+  }
+}
+
 impl From<Value> for gref_t {
   fn from(value: Value) -> Self {
     match value {

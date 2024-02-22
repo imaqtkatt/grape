@@ -121,6 +121,21 @@ pub const IUSHR: u8 = 0x27;
 /// Negate integer.
 pub const INEG: u8 = 0x28;
 
+/// Store to local variable 0.
+pub const STORE_0: u8 = 0x29;
+
+/// Store to local variable 1.
+pub const STORE_1: u8 = 0x2A;
+
+/// Store to local variable 2.
+pub const STORE_2: u8 = 0x2B;
+
+/// Store to local variable 3.
+pub const STORE_3: u8 = 0x2C;
+
+/// Duplicate from stack.
+pub const DUP: u8 = 0x2D;
+
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
   "RET",
@@ -164,4 +179,9 @@ pub const TO_STR: &[&str] = &[
   "ISHR",
   "IUSHR",
   "INEG",
+  "STORE_0",
+  "STORE_1",
+  "STORE_2",
+  "STORE_3",
+  "DUP",
 ];

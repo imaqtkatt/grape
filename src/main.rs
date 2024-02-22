@@ -87,15 +87,11 @@ fn main() {
           LOAD_0,
           PUSH_BYTE, 1,
           ISUB,
-          CALL, 0, 0, 0, 4,
-          //STORE, 1,
+          CALL, 0, 0, 0, 4,  // fib(x1 - 1)
           LOAD_0,
           PUSH_BYTE, 2,
           ISUB,
-          CALL, 0, 0, 0, 4,
-          //STORE, 2,
-          //LOAD_1,
-          //LOAD_2,
+          CALL, 0, 0, 0, 4,  // fib(x2 - 2)
           IADD,
           RETURN,
           //

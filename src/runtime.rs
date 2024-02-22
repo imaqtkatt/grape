@@ -1,5 +1,10 @@
 use crate::{
-  context::Context, function::Code, local::Local, module::Module, opcode, stack::Stack,
+  context::Context,
+  function::Code,
+  local::Local,
+  module::Module,
+  opcode,
+  stack::Stack,
   value::{gint_t, Value},
 };
 
@@ -33,8 +38,7 @@ impl<'ctx> Runtime<'ctx> {
     let Code::Bytecode(code) = &function.code else {
       unreachable!();
     };
-    let mut rt = Runtime::new(ctx, code, local, module);
-    rt.run(Stack::new(STACK_INIT))
+    Runtime::new(ctx, code, local, module).run(Stack::new(STACK_INIT))
   }
 
   fn call(&mut self, module: &str, function: &str, stack: &mut Stack) -> Option<Value> {
@@ -70,42 +74,55 @@ impl<'ctx> Runtime<'ctx> {
       match instruction {
         opcode::RET => break None,
         opcode::RETURN => break Some(stack.pop()),
+
         opcode::ICONST_0 => stack.iconst_0(),
         opcode::ICONST_1 => stack.iconst_1(),
+
         opcode::LOAD => {
           let index = self.fetch(ip) as usize;
           stack.push(self.local.load(index));
         }
+
         opcode::STORE => {
           let index = self.fetch(ip) as usize;
           self.local.store(index, stack.pop());
         }
+        opcode::STORE_0 => self.local.store(0, stack.pop()),
+        opcode::STORE_1 => self.local.store(1, stack.pop()),
+        opcode::STORE_2 => self.local.store(2, stack.pop()),
+        opcode::STORE_3 => self.local.store(3, stack.pop()),
+
         opcode::FCONST_0 => stack.fconst_0(),
         opcode::FCONST_1 => stack.fconst_1(),
+
         opcode::LOAD_0 => stack.push(self.local.load_0()),
         opcode::LOAD_1 => stack.push(self.local.load_1()),
         opcode::LOAD_2 => stack.push(self.local.load_2()),
         opcode::LOAD_3 => stack.push(self.local.load_3()),
-        opcode::I2F => todo!(),
-        opcode::F2I => todo!(),
+
+        opcode::I2F => stack.i2f(),
+        opcode::F2I => stack.f2i(),
+
         opcode::GOTO => {
           let indexbyte1 = self.fetch(ip) as usize;
           let indexbyte2 = self.fetch(ip) as usize;
           *ip = indexbyte1 << 8 | indexbyte2;
         }
+
         opcode::CALL => {
           let modulebyte1 = self.fetch(ip) as usize;
           let modulebyte2 = self.fetch(ip) as usize;
           let functionbyte1 = self.fetch(ip) as usize;
           let functionbyte2 = self.fetch(ip) as usize;
 
-          let module = &self.module.names[(modulebyte1 << 8 | modulebyte2) as usize];
-          let function = &self.module.names[(functionbyte1 << 8 | functionbyte2) as usize];
+          let module = &self.module.names[modulebyte1 << 8 | modulebyte2];
+          let function = &self.module.names[functionbyte1 << 8 | functionbyte2];
 
           if let Some(value) = self.call(module, function, &mut stack) {
             stack.push(value);
           }
         }
+
         opcode::LOADCONST => {
           let index = self.fetch(ip) as usize;
           match self.module.constants[index].clone() {
@@ -113,20 +130,64 @@ impl<'ctx> Runtime<'ctx> {
             crate::module::PoolEntry::Integer(i) => stack.push(Value::Integer(i)),
           }
         }
+
         opcode::NEW_OBJECT => todo!(),
         opcode::SET_FIELD => todo!(),
         opcode::GET_FIELD => todo!(),
+
         opcode::PUSH_BYTE => stack.push_byte(self.fetch(ip)),
         opcode::PUSH_SHORT => {
           let shortbyte1 = self.fetch(ip) as u16;
           let shortbyte2 = self.fetch(ip) as u16;
           stack.push_short(shortbyte1 << 8 | shortbyte2);
         }
-        opcode::POP => _ = stack.pop(),
-        opcode::IFEQ => todo!(),
-        opcode::IFNEQ => todo!(),
-        opcode::IFGT => todo!(),
-        opcode::IFGE => todo!(),
+
+        opcode::POP => std::mem::drop(stack.pop()),
+
+        opcode::IFEQ => {
+          let value2: gint_t = stack.pop().into();
+          let value1: gint_t = stack.pop().into();
+          if value1 == value2 {
+            let branchbyte1 = self.fetch(ip) as usize;
+            let branchbyte2 = self.fetch(ip) as usize;
+            *ip = branchbyte1 << 8 | branchbyte2;
+          } else {
+            *ip += 2;
+          }
+        }
+        opcode::IFNEQ => {
+          let value2: gint_t = stack.pop().into();
+          let value1: gint_t = stack.pop().into();
+          if value1 != value2 {
+            let branchbyte1 = self.fetch(ip) as usize;
+            let branchbyte2 = self.fetch(ip) as usize;
+            *ip = branchbyte1 << 8 | branchbyte2;
+          } else {
+            *ip += 2;
+          }
+        }
+        opcode::IFGT => {
+          let value2: gint_t = stack.pop().into();
+          let value1: gint_t = stack.pop().into();
+          if value1 > value2 {
+            let branchbyte1 = self.fetch(ip) as usize;
+            let branchbyte2 = self.fetch(ip) as usize;
+            *ip = branchbyte1 << 8 | branchbyte2;
+          } else {
+            *ip += 2;
+          }
+        }
+        opcode::IFGE => {
+          let value2: gint_t = stack.pop().into();
+          let value1: gint_t = stack.pop().into();
+          if value1 >= value2 {
+            let branchbyte1 = self.fetch(ip) as usize;
+            let branchbyte2 = self.fetch(ip) as usize;
+            *ip = branchbyte1 << 8 | branchbyte2;
+          } else {
+            *ip += 2;
+          }
+        }
         opcode::IFLT => {
           let value2: gint_t = stack.pop().into();
           let value1: gint_t = stack.pop().into();
@@ -137,7 +198,7 @@ impl<'ctx> Runtime<'ctx> {
           } else {
             *ip += 2;
           }
-        },
+        }
         opcode::IFLE => {
           let value2: gint_t = stack.pop().into();
           let value1: gint_t = stack.pop().into();
@@ -148,20 +209,24 @@ impl<'ctx> Runtime<'ctx> {
           } else {
             *ip += 2;
           }
-        },
+        }
+
         opcode::IADD => stack.iadd(),
         opcode::ISUB => stack.isub(),
         opcode::IMUL => stack.imul(),
         opcode::IDIV => stack.idiv(),
-        opcode::IREM => todo!(),
-        opcode::IAND => todo!(),
-        opcode::IOR => todo!(),
-        opcode::IXOR => todo!(),
-        opcode::ISHL => todo!(),
-        opcode::ISHR => todo!(),
-        opcode::IUSHR => todo!(),
-        opcode::INEG => todo!(),
-        _ => panic!(),
+        opcode::IREM => stack.irem(),
+        opcode::IAND => stack.iand(),
+        opcode::IOR => stack.ior(),
+        opcode::IXOR => stack.ixor(),
+        opcode::ISHL => stack.ishl(),
+        opcode::ISHR => stack.ishr(),
+        opcode::IUSHR => stack.iushr(),
+        opcode::INEG => stack.ineg(),
+
+        opcode::DUP => stack.dup(),
+
+        opcode => panic!("Unknown opcode {opcode:X?}"),
       }
     }
   }
