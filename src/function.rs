@@ -1,4 +1,4 @@
-use crate::{local::Local, read_bytes::ReadBytes, value::Value};
+use crate::{heap::Heap, local::Local, read_bytes::ReadBytes, value::Value};
 use core::fmt;
 use std::rc::Rc;
 
@@ -26,7 +26,7 @@ pub struct Function {
   pub code: Code,
 }
 
-type NativeFn = dyn Fn(&Local) -> Option<Value>;
+type NativeFn = dyn Fn(&Local, &Heap) -> Option<Value>;
 
 pub enum Code {
   Bytecode(Vec<u8>),
@@ -64,7 +64,7 @@ impl fmt::Debug for Code {
 }
 
 impl Function {
-  pub fn native(name: &str, args: u8, f: impl Fn(&Local) -> Option<Value> + 'static) -> Self {
+  pub fn native(name: &str, args: u8, f: impl Fn(&Local, &Heap) -> Option<Value> + 'static) -> Self {
     Self {
       name: Box::from(name),
       locals: args as u16,

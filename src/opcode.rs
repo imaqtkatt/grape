@@ -136,6 +136,9 @@ pub const STORE_3: u8 = 0x2C;
 /// Duplicate from stack.
 pub const DUP: u8 = 0x2D;
 
+/// Allocate new string.
+pub const NEW_STRING: u8 = 0x2E;
+
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
   "RET",

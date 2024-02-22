@@ -1,13 +1,14 @@
 use crate::{
   context::Context,
   function::{Code, Function},
-  module::Module,
+  module::{Module, PoolEntry},
   opcode::*,
   runtime::Runtime,
 };
 
 pub mod context;
 pub mod function;
+pub mod heap;
 pub mod local;
 pub mod module;
 pub mod opcode;
@@ -16,8 +17,13 @@ pub mod runtime;
 pub mod stack;
 pub mod value;
 
-fn std_out_print(local: &local::Local) -> Option<value::Value> {
-  println!("{}", local.load_0());
+fn std_out_print(local: &local::Local, heap: &heap::Heap) -> Option<value::Value> {
+  local.load_0().pretty(heap);
+  None
+}
+
+fn std_out_debug(local: &local::Local, _: &heap::Heap) -> Option<value::Value> {
+  println!("{:?}", local.load_0());
   None
 }
 
@@ -28,7 +34,8 @@ fn main() {
     names: vec![String::from("std:out"), String::from("print")],
     constants: Vec::new(),
     functions: vec![
-      Function::native("print", 1, std_out_print)
+      Function::native("print", 1, std_out_print),
+      Function::native("debug", 1, std_out_debug),
     ],
   };
 
@@ -40,8 +47,11 @@ fn main() {
       String::from("std:out"),
       String::from("print"),
       String::from("fib"),
+      String::from("debug"),
     ],
-    constants: Vec::new(),
+    constants: vec![
+      PoolEntry::String(String::from("oioiiooiiioioioiiiooiio")),
+    ],
     functions: vec![
       // proc main() {
       //   std:out:print(fib(35))
@@ -51,6 +61,12 @@ fn main() {
         locals: 1,
         arguments: 0,
         code: Code::Bytecode(vec![
+          LOADCONST, 0,
+          STORE_0,
+          LOAD_0,
+          CALL, 0, 2, 0, 5,
+          LOAD_0,
+          CALL, 0, 2, 0, 3,
           PUSH_BYTE, 35,
           CALL, 0, 0, 0, 4,
           CALL, 0, 2, 0, 3,

@@ -1,6 +1,7 @@
 use crate::{
   context::Context,
   function::Code,
+  heap::Heap,
   local::Local,
   module::Module,
   opcode,
@@ -13,18 +14,26 @@ pub struct Runtime<'ctx> {
   program: &'ctx [u8],
   local: Local,
   module: &'ctx Module,
+  heap: &'ctx mut Heap,
 }
 
 const STACK_INIT: usize = 1 << 10;
 const MAIN: &str = "main";
 
 impl<'ctx> Runtime<'ctx> {
-  pub fn new(ctx: &'ctx Context, program: &'ctx [u8], local: Local, module: &'ctx Module) -> Self {
+  pub fn new(
+    ctx: &'ctx Context,
+    program: &'ctx [u8],
+    local: Local,
+    module: &'ctx Module,
+    heap: &'ctx mut Heap,
+  ) -> Self {
     Self {
       ctx,
       program,
       local,
       module,
+      heap,
     }
   }
 
@@ -38,7 +47,7 @@ impl<'ctx> Runtime<'ctx> {
     let Code::Bytecode(code) = &function.code else {
       unreachable!();
     };
-    Runtime::new(ctx, code, local, module).run(Stack::new(STACK_INIT))
+    Runtime::new(ctx, code, local, module, &mut Heap::new()).run(Stack::new(STACK_INIT))
   }
 
   fn call(&mut self, module: &str, function: &str, stack: &mut Stack) -> Option<Value> {
@@ -57,10 +66,10 @@ impl<'ctx> Runtime<'ctx> {
 
     match &function.code {
       Code::Bytecode(program) => {
-        let mut rt = Runtime::new(self.ctx, program, local, module);
+        let mut rt = Runtime::new(self.ctx, program, local, module, self.heap);
         rt.run(Stack::new(STACK_INIT))
       }
-      Code::Native(native) => native(&local),
+      Code::Native(native) => native(&local, self.heap), // TODO
     }
   }
 
@@ -126,7 +135,7 @@ impl<'ctx> Runtime<'ctx> {
         opcode::LOADCONST => {
           let index = self.fetch(ip) as usize;
           match self.module.constants[index].clone() {
-            crate::module::PoolEntry::String(_) => todo!(),
+            crate::module::PoolEntry::String(s) => stack.push(self.heap.new_string(s)),
             crate::module::PoolEntry::Integer(i) => stack.push(Value::Integer(i)),
           }
         }
