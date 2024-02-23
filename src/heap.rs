@@ -25,6 +25,41 @@ impl Heap {
     Value::String(r#ref)
   }
 
+  pub fn new_array(&mut self, size: i32) -> Value {
+    let r#ref = self.mem.len();
+    self.mem.push(Object::Array(ObjArray {
+      len: size as usize,
+      arr: vec![Value::Object(0); size as usize],
+    }));
+    Value::Array(r#ref)
+  }
+
+  pub fn array_get(&mut self, array_ref: usize, index: i32) -> Value {
+    let arr = &mut self.mem[array_ref];
+    let index = index as usize;
+    let Object::Array(ObjArray { len, arr }) = arr else {
+      panic!()
+    };
+    if index > *len {
+      panic!("Index is out of bounds")
+    } else {
+      arr[index]
+    }
+  }
+
+  pub fn array_set(&mut self, array_ref: usize, index: i32, value: Value) {
+    let arr = &mut self.mem[array_ref];
+    let index = index as usize;
+    let Object::Array(ObjArray { len, arr }) = arr else {
+      panic!()
+    };
+    if index > *len {
+      panic!("Index is out of bounds")
+    } else {
+      arr[index] = value;
+    }
+  }
+
   pub fn get(&self, index: usize) -> &Object {
     &self.mem[index]
   }
@@ -51,6 +86,7 @@ pub struct ObjArray {
 }
 
 impl Object {
+  // TODO: refactor this
   pub fn pretty(&self, heap: &Heap) {
     match self {
       Object::Null => println!("null"),
@@ -66,7 +102,14 @@ impl Object {
         }
         println!("}}");
       }
-      Object::Array(_) => todo!(),
+      Object::Array(ObjArray { arr, .. }) => {
+        print!("[");
+        for el in arr {
+          el.pretty(heap);
+          print!(",");
+        }
+        println!("]");
+      }
     }
   }
 }

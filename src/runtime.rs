@@ -6,7 +6,7 @@ use crate::{
   module::Module,
   opcode,
   stack::Stack,
-  value::{gint_t, Value},
+  value::{g_int, g_ref, Value},
 };
 
 pub struct Runtime<'ctx> {
@@ -154,8 +154,8 @@ impl<'ctx> Runtime<'ctx> {
         opcode::POP => std::mem::drop(stack.pop()),
 
         opcode::IFEQ => {
-          let value2: gint_t = stack.pop().into();
-          let value1: gint_t = stack.pop().into();
+          let value2: g_int = stack.pop().into();
+          let value1: g_int = stack.pop().into();
           if value1 == value2 {
             let branchbyte1 = self.fetch(ip) as usize;
             let branchbyte2 = self.fetch(ip) as usize;
@@ -165,8 +165,8 @@ impl<'ctx> Runtime<'ctx> {
           }
         }
         opcode::IFNEQ => {
-          let value2: gint_t = stack.pop().into();
-          let value1: gint_t = stack.pop().into();
+          let value2: g_int = stack.pop().into();
+          let value1: g_int = stack.pop().into();
           if value1 != value2 {
             let branchbyte1 = self.fetch(ip) as usize;
             let branchbyte2 = self.fetch(ip) as usize;
@@ -176,8 +176,8 @@ impl<'ctx> Runtime<'ctx> {
           }
         }
         opcode::IFGT => {
-          let value2: gint_t = stack.pop().into();
-          let value1: gint_t = stack.pop().into();
+          let value2: g_int = stack.pop().into();
+          let value1: g_int = stack.pop().into();
           if value1 > value2 {
             let branchbyte1 = self.fetch(ip) as usize;
             let branchbyte2 = self.fetch(ip) as usize;
@@ -187,8 +187,8 @@ impl<'ctx> Runtime<'ctx> {
           }
         }
         opcode::IFGE => {
-          let value2: gint_t = stack.pop().into();
-          let value1: gint_t = stack.pop().into();
+          let value2: g_int = stack.pop().into();
+          let value1: g_int = stack.pop().into();
           if value1 >= value2 {
             let branchbyte1 = self.fetch(ip) as usize;
             let branchbyte2 = self.fetch(ip) as usize;
@@ -198,8 +198,8 @@ impl<'ctx> Runtime<'ctx> {
           }
         }
         opcode::IFLT => {
-          let value2: gint_t = stack.pop().into();
-          let value1: gint_t = stack.pop().into();
+          let value2: g_int = stack.pop().into();
+          let value1: g_int = stack.pop().into();
           if value1 < value2 {
             let branchbyte1 = self.fetch(ip) as usize;
             let branchbyte2 = self.fetch(ip) as usize;
@@ -209,8 +209,8 @@ impl<'ctx> Runtime<'ctx> {
           }
         }
         opcode::IFLE => {
-          let value2: gint_t = stack.pop().into();
-          let value1: gint_t = stack.pop().into();
+          let value2: g_int = stack.pop().into();
+          let value1: g_int = stack.pop().into();
           if value1 <= value2 {
             let branchbyte1 = self.fetch(ip) as usize;
             let branchbyte2 = self.fetch(ip) as usize;
@@ -234,6 +234,31 @@ impl<'ctx> Runtime<'ctx> {
         opcode::INEG => stack.ineg(),
 
         opcode::DUP => stack.dup(),
+
+        opcode::NEW_STRING => unimplemented!(),
+
+        opcode::NEW_ARRAY => {
+          let size: g_int = stack.pop().into();
+          stack.push(self.heap.new_array(size));
+        }
+
+        opcode::ARRAY_GET => {
+          let index: g_int = stack.pop().into();
+          let array_ref: g_ref = stack.pop().into();
+
+          stack.push(self.heap.array_get(array_ref, index));
+        }
+
+        opcode::ARRAY_SET => {
+          let value = stack.pop();
+          let index: g_int = stack.pop().into();
+          let array_ref: g_ref = stack.pop().into();
+
+          println!("value = {value:?}");
+          println!("index = {index:?}");
+
+          self.heap.array_set(array_ref, index, value);
+        }
 
         opcode => panic!("Unknown opcode {opcode:X?}"),
       }

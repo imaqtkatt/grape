@@ -139,6 +139,15 @@ pub const DUP: u8 = 0x2D;
 /// Allocate new string.
 pub const NEW_STRING: u8 = 0x2E;
 
+/// Allocate new array.
+pub const NEW_ARRAY: u8 = 0x2F;
+
+/// Get element from array by index.
+pub const ARRAY_GET: u8 = 0x30;
+
+/// Set element from array by index.
+pub const ARRAY_SET: u8 = 0x31;
+
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
   "RET",
@@ -187,4 +196,8 @@ pub const TO_STR: &[&str] = &[
   "STORE_2",
   "STORE_3",
   "DUP",
+  "NEW_STRING",
+  "NEW_ARRAY",
+  "ARRAY_GET",
+  "ARRAY_SET",
 ];

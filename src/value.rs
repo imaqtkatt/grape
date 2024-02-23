@@ -2,25 +2,26 @@
 
 use core::fmt;
 
-use crate::heap::{self, Heap};
+use crate::heap::Heap;
 
 /// Grape int type.
-pub type gint_t = i32;
+pub type g_int = i32;
 /// Grape float type.
-pub type gfloat_t = f32;
+pub type g_float = f32;
 /// Grape ref type.
-pub type gref_t = usize;
+pub type g_ref = usize;
 
 #[derive(Clone, Copy)]
 pub enum Value {
-  Integer(gint_t),
-  Float(gfloat_t),
-  Object(gref_t),
-  Array(gref_t),
-  String(gref_t),
+  Integer(g_int),
+  Float(g_float),
+  Object(g_ref),
+  Array(g_ref),
+  String(g_ref),
 }
 
 impl Value {
+  // TODO: refactor this
   pub fn pretty(&self, heap: &Heap) {
     match self {
       Value::Integer(i) => println!("{i}"),
@@ -40,7 +41,7 @@ impl fmt::Debug for Value {
   }
 }
 
-impl From<Value> for gint_t {
+impl From<Value> for g_int {
   fn from(value: Value) -> Self {
     if let Value::Integer(i) = value {
       i
@@ -50,7 +51,7 @@ impl From<Value> for gint_t {
   }
 }
 
-impl From<Value> for gfloat_t {
+impl From<Value> for g_float {
   fn from(value: Value) -> Self {
     if let Value::Float(i) = value {
       i
@@ -60,7 +61,7 @@ impl From<Value> for gfloat_t {
   }
 }
 
-impl From<Value> for gref_t {
+impl From<Value> for g_ref {
   fn from(value: Value) -> Self {
     match value {
       Value::Object(r) | Value::Array(r) | Value::String(r) => r,
