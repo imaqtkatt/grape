@@ -16,9 +16,10 @@ pub mod read_bytes;
 pub mod runtime;
 pub mod stack;
 pub mod value;
+pub mod formatting;
 
 fn std_out_print(local: &local::Local, heap: &heap::Heap) -> Option<value::Value> {
-  local.load_0().pretty(heap);
+  println!("{}", formatting::display_value(&local.load_0(), heap));
   None
 }
 
@@ -61,12 +62,13 @@ fn main() {
         locals: 2,
         arguments: 0,
         code: Code::Bytecode(vec![
-          NEW_OBJECT,
+          PUSH_BYTE, 2,
+          NEW_ARRAY,
           STORE_0,
           LOAD_0,
-          PUSH_BYTE, 2,
-          ICONST_1,
-          SET_FIELD,
+          ICONST_0,
+          ICONST_0,
+          ARRAY_SET,
           LOAD_0,
           CALL, 0, 2, 0, 3,
           LOADCONST, 0,

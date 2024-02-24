@@ -102,43 +102,14 @@ pub enum Object {
 }
 
 pub struct ObjString {
-  contents: String,
+  pub contents: String,
 }
 
 pub struct ObjMap {
-  fields: HashMap<Value, Value>,
+  pub fields: HashMap<Value, Value>,
 }
 
 pub struct ObjArray {
-  len: usize,
-  arr: Vec<Value>,
-}
-
-impl Object {
-  // TODO: refactor this
-  pub fn pretty(&self, heap: &Heap) {
-    match self {
-      Object::Null => println!("null"),
-      Object::String(ObjString { contents, .. }) => println!("{contents}"),
-      Object::Map(m) => {
-        println!("{{");
-        for (k, v) in &m.fields {
-          print!("  ");
-          k.pretty(heap);
-          print!(" -> ");
-          v.pretty(heap);
-          println!();
-        }
-        println!("}}");
-      }
-      Object::Array(ObjArray { arr, .. }) => {
-        print!("[");
-        for el in arr {
-          el.pretty(heap);
-          print!(",");
-        }
-        println!("]");
-      }
-    }
-  }
+  pub len: usize,
+  pub arr: Vec<Value>,
 }

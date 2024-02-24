@@ -2,8 +2,6 @@
 
 use core::fmt;
 
-use crate::heap::Heap;
-
 /// Grape int type.
 pub type g_int = i32;
 /// Grape float type.
@@ -18,17 +16,6 @@ pub enum Value {
   Object(g_ref),
   Array(g_ref),
   String(g_ref),
-}
-
-impl Value {
-  // TODO: refactor this
-  pub fn pretty(&self, heap: &Heap) {
-    match self {
-      Value::Integer(i) => println!("{i}"),
-      Value::Float(f) => println!("{f}"),
-      Value::Object(idx) | Value::Array(idx) | Value::String(idx) => heap.get(*idx).pretty(heap),
-    }
-  }
 }
 
 impl fmt::Debug for Value {
