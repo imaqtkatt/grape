@@ -19,14 +19,38 @@ impl Heap {
     Self { mem }
   }
 
+  pub fn new_object(&mut self) -> Value {
+    let r#ref = self.new_ref();
+    self.mem.push(Object::Map(ObjMap {
+      fields: Default::default(),
+    }));
+    Value::Object(r#ref)
+  }
+
+  pub fn get_field(&self, obj_ref: usize, field: Value) -> Value {
+    if let Object::Map(m) = &self.mem[obj_ref] {
+      m.fields[&field]
+    } else {
+      panic!("Is not an object")
+    }
+  }
+
+  pub fn set_field(&mut self, obj_ref: usize, field: Value, value: Value) {
+    if let Object::Map(m) = &mut self.mem[obj_ref] {
+      m.fields.insert(field, value);
+    } else {
+      panic!("Is not an object")
+    }
+  }
+
   pub fn new_string(&mut self, s: String) -> Value {
-    let r#ref = self.mem.len();
+    let r#ref = self.new_ref();
     self.mem.push(Object::String(ObjString { contents: s }));
     Value::String(r#ref)
   }
 
   pub fn new_array(&mut self, size: i32) -> Value {
-    let r#ref = self.mem.len();
+    let r#ref = self.new_ref();
     self.mem.push(Object::Array(ObjArray {
       len: size as usize,
       arr: vec![Value::Object(0); size as usize],
@@ -62,6 +86,11 @@ impl Heap {
 
   pub fn get(&self, index: usize) -> &Object {
     &self.mem[index]
+  }
+
+  #[inline(always)]
+  fn new_ref(&mut self) -> usize {
+    self.mem.len()
   }
 }
 

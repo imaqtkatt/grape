@@ -7,11 +7,11 @@ use crate::heap::Heap;
 /// Grape int type.
 pub type g_int = i32;
 /// Grape float type.
-pub type g_float = f32;
+pub type g_float = ordered_float::OrderedFloat<f32>;
 /// Grape ref type.
 pub type g_ref = usize;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Value {
   Integer(g_int),
   Float(g_float),

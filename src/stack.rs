@@ -36,11 +36,11 @@ impl Stack {
   }
 
   pub fn fconst_0(&mut self) {
-    self.push(Value::Float(0.));
+    self.push(Value::Float(ordered_float::OrderedFloat(0.)));
   }
 
   pub fn fconst_1(&mut self) {
-    self.push(Value::Float(1.));
+    self.push(Value::Float(ordered_float::OrderedFloat(1.)));
   }
 
   pub fn push_byte(&mut self, byte: u8) {
@@ -124,11 +124,11 @@ impl Stack {
 
   pub fn i2f(&mut self) {
     let value: g_int = self.pop().into();
-    self.push(Value::Float(value as g_float))
+    self.push(Value::Float(ordered_float::OrderedFloat(value as f32)))
   }
 
   pub fn f2i(&mut self) {
     let value: g_float = self.pop().into();
-    self.push(Value::Integer(value as g_int))
+    self.push(Value::Integer(value.into_inner() as g_int))
   }
 }

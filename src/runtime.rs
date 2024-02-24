@@ -140,9 +140,19 @@ impl<'ctx> Runtime<'ctx> {
           }
         }
 
-        opcode::NEW_OBJECT => todo!(),
-        opcode::SET_FIELD => todo!(),
-        opcode::GET_FIELD => todo!(),
+        opcode::NEW_OBJECT => stack.push(self.heap.new_object()),
+        opcode::SET_FIELD => {
+          let value = stack.pop();
+          let field = stack.pop();
+          let obj_ref: g_ref = stack.pop().into();
+
+          self.heap.set_field(obj_ref, field, value);
+        }
+        opcode::GET_FIELD => {
+          let field = stack.pop();
+          let obj_ref: g_ref = stack.pop().into();
+          stack.push(self.heap.get_field(obj_ref, field));
+        }
 
         opcode::PUSH_BYTE => stack.push_byte(self.fetch(ip)),
         opcode::PUSH_SHORT => {
@@ -253,9 +263,6 @@ impl<'ctx> Runtime<'ctx> {
           let value = stack.pop();
           let index: g_int = stack.pop().into();
           let array_ref: g_ref = stack.pop().into();
-
-          println!("value = {value:?}");
-          println!("index = {index:?}");
 
           self.heap.array_set(array_ref, index, value);
         }
