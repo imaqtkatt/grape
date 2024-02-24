@@ -55,6 +55,13 @@ fn main() {
     ],
     functions: vec![
       // proc main() {
+      //   x0 = [2]
+      //   x0[1] = 0
+      //
+      //   x1 = "oioiiooiiioioioiiiooiio"
+      //   std:out:debug(x1)
+      //   std:out:print(x1)
+      //
       //   std:out:print(fib(35))
       // }
       Function {
@@ -66,7 +73,7 @@ fn main() {
           NEW_ARRAY,
           STORE_0,
           LOAD_0,
-          ICONST_0,
+          ICONST_1,
           ICONST_0,
           ARRAY_SET,
           LOAD_0,
@@ -83,8 +90,8 @@ fn main() {
           RET,
         ]),
       },
-      // func snd(_, x) {
-      //   x
+      // func snd(_, x1) {
+      //   x1
       // }
       Function {
         name: Box::from("snd"),
@@ -99,11 +106,11 @@ fn main() {
         name: Box::from("fib"),
         locals: 1,
         arguments: 1,
-        // func fib(x) {
+        // func fib(x0) {
         //   if x < 2 {
-        //     x
+        //     x0
         //   } else {
-        //     fib(x - 1) + fib(x - 2)
+        //     fib(x0 - 1) + fib(x0 - 2)
         //   }
         // }
         code: Code::Bytecode(vec![
