@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{
   context::Context,
   function::Code,
@@ -10,10 +12,10 @@ use crate::{
 };
 
 pub struct Runtime<'ctx> {
-  ctx: &'ctx Context,
+  ctx: &'ctx mut Context,
   program: &'ctx [u8],
   local: Local,
-  module: &'ctx Module,
+  module: Rc<Module>,
   heap: &'ctx mut Heap,
 }
 
@@ -22,10 +24,10 @@ const MAIN: &str = "main";
 
 impl<'ctx> Runtime<'ctx> {
   pub fn new(
-    ctx: &'ctx Context,
+    ctx: &'ctx mut Context,
     program: &'ctx [u8],
     local: Local,
-    module: &'ctx Module,
+    module: Rc<Module>,
     heap: &'ctx mut Heap,
   ) -> Self {
     Self {
@@ -37,8 +39,8 @@ impl<'ctx> Runtime<'ctx> {
     }
   }
 
-  pub fn boot(ctx: &'ctx Context) -> Option<Value> {
-    let module = ctx.fetch_module(MAIN)?;
+  pub fn boot(ctx: &'ctx mut Context) -> Option<Value> {
+    let module = ctx.fetch_module(MAIN);
     let function = module.fetch_function(MAIN)?;
     assert!(function.arguments == 0);
 
@@ -47,13 +49,11 @@ impl<'ctx> Runtime<'ctx> {
     let Code::Bytecode(code) = &function.code else {
       unreachable!();
     };
-    Runtime::new(ctx, code, local, module, &mut Heap::new()).run(Stack::new(STACK_INIT))
+    Runtime::new(ctx, code, local, module.clone(), &mut Heap::new()).run(Stack::new(STACK_INIT))
   }
 
   fn call(&mut self, module: &str, function: &str, stack: &mut Stack) -> Option<Value> {
-    let Some(module) = self.ctx.fetch_module(module) else {
-      panic!("Module '{module}' not found.")
-    };
+    let module = self.ctx.fetch_module(module);
     let Some(function) = module.fetch_function(function) else {
       panic!("Function '{function}' not found.")
     };
@@ -66,10 +66,10 @@ impl<'ctx> Runtime<'ctx> {
 
     match &function.code {
       Code::Bytecode(program) => {
-        let mut rt = Runtime::new(self.ctx, program, local, module, self.heap);
+        let mut rt = Runtime::new(self.ctx, program, local, module.clone(), self.heap);
         rt.run(Stack::new(STACK_INIT))
       }
-      Code::Native(native) => native(&local, self.heap), // TODO
+      Code::Native(native) => native(&local, self.heap),
     }
   }
 
@@ -124,8 +124,9 @@ impl<'ctx> Runtime<'ctx> {
           let functionbyte1 = self.fetch(ip) as usize;
           let functionbyte2 = self.fetch(ip) as usize;
 
-          let module = &self.module.names[modulebyte1 << 8 | modulebyte2];
-          let function = &self.module.names[functionbyte1 << 8 | functionbyte2];
+          let this_module = self.module.clone();
+          let module = &this_module.names[modulebyte1 << 8 | modulebyte2];
+          let function = &this_module.names[functionbyte1 << 8 | functionbyte2];
 
           if let Some(value) = self.call(module, function, &mut stack) {
             stack.push(value);

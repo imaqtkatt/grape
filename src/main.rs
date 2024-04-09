@@ -7,6 +7,7 @@ use crate::{
 };
 
 pub mod context;
+pub mod formatting;
 pub mod function;
 pub mod heap;
 pub mod local;
@@ -16,7 +17,6 @@ pub mod read_bytes;
 pub mod runtime;
 pub mod stack;
 pub mod value;
-pub mod formatting;
 
 fn std_out_print(local: &local::Local, heap: &heap::Heap) -> Option<value::Value> {
   println!("{}", formatting::display_value(&local.load_0(), heap));
@@ -139,6 +139,6 @@ fn main() {
   ctx.add_module(main);
   ctx.add_module(std_out);
 
-  let ret = Runtime::boot(&ctx);
+  let ret = Runtime::boot(&mut ctx);
   println!("ret = {ret:?}")
 }
