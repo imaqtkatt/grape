@@ -17,7 +17,7 @@ pub fn display_value<'a>(v: &'a Value, heap: &'a Heap) -> impl fmt::Display + 'a
   Formatting(move |f| match v {
     Value::Integer(n) => write!(f, "{n}"),
     Value::Float(n) => write!(f, "{n}"),
-    Value::Object(r#ref) | Value::Array(r#ref) | Value::String(r#ref) => {
+    Value::Reference(r#ref) => {
       write!(f, "{}", display_object(*r#ref, heap))
     }
   })

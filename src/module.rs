@@ -1,3 +1,5 @@
+pub mod std_out;
+
 use crate::function::Function;
 use crate::read_bytes::ReadBytes;
 use crate::runtime_error;

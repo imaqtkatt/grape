@@ -24,7 +24,7 @@ impl Heap {
     self.mem.push(Object::Map(ObjMap {
       fields: Default::default(),
     }));
-    Value::Object(r#ref)
+    Value::Reference(r#ref)
   }
 
   pub fn get_field(&self, obj_ref: usize, field: Value) -> Value {
@@ -46,16 +46,16 @@ impl Heap {
   pub fn new_string(&mut self, s: String) -> Value {
     let r#ref = self.new_ref();
     self.mem.push(Object::String(ObjString { contents: s }));
-    Value::String(r#ref)
+    Value::Reference(r#ref)
   }
 
   pub fn new_array(&mut self, size: i32) -> Value {
     let r#ref = self.new_ref();
     self.mem.push(Object::Array(ObjArray {
       len: size as usize,
-      arr: vec![Value::Object(0); size as usize],
+      arr: vec![Value::Reference(0); size as usize],
     }));
-    Value::Array(r#ref)
+    Value::Reference(r#ref)
   }
 
   pub fn array_get(&mut self, array_ref: usize, index: i32) -> Value {

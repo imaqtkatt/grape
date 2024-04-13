@@ -20,35 +20,15 @@ pub mod runtime_error;
 pub mod stack;
 pub mod value;
 
-fn std_out_print(local: &local::Local, heap: &heap::Heap) -> Option<value::Value> {
-  println!("{}", formatting::display_value(&local.load_0(), heap));
-  None
-}
-
-fn std_out_debug(local: &local::Local, _: &heap::Heap) -> Option<value::Value> {
-  println!("{:?}", local.load_0());
-  None
-}
-
 #[rustfmt::skip]
 fn main() {
-  let std_out = Module {
-    name: Box::from("std:out"),
-    names: vec![String::from("std:out"), String::from("print")],
-    constants: Vec::new(),
-    functions: vec![
-      Function::native("print", 1, std_out_print),
-      Function::native("debug", 1, std_out_debug),
-    ],
-  };
-
   let main = Module {
     name: Box::from("main"),
     names: vec![
       String::from("main"),
       String::from("snd"),
       String::from("std:out"),
-      String::from("print"),
+      String::from("println"),
       String::from("fib"),
       String::from("debug"),
     ],
@@ -122,11 +102,11 @@ fn main() {
           LOAD_0,
           PUSH_BYTE, 1,
           ISUB,
-          CALL, 0, 0, 0, 4,  // fib(x1 - 1)
+          CALL, 0, 0, 0, 4,  // fib(x0 - 1)
           LOAD_0,
           PUSH_BYTE, 2,
           ISUB,
-          CALL, 0, 0, 0, 4,  // fib(x2 - 2)
+          CALL, 0, 0, 0, 4,  // fib(x0 - 2)
           IADD,
           RETURN,
           //
@@ -138,8 +118,8 @@ fn main() {
   };
 
   let mut ctx = Context::new();
+  ctx.add_module(module::std_out::module());
   ctx.add_module(main);
-  ctx.add_module(std_out);
 
   match Runtime::boot(&mut ctx) {
     Ok(..) => {},

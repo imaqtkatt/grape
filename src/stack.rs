@@ -1,4 +1,7 @@
-use crate::value::{g_float, g_int, Value};
+use crate::{
+  runtime_error::{Result, RtError},
+  value::{g_float, g_int, Value},
+};
 
 pub struct Stack {
   stack: Vec<Value>,
@@ -17,14 +20,15 @@ impl Stack {
   }
 
   #[inline(always)]
-  pub fn pop(&mut self) -> Value {
-    self.stack.pop().expect("To not be empty")
+  pub fn pop(&mut self) -> Result<Value> {
+    self.stack.pop().ok_or(RtError::StackUnderflow)
   }
 
-  pub fn dup(&mut self) {
-    let value = self.pop();
+  pub fn dup(&mut self) -> Result<()> {
+    let value = self.pop()?;
     self.push(value);
     self.push(value);
+    Ok(())
   }
 
   pub fn iconst_0(&mut self) {
@@ -51,84 +55,98 @@ impl Stack {
     self.push(Value::Integer(short as g_int));
   }
 
-  pub fn iadd(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn iadd(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 + value2));
+    Ok(())
   }
 
-  pub fn isub(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn isub(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 - value2));
+    Ok(())
   }
 
-  pub fn imul(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn imul(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 * value2));
+    Ok(())
   }
 
-  pub fn idiv(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn idiv(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 / value2));
+    Ok(())
   }
 
-  pub fn irem(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn irem(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 % value2));
+    Ok(())
   }
 
-  pub fn iand(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn iand(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 & value2));
+    Ok(())
   }
 
-  pub fn ior(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn ior(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 | value2));
+    Ok(())
   }
 
-  pub fn ixor(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn ixor(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 ^ value2));
+    Ok(())
   }
 
-  pub fn ishl(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn ishl(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 << value2));
+    Ok(())
   }
 
-  pub fn ishr(&mut self) {
-    let value2: g_int = self.pop().into();
-    let value1: g_int = self.pop().into();
+  pub fn ishr(&mut self) -> Result<()> {
+    let value2: g_int = self.pop()?.into();
+    let value1: g_int = self.pop()?.into();
     self.push(Value::Integer(value1 >> value2));
+    Ok(())
   }
 
-  pub fn iushr(&mut self) {
-    let rhs = g_int::from(self.pop()) as u32;
-    let lhs = g_int::from(self.pop()) as u32;
+  pub fn iushr(&mut self) -> Result<()> {
+    let rhs = g_int::from(self.pop()?) as u32;
+    let lhs = g_int::from(self.pop()?) as u32;
     self.push(Value::Integer((lhs >> rhs) as i32));
+    Ok(())
   }
 
-  pub fn ineg(&mut self) {
-    let value: g_int = self.pop().into();
-    self.push(Value::Integer(value.wrapping_neg()))
+  pub fn ineg(&mut self) -> Result<()> {
+    let value: g_int = self.pop()?.into();
+    self.push(Value::Integer(value.wrapping_neg()));
+    Ok(())
   }
 
-  pub fn i2f(&mut self) {
-    let value: g_int = self.pop().into();
-    self.push(Value::Float(ordered_float::OrderedFloat(value as f32)))
+  pub fn i2f(&mut self) -> Result<()> {
+    let value: g_int = self.pop()?.into();
+    self.push(Value::Float(ordered_float::OrderedFloat(value as f32)));
+    Ok(())
   }
 
-  pub fn f2i(&mut self) {
-    let value: g_float = self.pop().into();
-    self.push(Value::Integer(value.into_inner() as g_int))
+  pub fn f2i(&mut self) -> Result<()> {
+    let value: g_float = self.pop()?.into();
+    self.push(Value::Integer(value.into_inner() as g_int));
+    Ok(())
   }
 }

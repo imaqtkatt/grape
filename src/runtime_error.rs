@@ -3,6 +3,7 @@ use std::error::Error;
 
 #[derive(Debug)]
 pub enum RtError {
+  StackUnderflow,
   ModuleNotFound(String),
   FunctionNotFound(String),
   Other(Box<dyn Error + 'static>),
@@ -17,6 +18,7 @@ pub type Result<T> = std::result::Result<T, RtError>;
 impl fmt::Display for RtError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
+      RtError::StackUnderflow => write!(f, "Stack Underflow"),
       RtError::ModuleNotFound(name) => write!(f, "Module '{name}' not found."),
       RtError::FunctionNotFound(name) => write!(f, "Function '{name}' not found."),
       RtError::Other(e) => write!(f, "{e}"),

@@ -13,9 +13,7 @@ pub type g_ref = usize;
 pub enum Value {
   Integer(g_int),
   Float(g_float),
-  Object(g_ref),
-  Array(g_ref),
-  String(g_ref),
+  Reference(g_ref),
 }
 
 impl fmt::Debug for Value {
@@ -23,7 +21,7 @@ impl fmt::Debug for Value {
     match self {
       Value::Integer(n) => write!(f, "{n}"),
       Value::Float(n) => write!(f, "{n}"),
-      Value::Object(r) | Value::Array(r) | Value::String(r) => write!(f, "ref@{r:08}"),
+      Value::Reference(r) => write!(f, "@{r:08x}"),
     }
   }
 }
@@ -51,7 +49,7 @@ impl From<Value> for g_float {
 impl From<Value> for g_ref {
   fn from(value: Value) -> Self {
     match value {
-      Value::Object(r) | Value::Array(r) | Value::String(r) => r,
+      Value::Reference(r#ref) => r#ref,
       other => panic!("Expected a reference, found {other:?}"),
     }
   }
