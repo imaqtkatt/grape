@@ -1,6 +1,9 @@
 use core::fmt;
 
-use crate::{heap::{Heap, ObjArray, ObjMap, ObjString, Object}, value::Value};
+use crate::{
+  heap::{Heap, ObjArray, ObjMap, ObjString, Object},
+  value::Value,
+};
 
 struct Formatting<F: Fn(&mut fmt::Formatter) -> fmt::Result>(pub F);
 
@@ -20,7 +23,7 @@ pub fn display_value<'a>(v: &'a Value, heap: &'a Heap) -> impl fmt::Display + 'a
   })
 }
 
-pub fn display_object<'a>(o: usize, heap: &'a Heap) -> impl fmt::Display + 'a {
+pub fn display_object(o: usize, heap: &Heap) -> impl fmt::Display + '_ {
   Formatting(move |f| match heap.get(o) {
     Object::Null => write!(f, "null"),
     Object::String(ObjString { contents }) => write!(f, "{contents}"),
@@ -38,8 +41,8 @@ pub fn display_object<'a>(o: usize, heap: &'a Heap) -> impl fmt::Display + 'a {
     }
     Object::Array(ObjArray { len, arr }) => {
       write!(f, "[")?;
-      for i in 0..*len {
-        write!(f, "{};", display_value(&arr[i], heap))?;
+      for value in arr.iter().take(*len) {
+        write!(f, "{};", display_value(value, heap))?;
       }
       write!(f, "]")
     }

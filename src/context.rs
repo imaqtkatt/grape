@@ -1,6 +1,11 @@
 use std::{collections::HashMap, fs::File, rc::Rc};
 
-use crate::{function::Function, module::Module};
+use crate::{
+  function::Function,
+  module::Module,
+  module_path,
+  runtime_error::{self, RtError},
+};
 
 #[derive(Default)]
 pub struct Context {
@@ -24,25 +29,29 @@ impl Context {
     }
   }
 
-  pub fn fetch_module(&mut self, module_name: &str) -> Rc<Module> {
+  pub fn fetch_module(&mut self, module_name: &str) -> runtime_error::Result<Rc<Module>> {
     match self.modules.get(module_name) {
-      Some(module) => module.clone(),
+      Some(module) => Ok(module.clone()),
       None => {
         // TODO: fixme
-        let mut file = File::open(module_name).unwrap();
-        let module = Module::read(&mut file).unwrap();
-        self
-          .modules
-          .insert(Box::from(module_name), Rc::new(module))
-          .unwrap()
+        let mut file = File::open(module_path::from(module_name))
+          .map_err(|_| RtError::ModuleNotFound(module_name.to_string()))?;
+        let module = Module::read(&mut file).map_err(runtime_error::other)?;
+        Ok(
+          self
+            .modules
+            .insert(Box::from(module_name), Rc::new(module))
+            .unwrap(),
+        )
       }
     }
   }
 
-  pub fn fetch_function(&self, module: &str, function: &str) -> Option<&Function> {
-    self
-      .modules
-      .get(module)
-      .and_then(|module| module.fetch_function(function))
+  pub fn fetch_function(&self, _module: &str, _function: &str) -> runtime_error::Result<&Function> {
+    // self
+    //   .modules
+    //   .get(module)
+    //   .and_then(|module| module.fetch_function(function))
+    todo!()
   }
 }

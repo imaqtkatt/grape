@@ -1,5 +1,6 @@
 use crate::function::Function;
 use crate::read_bytes::ReadBytes;
+use crate::runtime_error;
 
 /// Bytecode Module representation.
 ///
@@ -83,7 +84,11 @@ impl Module {
 }
 
 impl Module {
-  pub fn fetch_function(&self, name: &str) -> Option<&Function> {
-    self.functions.iter().find(|f| f.name.as_ref() == name)
+  pub fn fetch_function(&self, name: &str) -> runtime_error::Result<&Function> {
+    self
+      .functions
+      .iter()
+      .find(|f| f.name.as_ref() == name)
+      .ok_or(runtime_error::RtError::FunctionNotFound(name.to_string()))
   }
 }

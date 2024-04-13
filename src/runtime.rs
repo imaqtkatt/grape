@@ -7,6 +7,7 @@ use crate::{
   local::Local,
   module::Module,
   opcode,
+  runtime_error::Result,
   stack::Stack,
   value::{g_int, g_ref, Value},
 };
@@ -39,8 +40,8 @@ impl<'ctx> Runtime<'ctx> {
     }
   }
 
-  pub fn boot(ctx: &'ctx mut Context) -> Option<Value> {
-    let module = ctx.fetch_module(MAIN);
+  pub fn boot(ctx: &'ctx mut Context) -> Result<Option<Value>> {
+    let module = ctx.fetch_module(MAIN)?;
     let function = module.fetch_function(MAIN)?;
     assert!(function.arguments == 0);
 
@@ -52,11 +53,9 @@ impl<'ctx> Runtime<'ctx> {
     Runtime::new(ctx, code, local, module.clone(), &mut Heap::new()).run(Stack::new(STACK_INIT))
   }
 
-  fn call(&mut self, module: &str, function: &str, stack: &mut Stack) -> Option<Value> {
-    let module = self.ctx.fetch_module(module);
-    let Some(function) = module.fetch_function(function) else {
-      panic!("Function '{function}' not found.")
-    };
+  fn call(&mut self, module: &str, function: &str, stack: &mut Stack) -> Result<Option<Value>> {
+    let module = self.ctx.fetch_module(module)?;
+    let function = module.fetch_function(function)?;
 
     let mut local = Local::new(function.locals as usize);
 
@@ -69,11 +68,11 @@ impl<'ctx> Runtime<'ctx> {
         let mut rt = Runtime::new(self.ctx, program, local, module.clone(), self.heap);
         rt.run(Stack::new(STACK_INIT))
       }
-      Code::Native(native) => native(&local, self.heap),
+      Code::Native(native) => Ok(native(&local, self.heap)),
     }
   }
 
-  fn run(&mut self, mut stack: Stack) -> Option<Value> {
+  fn run(&mut self, mut stack: Stack) -> Result<Option<Value>> {
     let ip = &mut 0;
 
     loop {
@@ -81,8 +80,8 @@ impl<'ctx> Runtime<'ctx> {
 
       // println!("{}", opcode::TO_STR[instruction as usize]);
       match instruction {
-        opcode::RET => break None,
-        opcode::RETURN => break Some(stack.pop()),
+        opcode::RET => break Ok(None),
+        opcode::RETURN => break Ok(Some(stack.pop())),
 
         opcode::ICONST_0 => stack.iconst_0(),
         opcode::ICONST_1 => stack.iconst_1(),
@@ -128,7 +127,7 @@ impl<'ctx> Runtime<'ctx> {
           let module = &this_module.names[modulebyte1 << 8 | modulebyte2];
           let function = &this_module.names[functionbyte1 << 8 | functionbyte2];
 
-          if let Some(value) = self.call(module, function, &mut stack) {
+          if let Some(value) = self.call(module, function, &mut stack)? {
             stack.push(value);
           }
         }

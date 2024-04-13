@@ -113,3 +113,9 @@ pub struct ObjArray {
   pub len: usize,
   pub arr: Vec<Value>,
 }
+
+impl Default for Heap {
+  fn default() -> Self {
+    Self::new()
+  }
+}

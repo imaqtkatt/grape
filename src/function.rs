@@ -64,7 +64,11 @@ impl fmt::Debug for Code {
 }
 
 impl Function {
-  pub fn native(name: &str, args: u8, f: impl Fn(&Local, &Heap) -> Option<Value> + 'static) -> Self {
+  pub fn native(
+    name: &str,
+    args: u8,
+    f: impl Fn(&Local, &Heap) -> Option<Value> + 'static,
+  ) -> Self {
     Self {
       name: Box::from(name),
       locals: args as u16,

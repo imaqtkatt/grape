@@ -12,9 +12,11 @@ pub mod function;
 pub mod heap;
 pub mod local;
 pub mod module;
+pub mod module_path;
 pub mod opcode;
 pub mod read_bytes;
 pub mod runtime;
+pub mod runtime_error;
 pub mod stack;
 pub mod value;
 
@@ -139,6 +141,8 @@ fn main() {
   ctx.add_module(main);
   ctx.add_module(std_out);
 
-  let ret = Runtime::boot(&mut ctx);
-  println!("ret = {ret:?}")
+  match Runtime::boot(&mut ctx) {
+    Ok(..) => {},
+    Err(e) => eprintln!("Error: {e}"),
+  }
 }
