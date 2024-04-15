@@ -40,6 +40,8 @@ pub enum PoolEntry {
 pub const TAG_STRING: u8 = 0x1;
 pub const TAG_INTEGER: u8 = 0x2;
 
+const UVAS: u32 = 1970692467;
+
 impl Module {
   pub fn read<R: std::io::Read>(rd: &mut R) -> std::io::Result<Module> {
     let magic = rd.read_u32()?;
@@ -92,5 +94,47 @@ impl Module {
       .iter()
       .find(|f| f.name.as_ref() == name)
       .ok_or(runtime_error::RtError::FunctionNotFound(name.to_string()))
+  }
+}
+
+impl Module {
+  pub fn write<W: std::io::Write>(&self, wr: &mut W) -> std::io::Result<()> {
+    wr.write_all(&UVAS.to_be_bytes())?;
+    let name_len = (self.name.len() as u16).to_be_bytes();
+    wr.write_all(&name_len)?;
+    wr.write_all(self.name.as_bytes())?;
+    let names_count = (self.names.len() as u16).to_be_bytes();
+    wr.write_all(&names_count)?;
+    for name in self.names.iter() {
+      let name_length = (name.len() as u16).to_be_bytes();
+      wr.write_all(&name_length)?;
+      wr.write_all(name.as_bytes())?;
+    }
+
+    let pool_count = (self.constants.len() as u16).to_be_bytes();
+    wr.write_all(&pool_count)?;
+
+    for element in self.constants.iter() {
+      match element {
+        PoolEntry::String(s) => {
+          wr.write_all(&TAG_STRING.to_be_bytes())?;
+          wr.write_all(&(s.len() as u16).to_be_bytes())?;
+          wr.write_all(s.as_bytes())?;
+        }
+        PoolEntry::Integer(i) => {
+          wr.write_all(&TAG_INTEGER.to_be_bytes())?;
+          wr.write_all(&i.to_be_bytes())?;
+        }
+      }
+    }
+
+    let functions_count = (self.functions.len() as u16).to_be_bytes();
+    wr.write_all(&functions_count)?;
+
+    for function in self.functions.iter() {
+      function.write(wr)?;
+    }
+
+    Ok(())
   }
 }

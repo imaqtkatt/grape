@@ -77,3 +77,19 @@ impl Function {
     }
   }
 }
+
+impl Function {
+  pub fn write<W: std::io::Write>(&self, wr: &mut W) -> std::io::Result<()> {
+    let name_len = (self.name.len() as u16).to_be_bytes();
+    wr.write_all(&name_len)?;
+    wr.write_all(self.name.as_bytes())?;
+    wr.write_all(&self.locals.to_be_bytes())?;
+    wr.write_all(&self.arguments.to_be_bytes())?;
+    if let Code::Bytecode(code) = &self.code {
+      let code_length = (code.len() as u16).to_be_bytes();
+      wr.write_all(&code_length)?;
+      wr.write_all(code)?;
+    }
+    Ok(())
+  }
+}
