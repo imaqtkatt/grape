@@ -21,7 +21,7 @@ impl fmt::Debug for Value {
     match self {
       Value::Integer(n) => write!(f, "{n}"),
       Value::Float(n) => write!(f, "{n}"),
-      Value::Reference(r) => write!(f, "@{r:08x}"),
+      Value::Reference(r) => write!(f, "#{r:08x}"),
     }
   }
 }

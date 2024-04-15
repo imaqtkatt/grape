@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::value::Value;
 
-pub const HEAP_MEM: usize = 0xFFF;
+pub const HEAP_MEM: usize = 0xFFFF;
 
 pub struct Heap {
   mem: Vec<Object>,

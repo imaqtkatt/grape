@@ -118,11 +118,11 @@ fn main() {
   };
 
   let mut ctx = Context::new();
-  ctx.add_module(module::std_out::module());
-  ctx.add_module(main);
+  ctx.add_module(module::std_out::module()).expect("Add std:out module");
+  ctx.add_module(main).expect("Add main module");
 
   match Runtime::boot(&mut ctx) {
-    Ok(..) => {},
+    Ok(_) => {},
     Err(e) => eprintln!("Error: {e}"),
   }
 }

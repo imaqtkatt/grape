@@ -20,7 +20,7 @@ pub struct Runtime<'ctx> {
   heap: &'ctx mut Heap,
 }
 
-const STACK_INIT: usize = 1 << 10;
+const STACK_INIT: usize = 0x800;
 const MAIN: &str = "main";
 
 impl<'ctx> Runtime<'ctx> {

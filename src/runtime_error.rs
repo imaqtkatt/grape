@@ -5,6 +5,7 @@ use std::error::Error;
 pub enum RtError {
   StackUnderflow,
   ModuleNotFound(String),
+  ModuleAlreadyExists(String),
   FunctionNotFound(String),
   Other(Box<dyn Error + 'static>),
 }
@@ -20,6 +21,7 @@ impl fmt::Display for RtError {
     match self {
       RtError::StackUnderflow => write!(f, "Stack Underflow"),
       RtError::ModuleNotFound(name) => write!(f, "Module '{name}' not found."),
+      RtError::ModuleAlreadyExists(name) => write!(f, "Module '{name}' already exists."),
       RtError::FunctionNotFound(name) => write!(f, "Function '{name}' not found."),
       RtError::Other(e) => write!(f, "{e}"),
     }
