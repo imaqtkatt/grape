@@ -30,12 +30,7 @@ pub fn display_object(o: usize, heap: &Heap) -> impl fmt::Display + '_ {
     Object::Map(ObjMap { fields }) => {
       writeln!(f, "{{")?;
       for (k, v) in fields.iter() {
-        writeln!(
-          f,
-          "  {} -> {}",
-          display_value(k, heap),
-          display_value(v, heap)
-        )?
+        writeln!(f, "  {} -> {}", display_value(k, heap), display_value(v, heap))?
       }
       write!(f, "}}")
     }

@@ -21,9 +21,7 @@ impl Heap {
 
   pub fn new_object(&mut self) -> Value {
     let r#ref = self.new_ref();
-    self.mem.push(Object::Map(ObjMap {
-      fields: Default::default(),
-    }));
+    self.mem.push(Object::Map(ObjMap { fields: Default::default() }));
     Value::Reference(r#ref)
   }
 
@@ -61,9 +59,7 @@ impl Heap {
   pub fn array_get(&mut self, array_ref: usize, index: i32) -> Value {
     let arr = &mut self.mem[array_ref];
     let index = index as usize;
-    let Object::Array(ObjArray { len, arr }) = arr else {
-      panic!()
-    };
+    let Object::Array(ObjArray { len, arr }) = arr else { panic!() };
     if index > *len {
       panic!("Index is out of bounds")
     } else {
@@ -74,9 +70,7 @@ impl Heap {
   pub fn array_set(&mut self, array_ref: usize, index: i32, value: Value) {
     let arr = &mut self.mem[array_ref];
     let index = index as usize;
-    let Object::Array(ObjArray { len, arr }) = arr else {
-      panic!()
-    };
+    let Object::Array(ObjArray { len, arr }) = arr else { panic!() };
     if index > *len {
       panic!("Index is out of bounds")
     } else {

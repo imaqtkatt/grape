@@ -9,9 +9,7 @@ pub struct Stack {
 
 impl Stack {
   pub fn new(capacity: usize) -> Self {
-    Self {
-      stack: Vec::with_capacity(capacity),
-    }
+    Self { stack: Vec::with_capacity(capacity) }
   }
 
   #[inline(always)]

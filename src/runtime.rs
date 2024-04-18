@@ -31,13 +31,7 @@ impl<'ctx> Runtime<'ctx> {
     module: Rc<Module>,
     heap: &'ctx mut Heap,
   ) -> Self {
-    Self {
-      ctx,
-      program,
-      local,
-      module,
-      heap,
-    }
+    Self { ctx, program, local, module, heap }
   }
 
   pub fn boot(ctx: &'ctx mut Context) -> Result<Option<Value>> {
@@ -47,10 +41,10 @@ impl<'ctx> Runtime<'ctx> {
 
     let local = Local::new(function.locals as usize);
 
-    let Code::Bytecode(code) = &function.code else {
-      unreachable!()
-    };
-    Runtime::new(ctx, code, local, module.clone(), &mut Heap::new()).run(Stack::new(STACK_INIT))
+    let Code::Bytecode(code) = &function.code else { unreachable!() };
+    let mut heap = Heap::new();
+    let mut stack = Stack::new(STACK_INIT);
+    Runtime::new(ctx, code, local, module.clone(), &mut heap).run(&mut stack)
   }
 
   fn call(&mut self, module: &str, function: &str, stack: &mut Stack) -> Result<Option<Value>> {
@@ -66,13 +60,13 @@ impl<'ctx> Runtime<'ctx> {
     match &function.code {
       Code::Bytecode(program) => {
         let mut rt = Runtime::new(self.ctx, program, local, module.clone(), self.heap);
-        rt.run(Stack::new(STACK_INIT))
+        rt.run(stack)
       }
       Code::Native(native) => Ok(native(&local, self.heap)),
     }
   }
 
-  fn run(&mut self, mut stack: Stack) -> Result<Option<Value>> {
+  fn run(&mut self, stack: &mut Stack) -> Result<Option<Value>> {
     let ip = &mut 0;
 
     loop {
@@ -127,7 +121,7 @@ impl<'ctx> Runtime<'ctx> {
           let module = &this_module.names[modulebyte1 << 8 | modulebyte2];
           let function = &this_module.names[functionbyte1 << 8 | functionbyte2];
 
-          if let Some(value) = self.call(module, function, &mut stack)? {
+          if let Some(value) = self.call(module, function, stack)? {
             stack.push(value);
           }
         }

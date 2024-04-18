@@ -78,12 +78,7 @@ impl Module {
       functions.push(Function::read(rd)?);
     }
 
-    Ok(Self {
-      name,
-      names,
-      constants,
-      functions,
-    })
+    Ok(Self { name, names, constants, functions })
   }
 }
 

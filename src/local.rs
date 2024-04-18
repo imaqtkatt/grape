@@ -7,9 +7,7 @@ pub struct Local {
 
 impl Local {
   pub fn new(capacity: usize) -> Self {
-    Self {
-      local: vec![Value::Integer(0); capacity],
-    }
+    Self { local: vec![Value::Integer(0); capacity] }
   }
 
   #[inline(always)]

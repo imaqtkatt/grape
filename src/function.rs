@@ -45,12 +45,7 @@ impl Function {
 
     let code = Code::Bytecode(code_buf);
 
-    Ok(Self {
-      name,
-      locals,
-      arguments,
-      code,
-    })
+    Ok(Self { name, locals, arguments, code })
   }
 }
 
