@@ -1,3 +1,4 @@
+pub mod builder;
 pub mod std_out;
 
 use crate::function::Function;
@@ -74,8 +75,10 @@ impl Module {
 
     let functions_count = rd.read_u16()?;
     let mut functions = Vec::with_capacity(functions_count as usize);
-    for _ in 0..functions_count {
-      functions.push(Function::read(rd)?);
+    for id in 0..functions_count {
+      let mut function = Function::read(rd)?;
+      function.identifier = id as usize;
+      functions.push(function);
     }
 
     Ok(Self { name, names, constants, functions })
@@ -83,12 +86,16 @@ impl Module {
 }
 
 impl Module {
-  pub fn fetch_function(&self, name: &str) -> runtime_error::Result<&Function> {
+  pub fn fetch_function_with_name(&self, name: &str) -> runtime_error::Result<&Function> {
     self
       .functions
       .iter()
       .find(|f| f.name.as_ref() == name)
       .ok_or(runtime_error::RtError::FunctionNotFound(name.to_string()))
+  }
+
+  pub fn fetch_function_with_identifier(&self, identifier: usize) -> &Function {
+    &self.functions[identifier]
   }
 }
 

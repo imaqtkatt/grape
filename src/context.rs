@@ -4,6 +4,8 @@ use std::{
   rc::Rc,
 };
 
+use fxhash::FxBuildHasher;
+
 use crate::{
   module::Module,
   module_path,
@@ -12,7 +14,7 @@ use crate::{
 
 #[derive(Default)]
 pub struct Context {
-  pub modules: HashMap<Box<str>, Rc<Module>>,
+  pub modules: HashMap<Box<str>, Rc<Module>, FxBuildHasher>,
 }
 
 impl Context {

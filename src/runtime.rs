@@ -36,7 +36,7 @@ impl<'ctx> Runtime<'ctx> {
 
   pub fn boot(ctx: &'ctx mut Context) -> Result<Option<Value>> {
     let module = ctx.fetch_module(MAIN)?;
-    let function = module.fetch_function(MAIN)?;
+    let function = module.fetch_function_with_name(MAIN)?;
     assert!(function.arguments == 0);
 
     let local = Local::new(function.locals as usize);
@@ -47,9 +47,9 @@ impl<'ctx> Runtime<'ctx> {
     Runtime::new(ctx, code, local, module.clone(), &mut heap).run(&mut stack)
   }
 
-  fn call(&mut self, module: &str, function: &str, stack: &mut Stack) -> Result<Option<Value>> {
+  fn call(&mut self, module: &str, function: usize, stack: &mut Stack) -> Result<Option<Value>> {
     let module = self.ctx.fetch_module(module)?;
-    let function = module.fetch_function(function)?;
+    let function = module.fetch_function_with_identifier(function);
 
     let mut local = Local::new(function.locals as usize);
 
@@ -119,7 +119,7 @@ impl<'ctx> Runtime<'ctx> {
 
           let this_module = self.module.clone();
           let module = &this_module.names[modulebyte1 << 8 | modulebyte2];
-          let function = &this_module.names[functionbyte1 << 8 | functionbyte2];
+          let function = functionbyte1 << 8 | functionbyte2;
 
           if let Some(value) = self.call(module, function, stack)? {
             stack.push(value);

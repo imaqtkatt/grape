@@ -16,6 +16,8 @@ use std::rc::Rc;
 /// ```
 #[derive(Debug)]
 pub struct Function {
+  /// The function lookup identifier.
+  pub identifier: usize,
   /// The function name.
   pub name: Box<str>,
   /// The locals used in the code.
@@ -45,7 +47,7 @@ impl Function {
 
     let code = Code::Bytecode(code_buf);
 
-    Ok(Self { name, locals, arguments, code })
+    Ok(Self { identifier: usize::MAX, name, locals, arguments, code })
   }
 }
 
@@ -61,10 +63,12 @@ impl fmt::Debug for Code {
 impl Function {
   pub fn native(
     name: &str,
+    id: usize,
     args: u8,
     f: impl Fn(&Local, &Heap) -> Option<Value> + 'static,
   ) -> Self {
     Self {
+      identifier: id,
       name: Box::from(name),
       locals: args as u16,
       arguments: args,
