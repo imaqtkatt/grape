@@ -96,6 +96,7 @@ impl Module {
 
   pub fn fetch_function_with_identifier(&self, identifier: usize) -> &Function {
     &self.functions[identifier]
+    //unsafe { self.functions.get_unchecked(identifier) }
   }
 }
 
