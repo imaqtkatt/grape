@@ -52,23 +52,25 @@ impl<'ctx> Runtime<'ctx> {
     let to_fetch = module.clone();
     let function = to_fetch.fetch_function_with_identifier(function);
 
-    let mut local = Local::new(function.locals as usize);
+    let frame = self.local.push_frame(function.locals as usize);
 
     for idx in (0..function.arguments).rev() {
-      local.store(idx as usize, self.stack.pop()?);
+      self.local.store(idx as usize, self.stack.pop()?);
     }
 
-    match &function.code {
+    let result = match &function.code {
       Code::Bytecode(program) => {
         let old_module = std::mem::replace(&mut self.module, module);
-        let old_local = std::mem::replace(&mut self.local, local);
         let ret = self.run(program);
-        let _ = std::mem::replace(&mut self.module, old_module);
-        let _ = std::mem::replace(&mut self.local, old_local);
+        _ = std::mem::replace(&mut self.module, old_module);
         ret
       }
-      Code::Native(native) => Ok(native(&local, self.heap)),
-    }
+      Code::Native(native) => Ok(native(&self.local, self.heap)),
+    };
+
+    self.local.pop_frame(frame);
+
+    result
   }
 
   fn run(&mut self, program: &[u8]) -> Result<Option<Value>> {

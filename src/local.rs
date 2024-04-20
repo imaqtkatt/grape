@@ -3,21 +3,35 @@ use crate::value::Value;
 #[derive(Debug)]
 pub struct Local {
   local: Vec<Value>,
+  base: usize,
 }
 
 impl Local {
   pub fn new(capacity: usize) -> Self {
-    Self { local: vec![Value::Integer(0); capacity] }
+    Self { local: vec![Value::Integer(0); capacity], base: 0 }
+  }
+
+  pub fn push_frame(&mut self, size: usize) -> usize {
+    let old_base = self.base;
+    let new_base = self.local.len();
+    self.local.resize(new_base + size, Value::Integer(0));
+    self.base = new_base;
+    old_base
+  }
+
+  pub fn pop_frame(&mut self, base: usize) {
+    self.local.truncate(self.base);
+    self.base = base;
   }
 
   #[inline(always)]
   pub fn load(&self, index: usize) -> Value {
-    self.local[index]
+    self.local[self.base + index]
   }
 
   #[inline(always)]
   pub fn store(&mut self, index: usize, value: Value) {
-    self.local[index] = value;
+    self.local[self.base + index] = value;
   }
 
   pub fn load_0(&self) -> Value {
