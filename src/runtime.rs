@@ -5,9 +5,9 @@ use crate::{
   function::Code,
   heap::Heap,
   local::Local,
-  module::Module,
+  module::{Module, PoolEntry},
   opcode,
-  runtime_error::Result,
+  runtime_error::{Result, RtError},
   stack::Stack,
   value::{g_int, g_ref, Value},
 };
@@ -125,7 +125,10 @@ impl<'ctx> Runtime<'ctx> {
           let functionbyte2 = self.fetch(ip, program) as usize;
 
           let this_module = self.module.clone();
-          let module = &this_module.names[modulebyte1 << 8 | modulebyte2];
+          let entry_index = modulebyte1 << 8 | modulebyte2;
+          let PoolEntry::Module(module) = &this_module.constants[entry_index] else {
+            return Err(RtError::InvalidEntry(entry_index));
+          };
           let function = functionbyte1 << 8 | functionbyte2;
 
           if let Some(value) = self.call(module, function)? {
@@ -138,6 +141,7 @@ impl<'ctx> Runtime<'ctx> {
           match self.module.constants[index].clone() {
             crate::module::PoolEntry::String(s) => self.stack.push(self.heap.new_string(s)),
             crate::module::PoolEntry::Integer(i) => self.stack.push(Value::Integer(i)),
+            crate::module::PoolEntry::Module(_) => return Err(RtError::InvalidEntry(index)),
           }
         }
 

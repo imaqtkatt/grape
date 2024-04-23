@@ -28,8 +28,8 @@ pub mod value;
 fn main() {
   let _main = ModuleBuilder::new()
     .with_name("main")
-    .with_constant_module_name("std:out")
     .with_constant(PoolEntry::String("oioiiooiiioioioiiiooiio".to_string()))
+    .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_function(Function {
       // proc main() {
       //   x0 = [2]
@@ -55,16 +55,16 @@ fn main() {
         ICONST_0,
         ARRAY_SET,
         LOAD_0,
-        CALL, 0, 1, 0, 0, // std:out:print
-        LOADCONST, 0,
+        CALL, 0, 2, 0, 0, // std:out:print
+        LOADCONST, 1,
         STORE_1,
         LOAD_1,
-        CALL, 0, 1, 0, 2, // std:out:debug
+        CALL, 0, 2, 0, 2, // std:out:debug
         LOAD_1,
-        CALL, 0, 1, 0, 0, // std:out:print
+        CALL, 0, 2, 0, 0, // std:out:print
         PUSH_BYTE, 35,
         CALL, 0, 0, 0, 2, // fib
-        CALL, 0, 1, 0, 0, // std:out:print
+        CALL, 0, 2, 0, 0, // std:out:print
         RET,
       ])
     })

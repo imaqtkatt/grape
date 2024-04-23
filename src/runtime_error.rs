@@ -7,6 +7,7 @@ pub enum RtError {
   ModuleNotFound(String),
   ModuleAlreadyExists(String),
   FunctionNotFound(String),
+  InvalidEntry(usize),
   Other(Box<dyn Error + 'static>),
 }
 
@@ -23,6 +24,7 @@ impl fmt::Display for RtError {
       RtError::ModuleNotFound(name) => write!(f, "Module '{name}' not found."),
       RtError::ModuleAlreadyExists(name) => write!(f, "Module '{name}' already exists."),
       RtError::FunctionNotFound(name) => write!(f, "Function '{name}' not found."),
+      RtError::InvalidEntry(index) => write!(f, "Invalid constant pool entry '{index}'."),
       RtError::Other(e) => write!(f, "{e}"),
     }
   }
