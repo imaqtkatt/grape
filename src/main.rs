@@ -115,7 +115,7 @@ fn main() {
   ctx.add_module(module::std_out::module()).expect("Add std:out module");
   //ctx.add_module(main).expect("Add main module");
 
-  match Runtime::boot(&mut ctx) {
+  match Runtime::boot(ctx) {
     Ok(_) => {},
     Err(e) => eprintln!("Error: {e}"),
   }

@@ -12,29 +12,23 @@ use crate::{
   value::{g_int, g_ref, Value},
 };
 
-pub struct Runtime<'ctx> {
-  ctx: &'ctx mut Context,
+pub struct Runtime {
+  ctx: Context,
   local: Local,
   module: Rc<Module>,
-  heap: &'ctx mut Heap,
-  stack: &'ctx mut Stack,
+  heap: Heap,
+  stack: Stack,
 }
 
 const STACK_INIT: usize = 0x800;
 const MAIN: &str = "main";
 
-impl<'ctx> Runtime<'ctx> {
-  pub fn new(
-    ctx: &'ctx mut Context,
-    local: Local,
-    module: Rc<Module>,
-    heap: &'ctx mut Heap,
-    stack: &'ctx mut Stack,
-  ) -> Self {
+impl Runtime {
+  pub fn new(ctx: Context, local: Local, module: Rc<Module>, heap: Heap, stack: Stack) -> Self {
     Self { ctx, local, module, heap, stack }
   }
 
-  pub fn boot(ctx: &'ctx mut Context) -> Result<Option<Value>> {
+  pub fn boot(mut ctx: Context) -> Result<Option<Value>> {
     let module = ctx.fetch_module(MAIN)?;
     let function = module.fetch_function_with_name(MAIN)?;
     assert!(function.arguments == 0);
@@ -42,9 +36,9 @@ impl<'ctx> Runtime<'ctx> {
     let local = Local::new(function.locals as usize);
 
     let Code::Bytecode(code) = &function.code else { unreachable!() };
-    let mut heap = Heap::new();
-    let mut stack = Stack::new(STACK_INIT);
-    Runtime::new(ctx, local, module.clone(), &mut heap, &mut stack).run(code)
+    let heap = Heap::new();
+    let stack = Stack::new(STACK_INIT);
+    Runtime::new(ctx, local, module.clone(), heap, stack).run(code)
   }
 
   fn call(&mut self, module: &str, function: usize) -> Result<Option<Value>> {
@@ -65,7 +59,7 @@ impl<'ctx> Runtime<'ctx> {
         _ = std::mem::replace(&mut self.module, old_module);
         ret
       }
-      Code::Native(native) => Ok(native(&self.local, self.heap)),
+      Code::Native(native) => Ok(native(&self.local, &self.heap)),
     };
 
     self.local.pop_frame(frame);
