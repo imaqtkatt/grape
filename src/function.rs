@@ -1,3 +1,5 @@
+pub mod builder;
+
 use crate::{heap::Heap, local::Local, read_bytes::ReadBytes, value::Value};
 use core::fmt;
 use std::rc::Rc;
@@ -30,10 +32,18 @@ pub struct Function {
 
 type NativeFn = dyn Fn(&Local, &Heap) -> Option<Value>;
 
-#[derive(Clone)]
 pub enum Code {
   Bytecode(Rc<Vec<u8>>),
   Native(Rc<NativeFn>),
+}
+
+impl Clone for Code {
+  fn clone(&self) -> Self {
+    match self {
+      Code::Bytecode(bytecode) => Code::Bytecode(bytecode.clone()),
+      Code::Native(native) => Code::Native(native.clone()),
+    }
+  }
 }
 
 impl Function {

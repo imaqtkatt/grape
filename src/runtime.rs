@@ -24,6 +24,27 @@ pub struct Runtime {
   call_stack: Vec<Frame>,
 }
 
+pub trait RuntimeVisitor {
+  fn visit(&self, rt: &Runtime);
+}
+
+pub struct StackTrace;
+
+impl RuntimeVisitor for StackTrace {
+  fn visit(&self, rt: &Runtime) {
+    println!("At {}:{}%{}", rt.module.name, rt.function.name, rt.ip);
+    for frame in rt.call_stack.iter().rev() {
+      println!("  ~{}:{}%{}", frame.module.name, frame.function.name, frame.return_address);
+    }
+  }
+}
+
+impl Runtime {
+  pub fn accept(&self, visitor: impl RuntimeVisitor) {
+    visitor.visit(self)
+  }
+}
+
 struct Frame {
   return_address: usize,
   local_frame: usize,
@@ -55,14 +76,14 @@ impl Runtime {
     }
   }
 
-  pub fn boot(mut ctx: Context) -> Result<()> {
+  pub fn boot(mut ctx: Context) -> Result<Self> {
     let module = ctx.fetch_module(MAIN)?;
     let function = module.fetch_function_with_name(MAIN)?;
     assert!(function.arguments == 0);
 
     let local = Local::new(function.locals as usize);
 
-    Runtime::new(ctx, local, module.clone(), function).run()
+    Ok(Runtime::new(ctx, local, module.clone(), function))
   }
 
   fn call(&mut self, module: &str, function: usize) -> Result<()> {
@@ -86,15 +107,18 @@ impl Runtime {
     Ok(())
   }
 
-  fn run(&mut self) -> Result<()> {
+  pub fn run(&mut self) -> Result<()> {
     loop {
       match self.function.code.clone() {
         Code::Native(native) => {
-          native(&self.local, &self.heap);
+          if let Some(value) = native(&self.local, &self.heap) {
+            self.stack.push(value);
+          }
           self.pop_call_stack();
         }
         Code::Bytecode(ref program) => {
           let instruction = self.fetch(program);
+
           // println!("{}", opcode::TO_STR[instruction as usize]);
           match instruction {
             // halts, we dont return values anymore
@@ -298,11 +322,6 @@ impl Runtime {
         }
       }
     }
-    // loop {
-    //   let instruction = self.fetch(program);
-
-    //   // println!("{}", opcode::TO_STR[instruction as usize]);
-    // }
   }
 
   #[inline(always)]

@@ -28,6 +28,6 @@ pub fn module() -> Module {
     .with_function(Function::native("println", 0, 1, println))
     .with_function(Function::native("print", 1, 1, print))
     .with_function(Function::native("debug", 2, 1, debug))
-    .with_function(Function::native("eprintln", 2, 1, eprintln))
+    .with_function(Function::native("eprintln", 3, 1, eprintln))
     .build()
 }
