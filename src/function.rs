@@ -30,6 +30,7 @@ pub struct Function {
 
 type NativeFn = dyn Fn(&Local, &Heap) -> Option<Value>;
 
+#[derive(Clone)]
 pub enum Code {
   Bytecode(Vec<u8>),
   Native(Rc<NativeFn>),

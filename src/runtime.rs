@@ -13,11 +13,17 @@ use crate::{
 };
 
 pub struct Runtime {
+  ip: usize,
   ctx: Context,
   local: Local,
   module: Rc<Module>,
   heap: Heap,
   stack: Stack,
+  call_stack: Vec<Frame>,
+}
+
+struct Frame {
+  return_address: usize,
 }
 
 const STACK_INIT: usize = 0x800;
@@ -25,7 +31,7 @@ const MAIN: &str = "main";
 
 impl Runtime {
   pub fn new(ctx: Context, local: Local, module: Rc<Module>, heap: Heap, stack: Stack) -> Self {
-    Self { ctx, local, module, heap, stack }
+    Self { ip: 0, ctx, local, module, heap, stack, call_stack: Vec::new() }
   }
 
   pub fn boot(mut ctx: Context) -> Result<Option<Value>> {
@@ -42,6 +48,8 @@ impl Runtime {
   }
 
   fn call(&mut self, module: &str, function: usize) -> Result<Option<Value>> {
+    self.call_stack.push(Frame { return_address: self.ip });
+
     let module = self.ctx.fetch_module(module)?;
     let to_fetch = module.clone();
     let function = to_fetch.fetch_function_with_identifier(function);
@@ -55,6 +63,7 @@ impl Runtime {
     let result = match &function.code {
       Code::Bytecode(program) => {
         let old_module = std::mem::replace(&mut self.module, module);
+        self.ip = 0;
         let ret = self.run(program);
         _ = std::mem::replace(&mut self.module, old_module);
         ret
@@ -68,26 +77,34 @@ impl Runtime {
   }
 
   fn run(&mut self, program: &[u8]) -> Result<Option<Value>> {
-    let ip = &mut 0;
-
     loop {
-      let instruction = self.fetch(ip, program);
+      let instruction = self.fetch(program);
 
       // println!("{}", opcode::TO_STR[instruction as usize]);
       match instruction {
-        opcode::RET => break Ok(None),
-        opcode::RETURN => break Ok(Some(self.stack.pop()?)),
+        opcode::RET => {
+          if let Some(frame) = self.call_stack.pop() {
+            self.ip = frame.return_address;
+          }
+          break Ok(None);
+        }
+        opcode::RETURN => {
+          if let Some(frame) = self.call_stack.pop() {
+            self.ip = frame.return_address;
+          }
+          break Ok(Some(self.stack.pop()?));
+        }
 
         opcode::ICONST_0 => self.stack.iconst_0(),
         opcode::ICONST_1 => self.stack.iconst_1(),
 
         opcode::LOAD => {
-          let index = self.fetch(ip, program) as usize;
+          let index = self.fetch(program) as usize;
           self.stack.push(self.local.load(index));
         }
 
         opcode::STORE => {
-          let index = self.fetch(ip, program) as usize;
+          let index = self.fetch(program) as usize;
           self.local.store(index, self.stack.pop()?);
         }
         opcode::STORE_0 => self.local.store(0, self.stack.pop()?),
@@ -107,16 +124,16 @@ impl Runtime {
         opcode::F2I => self.stack.f2i()?,
 
         opcode::GOTO => {
-          let indexbyte1 = self.fetch(ip, program) as usize;
-          let indexbyte2 = self.fetch(ip, program) as usize;
-          *ip = indexbyte1 << 8 | indexbyte2;
+          let indexbyte1 = self.fetch(program) as usize;
+          let indexbyte2 = self.fetch(program) as usize;
+          self.ip = indexbyte1 << 8 | indexbyte2;
         }
 
         opcode::CALL => {
-          let modulebyte1 = self.fetch(ip, program) as usize;
-          let modulebyte2 = self.fetch(ip, program) as usize;
-          let functionbyte1 = self.fetch(ip, program) as usize;
-          let functionbyte2 = self.fetch(ip, program) as usize;
+          let modulebyte1 = self.fetch(program) as usize;
+          let modulebyte2 = self.fetch(program) as usize;
+          let functionbyte1 = self.fetch(program) as usize;
+          let functionbyte2 = self.fetch(program) as usize;
 
           let this_module = self.module.clone();
           let entry_index = modulebyte1 << 8 | modulebyte2;
@@ -131,7 +148,7 @@ impl Runtime {
         }
 
         opcode::LOADCONST => {
-          let index = self.fetch(ip, program) as usize;
+          let index = self.fetch(program) as usize;
           match self.module.constants[index].clone() {
             crate::module::PoolEntry::String(s) => self.stack.push(self.heap.new_string(s)),
             crate::module::PoolEntry::Integer(i) => self.stack.push(Value::Integer(i)),
@@ -153,10 +170,13 @@ impl Runtime {
           self.stack.push(self.heap.get_field(obj_ref, field));
         }
 
-        opcode::PUSH_BYTE => self.stack.push_byte(self.fetch(ip, program)),
+        opcode::PUSH_BYTE => {
+          let byte = self.fetch(program);
+          self.stack.push_byte(byte)
+        }
         opcode::PUSH_SHORT => {
-          let shortbyte1 = self.fetch(ip, program) as u16;
-          let shortbyte2 = self.fetch(ip, program) as u16;
+          let shortbyte1 = self.fetch(program) as u16;
+          let shortbyte2 = self.fetch(program) as u16;
           self.stack.push_short(shortbyte1 << 8 | shortbyte2);
         }
 
@@ -166,66 +186,66 @@ impl Runtime {
           let value2: g_int = self.stack.pop()?.into();
           let value1: g_int = self.stack.pop()?.into();
           if value1 == value2 {
-            let branchbyte1 = self.fetch(ip, program) as usize;
-            let branchbyte2 = self.fetch(ip, program) as usize;
-            *ip = branchbyte1 << 8 | branchbyte2;
+            let branchbyte1 = self.fetch(program) as usize;
+            let branchbyte2 = self.fetch(program) as usize;
+            self.ip = branchbyte1 << 8 | branchbyte2;
           } else {
-            *ip += 2;
+            self.ip += 2;
           }
         }
         opcode::IFNEQ => {
           let value2: g_int = self.stack.pop()?.into();
           let value1: g_int = self.stack.pop()?.into();
           if value1 != value2 {
-            let branchbyte1 = self.fetch(ip, program) as usize;
-            let branchbyte2 = self.fetch(ip, program) as usize;
-            *ip = branchbyte1 << 8 | branchbyte2;
+            let branchbyte1 = self.fetch(program) as usize;
+            let branchbyte2 = self.fetch(program) as usize;
+            self.ip = branchbyte1 << 8 | branchbyte2;
           } else {
-            *ip += 2;
+            self.ip += 2;
           }
         }
         opcode::IFGT => {
           let value2: g_int = self.stack.pop()?.into();
           let value1: g_int = self.stack.pop()?.into();
           if value1 > value2 {
-            let branchbyte1 = self.fetch(ip, program) as usize;
-            let branchbyte2 = self.fetch(ip, program) as usize;
-            *ip = branchbyte1 << 8 | branchbyte2;
+            let branchbyte1 = self.fetch(program) as usize;
+            let branchbyte2 = self.fetch(program) as usize;
+            self.ip = branchbyte1 << 8 | branchbyte2;
           } else {
-            *ip += 2;
+            self.ip += 2;
           }
         }
         opcode::IFGE => {
           let value2: g_int = self.stack.pop()?.into();
           let value1: g_int = self.stack.pop()?.into();
           if value1 >= value2 {
-            let branchbyte1 = self.fetch(ip, program) as usize;
-            let branchbyte2 = self.fetch(ip, program) as usize;
-            *ip = branchbyte1 << 8 | branchbyte2;
+            let branchbyte1 = self.fetch(program) as usize;
+            let branchbyte2 = self.fetch(program) as usize;
+            self.ip = branchbyte1 << 8 | branchbyte2;
           } else {
-            *ip += 2;
+            self.ip += 2;
           }
         }
         opcode::IFLT => {
           let value2: g_int = self.stack.pop()?.into();
           let value1: g_int = self.stack.pop()?.into();
           if value1 < value2 {
-            let branchbyte1 = self.fetch(ip, program) as usize;
-            let branchbyte2 = self.fetch(ip, program) as usize;
-            *ip = branchbyte1 << 8 | branchbyte2;
+            let branchbyte1 = self.fetch(program) as usize;
+            let branchbyte2 = self.fetch(program) as usize;
+            self.ip = branchbyte1 << 8 | branchbyte2;
           } else {
-            *ip += 2;
+            self.ip += 2;
           }
         }
         opcode::IFLE => {
           let value2: g_int = self.stack.pop()?.into();
           let value1: g_int = self.stack.pop()?.into();
           if value1 <= value2 {
-            let branchbyte1 = self.fetch(ip, program) as usize;
-            let branchbyte2 = self.fetch(ip, program) as usize;
-            *ip = branchbyte1 << 8 | branchbyte2;
+            let branchbyte1 = self.fetch(program) as usize;
+            let branchbyte2 = self.fetch(program) as usize;
+            self.ip = branchbyte1 << 8 | branchbyte2;
           } else {
-            *ip += 2;
+            self.ip += 2;
           }
         }
 
@@ -272,9 +292,9 @@ impl Runtime {
   }
 
   #[inline(always)]
-  fn fetch(&self, ip: &mut usize, program: &[u8]) -> u8 {
-    let instruction = program[*ip];
-    *ip += 1;
+  fn fetch(&mut self, program: &[u8]) -> u8 {
+    let instruction = program[self.ip];
+    self.ip += 1;
     instruction
   }
 }
