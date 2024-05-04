@@ -1,7 +1,7 @@
-/// Return, no pop.
-pub const RET: u8 = 0x0;
+/// Abrupt stop.
+pub const HALT: u8 = 0x0;
 
-/// Return, pop.
+/// Return from call.
 pub const RETURN: u8 = 0x1;
 
 /// Push integer 0 constant.

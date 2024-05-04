@@ -72,12 +72,10 @@ impl fmt::Debug for Code {
 }
 
 impl Function {
-  pub fn native(
-    name: &str,
-    id: usize,
-    args: u8,
-    f: impl Fn(&Local, &Heap) -> Option<Value> + 'static,
-  ) -> Self {
+  pub fn native<NativeFnImpl>(name: &str, id: usize, args: u8, f: NativeFnImpl) -> Self
+  where
+    NativeFnImpl: Fn(&Local, &Heap) -> Option<Value> + 'static,
+  {
     Self {
       identifier: id,
       name: Box::from(name),

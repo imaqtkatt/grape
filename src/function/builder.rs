@@ -39,7 +39,10 @@ impl FunctionBuilder {
     self
   }
 
-  pub fn with_native(mut self, native: impl Fn(&Local, &Heap) -> Option<Value> + 'static) -> Self {
+  pub fn with_native<NativeFnImpl>(mut self, native: NativeFnImpl) -> Self
+  where
+    NativeFnImpl: Fn(&Local, &Heap) -> Option<Value> + 'static,
+  {
     self.code = Some(Code::Native(Rc::new(native)));
     self
   }

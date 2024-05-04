@@ -51,7 +51,7 @@ impl Heap {
     let r#ref = self.new_ref();
     self.mem.push(Object::Array(ObjArray {
       len: size as usize,
-      arr: vec![Value::Reference(0); size as usize],
+      arr: vec![Value::Reference(0); size as usize].into_boxed_slice(),
     }));
     Value::Reference(r#ref)
   }
@@ -105,7 +105,7 @@ pub struct ObjMap {
 
 pub struct ObjArray {
   pub len: usize,
-  pub arr: Vec<Value>,
+  pub arr: Box<[Value]>,
 }
 
 impl Default for Heap {

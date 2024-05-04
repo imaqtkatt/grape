@@ -1,15 +1,13 @@
 //use std::fs::File;
 
-use std::rc::Rc;
-
+use function::builder::FunctionBuilder;
 use module::builder::ModuleBuilder;
 
 use crate::{
   context::Context,
-  function::{Code, Function},
   module::PoolEntry,
   opcode::*,
-  runtime::Runtime,
+  runtime::{Result, Runtime},
 };
 
 pub mod context;
@@ -22,33 +20,20 @@ pub mod module_path;
 pub mod opcode;
 pub mod read_bytes;
 pub mod runtime;
-pub mod runtime_error;
 pub mod stack;
 pub mod value;
 
 #[rustfmt::skip]
-fn main() -> runtime_error::Result<()> {
+fn main() -> Result<()> {
   let _main = ModuleBuilder::new()
     .with_name("main")
     .with_constant(PoolEntry::String("oioiiooiiioioioiiiooiio".to_string()))
     .with_constant(PoolEntry::Module("std:out".to_string()))
-    .with_function(Function {
-      // proc main() {
-      //   x0 = [2]
-      //   x0[1] = 0
-      //   std:out:print(x0)
-      //
-      //   x1 = "oioiiooiiioioioiiiooiio"
-      //   std:out:debug(x1)
-      //   std:out:print(x1)
-      //
-      //   std:out:print(fib(35))
-      // }
-      identifier: 0,
-      name: Box::from("main"),
-      locals: 2,
-      arguments: 0,
-      code: Code::Bytecode(Rc::new(vec![
+    .with_function(FunctionBuilder::new()
+      .with_name_and_identifier("main", 0)
+      .with_locals(2)
+      .with_arguments(0)
+      .with_bytecode(&[
         PUSH_BYTE, 2,
         NEW_ARRAY,
         STORE_0,
@@ -67,29 +52,19 @@ fn main() -> runtime_error::Result<()> {
         PUSH_BYTE, 35,
         CALL, 0, 0, 0, 2, // fib
         CALL, 0, 2, 0, 0, // std:out:print
-        RET,
-      ]))
-    })
-    .with_function(Function {
-      identifier: 1,
-      name: Box::from("snd"),
-      locals: 2,
-      arguments: 2,
-      code: Code::Bytecode(Rc::new(vec![LOAD_1, RETURN])),
-    })
-    .with_function(Function {
-      identifier: 2,
-      name: Box::from("fib"),
-      locals: 1,
-      arguments: 1,
-      // func fib(x0) {
-      //   if x < 2 {
-      //     x0
-      //   } else {
-      //     fib(x0 - 1) + fib(x0 - 2)
-      //   }
-      // }
-      code: Code::Bytecode(Rc::new(vec![
+        HALT])
+      .build())
+    .with_function(FunctionBuilder::new()
+      .with_name_and_identifier("snd", 1)
+      .with_locals(2)
+      .with_arguments(2)
+      .with_bytecode(&[LOAD_1, RETURN])
+      .build())
+    .with_function(FunctionBuilder::new()
+      .with_name_and_identifier("fib", 2)
+      .with_locals(1)
+      .with_arguments(1)
+      .with_bytecode(&[
         LOAD_0,            // 0
         PUSH_BYTE, 2,      // 1
         IFLT, 0, 26,
@@ -105,9 +80,8 @@ fn main() -> runtime_error::Result<()> {
         RETURN,
         //
         LOAD_0,
-        RETURN,
-      ])),
-    })
+        RETURN])
+      .build())
     .build();
 
   // let mut f = std::fs::File::options().append(true).create(true).open("main.grape").unwrap();
@@ -120,7 +94,7 @@ fn main() -> runtime_error::Result<()> {
   let mut runtime = Runtime::boot(ctx)?;
   if let Err(e) = runtime.run() {
     eprintln!("Error: {e}");
-    runtime.accept(runtime::StackTrace);
+    runtime.accept(runtime::stack_trace::StackTrace);
   }
 
   Ok(())

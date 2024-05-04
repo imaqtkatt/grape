@@ -1,5 +1,5 @@
 use crate::{
-  runtime_error::{Result, RtError},
+  runtime::{Error, Result},
   value::{g_float, g_int, Value},
 };
 
@@ -19,7 +19,7 @@ impl Stack {
 
   #[inline(always)]
   pub fn pop(&mut self) -> Result<Value> {
-    self.stack.pop().ok_or(RtError::StackUnderflow)
+    self.stack.pop().ok_or(Error::StackUnderflow)
   }
 
   pub fn dup(&mut self) -> Result<()> {

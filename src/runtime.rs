@@ -1,3 +1,5 @@
+pub mod stack_trace;
+
 use core::fmt;
 use std::rc::Rc;
 
@@ -8,7 +10,6 @@ use crate::{
   local::Local,
   module::{Module, PoolEntry},
   opcode,
-  runtime_error::{Result, RtError},
   stack::Stack,
   value::{g_int, g_ref, Value},
 };
@@ -26,23 +27,6 @@ pub struct Runtime {
 
 pub trait RuntimeVisitor {
   fn visit(&self, rt: &Runtime);
-}
-
-pub struct StackTrace;
-
-impl RuntimeVisitor for StackTrace {
-  fn visit(&self, rt: &Runtime) {
-    println!("At {}:{}%{}", rt.module.name, rt.function.name, rt.ip);
-    for frame in rt.call_stack.iter().rev() {
-      println!("  ~{}:{}%{}", frame.module.name, frame.function.name, frame.return_address);
-    }
-  }
-}
-
-impl Runtime {
-  pub fn accept(&self, visitor: impl RuntimeVisitor) {
-    visitor.visit(self)
-  }
 }
 
 struct Frame {
@@ -63,7 +47,7 @@ const MAIN: &str = "main";
 const IP_INIT: usize = 0;
 
 impl Runtime {
-  pub fn new(ctx: Context, local: Local, module: Rc<Module>, function: Rc<Function>) -> Self {
+  fn new(ctx: Context, local: Local, module: Rc<Module>, function: Rc<Function>) -> Self {
     Self {
       ip: IP_INIT,
       ctx,
@@ -83,7 +67,7 @@ impl Runtime {
 
     let local = Local::new(function.locals as usize);
 
-    Ok(Runtime::new(ctx, local, module.clone(), function))
+    Ok(Runtime::new(ctx, local, module, function))
   }
 
   fn call(&mut self, module: &str, function: usize) -> Result<()> {
@@ -114,19 +98,18 @@ impl Runtime {
           if let Some(value) = native(&self.local, &self.heap) {
             self.stack.push(value);
           }
-          self.pop_call_stack();
+          self.pop_frame();
         }
         Code::Bytecode(ref program) => {
           let instruction = self.fetch(program);
 
           // println!("{}", opcode::TO_STR[instruction as usize]);
           match instruction {
-            // halts, we dont return values anymore
-            opcode::RET => {
-              self.pop_call_stack();
+            opcode::HALT => {
+              self.pop_frame();
               break Ok(());
             }
-            opcode::RETURN => self.pop_call_stack(),
+            opcode::RETURN => self.pop_frame(),
 
             opcode::ICONST_0 => self.stack.iconst_0(),
             opcode::ICONST_1 => self.stack.iconst_1(),
@@ -171,7 +154,7 @@ impl Runtime {
               let this_module = self.module.clone();
               let entry_index = modulebyte1 << 8 | modulebyte2;
               let PoolEntry::Module(module) = &this_module.constants[entry_index] else {
-                return Err(RtError::InvalidEntry(entry_index));
+                return Err(Error::InvalidEntry(entry_index));
               };
               let function = functionbyte1 << 8 | functionbyte2;
 
@@ -183,7 +166,7 @@ impl Runtime {
               match self.module.constants[index].clone() {
                 crate::module::PoolEntry::String(s) => self.stack.push(self.heap.new_string(s)),
                 crate::module::PoolEntry::Integer(i) => self.stack.push(Value::Integer(i)),
-                crate::module::PoolEntry::Module(_) => return Err(RtError::InvalidEntry(index)),
+                crate::module::PoolEntry::Module(_) => return Err(Error::InvalidEntry(index)),
               }
             }
 
@@ -325,7 +308,7 @@ impl Runtime {
   }
 
   #[inline(always)]
-  fn pop_call_stack(&mut self) {
+  fn pop_frame(&mut self) {
     if let Some(frame) = self.call_stack.pop() {
       self.ip = frame.return_address;
       self.module = frame.module;
@@ -339,5 +322,43 @@ impl Runtime {
     let instruction = program[self.ip];
     self.ip += 1;
     instruction
+  }
+}
+
+impl Runtime {
+  pub fn accept(&self, visitor: impl RuntimeVisitor) {
+    visitor.visit(self);
+  }
+}
+
+#[derive(Debug)]
+/// A runtime error.
+pub enum Error {
+  StackUnderflow,
+  ModuleNotFound(String),
+  ModuleAlreadyExists(String),
+  FunctionNotFound(String),
+  InvalidEntry(usize),
+  Other(Box<dyn std::error::Error + 'static>),
+}
+
+impl Error {
+  pub fn other<E: std::error::Error + 'static>(e: E) -> Error {
+    Error::Other(Box::new(e))
+  }
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+impl fmt::Display for Error {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Error::StackUnderflow => write!(f, "Stack Underflow"),
+      Error::ModuleNotFound(name) => write!(f, "Module '{name}' not found."),
+      Error::ModuleAlreadyExists(name) => write!(f, "Module '{name}' already exists."),
+      Error::FunctionNotFound(name) => write!(f, "Function '{name}' not found."),
+      Error::InvalidEntry(index) => write!(f, "Invalid constant pool entry '{index}'."),
+      Error::Other(e) => write!(f, "{e}"),
+    }
   }
 }
