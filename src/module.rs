@@ -25,7 +25,7 @@ pub struct Module {
   /// The constant pool.
   pub constants: Vec<PoolEntry>,
   /// The module functions.
-  pub functions: Vec<Function>,
+  pub functions: Vec<std::rc::Rc<Function>>,
 }
 
 #[derive(Clone, Debug)]
@@ -68,7 +68,7 @@ impl Module {
     for id in 0..functions_count {
       let mut function = Function::read(rd)?;
       function.identifier = id as usize;
-      functions.push(function);
+      functions.push(std::rc::Rc::new(function));
     }
 
     Ok(Self { name, constants, functions })
@@ -76,11 +76,15 @@ impl Module {
 }
 
 impl Module {
-  pub fn fetch_function_with_name(&self, name: &str) -> runtime_error::Result<&Function> {
+  pub fn fetch_function_with_name(
+    &self,
+    name: &str,
+  ) -> runtime_error::Result<std::rc::Rc<Function>> {
     self
       .functions
       .iter()
       .find(|f| f.name.as_ref() == name)
+      .cloned()
       .ok_or(runtime_error::RtError::FunctionNotFound(name.to_string()))
   }
 

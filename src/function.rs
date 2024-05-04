@@ -14,7 +14,7 @@ use std::rc::Rc;
 ///   code: Vec<code_length>,
 /// }
 /// ```
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Function {
   /// The function lookup identifier.
   pub identifier: usize,
