@@ -84,12 +84,12 @@ impl Module {
       .functions
       .iter()
       .find(|f| f.name.as_ref() == name)
-      .cloned()
       .ok_or(runtime_error::RtError::FunctionNotFound(name.to_string()))
+      .cloned()
   }
 
-  pub fn fetch_function_with_identifier(&self, identifier: usize) -> &Function {
-    &self.functions[identifier]
+  pub fn fetch_function_with_identifier(&self, identifier: usize) -> std::rc::Rc<Function> {
+    unsafe { self.functions.get_unchecked(identifier).clone() }
   }
 }
 

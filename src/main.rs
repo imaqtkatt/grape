@@ -1,5 +1,7 @@
 //use std::fs::File;
 
+use std::rc::Rc;
+
 use module::builder::ModuleBuilder;
 
 use crate::{
@@ -46,7 +48,7 @@ fn main() {
       name: Box::from("main"),
       locals: 2,
       arguments: 0,
-      code: Code::Bytecode(vec![
+      code: Code::Bytecode(Rc::new(vec![
         PUSH_BYTE, 2,
         NEW_ARRAY,
         STORE_0,
@@ -66,14 +68,14 @@ fn main() {
         CALL, 0, 0, 0, 2, // fib
         CALL, 0, 2, 0, 0, // std:out:print
         RET,
-      ])
+      ]))
     })
     .with_function(Function {
       identifier: 1,
       name: Box::from("snd"),
       locals: 2,
       arguments: 2,
-      code: Code::Bytecode(vec![LOAD_1, RETURN]),
+      code: Code::Bytecode(Rc::new(vec![LOAD_1, RETURN])),
     })
     .with_function(Function {
       identifier: 2,
@@ -87,7 +89,7 @@ fn main() {
       //     fib(x0 - 1) + fib(x0 - 2)
       //   }
       // }
-      code: Code::Bytecode(vec![
+      code: Code::Bytecode(Rc::new(vec![
         LOAD_0,            // 0
         PUSH_BYTE, 2,      // 1
         IFLT, 0, 26,
@@ -104,7 +106,7 @@ fn main() {
         //
         LOAD_0,
         RETURN,
-      ]),
+      ])),
     })
     .build();
 

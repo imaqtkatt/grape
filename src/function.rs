@@ -14,7 +14,7 @@ use std::rc::Rc;
 ///   code: Vec<code_length>,
 /// }
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Function {
   /// The function lookup identifier.
   pub identifier: usize,
@@ -32,7 +32,7 @@ type NativeFn = dyn Fn(&Local, &Heap) -> Option<Value>;
 
 #[derive(Clone)]
 pub enum Code {
-  Bytecode(Vec<u8>),
+  Bytecode(Rc<Vec<u8>>),
   Native(Rc<NativeFn>),
 }
 
@@ -46,7 +46,7 @@ impl Function {
     let mut code_buf = vec![0; code_length as usize];
     rd.read_exact(&mut code_buf)?;
 
-    let code = Code::Bytecode(code_buf);
+    let code = Code::Bytecode(Rc::new(code_buf));
 
     Ok(Self { identifier: usize::MAX, name, locals, arguments, code })
   }

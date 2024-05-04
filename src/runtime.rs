@@ -26,7 +26,7 @@ pub struct Runtime {
 
 struct Frame {
   return_address: usize,
-  frame: usize,
+  local_frame: usize,
   module: Rc<Module>,
   function: Rc<Function>,
 }
@@ -39,30 +39,30 @@ impl fmt::Debug for Frame {
 
 const STACK_INIT: usize = 0x800;
 const MAIN: &str = "main";
+const IP_INIT: usize = 0;
 
 impl Runtime {
-  pub fn new(
-    ctx: Context,
-    local: Local,
-    module: Rc<Module>,
-    function: Rc<Function>,
-    heap: Heap,
-    stack: Stack,
-  ) -> Self {
-    Self { ip: 0, ctx, local, module, function, heap, stack, call_stack: Vec::new() }
+  pub fn new(ctx: Context, local: Local, module: Rc<Module>, function: Rc<Function>) -> Self {
+    Self {
+      ip: IP_INIT,
+      ctx,
+      local,
+      module,
+      function,
+      heap: Heap::new(),
+      stack: Stack::new(STACK_INIT),
+      call_stack: Vec::new(),
+    }
   }
 
-  pub fn boot(mut ctx: Context) -> Result<Option<Value>> {
+  pub fn boot(mut ctx: Context) -> Result<()> {
     let module = ctx.fetch_module(MAIN)?;
     let function = module.fetch_function_with_name(MAIN)?;
     assert!(function.arguments == 0);
 
     let local = Local::new(function.locals as usize);
 
-    // let Code::Bytecode(code) = &function.code else { unreachable!() };
-    let heap = Heap::new();
-    let stack = Stack::new(STACK_INIT);
-    Runtime::new(ctx, local, module.clone(), function, heap, stack).run()
+    Runtime::new(ctx, local, module.clone(), function).run()
   }
 
   fn call(&mut self, module: &str, function: usize) -> Result<()> {
@@ -77,41 +77,21 @@ impl Runtime {
     }
 
     self.call_stack.push(Frame {
-      return_address: self.ip,
-      frame,
-      module: self.module.clone(),
-      function: self.function.clone(),
+      return_address: std::mem::replace(&mut self.ip, IP_INIT),
+      local_frame: frame,
+      module: std::mem::replace(&mut self.module, module),
+      function: std::mem::replace(&mut self.function, function),
     });
-    self.ip = 0;
-    self.module = module;
-    self.function = Rc::new(function.clone());
 
-    // let result = match &function.code {
-    //   Code::Bytecode(program) => {
-    //     let old_module = std::mem::replace(&mut self.module, module);
-    //     self.ip = 0;
-    //     let ret = self.run(program);
-    //     _ = std::mem::replace(&mut self.module, old_module);
-    //     ret
-    //   }
-    //   Code::Native(native) => Ok(native(&self.local, &self.heap)),
-    // };
-
-    // self.local.pop_frame(frame);
-    return Ok(());
+    Ok(())
   }
 
-  fn run(&mut self) -> Result<Option<Value>> {
+  fn run(&mut self) -> Result<()> {
     loop {
-      match &self.function.clone().code {
+      match self.function.code.clone() {
         Code::Native(native) => {
           native(&self.local, &self.heap);
-          if let Some(frame) = self.call_stack.pop() {
-            self.ip = frame.return_address;
-            self.module = frame.module;
-            self.function = frame.function;
-            self.local.pop_frame(frame.frame);
-          }
+          self.pop_call_stack();
         }
         Code::Bytecode(ref program) => {
           let instruction = self.fetch(program);
@@ -119,23 +99,10 @@ impl Runtime {
           match instruction {
             // halts, we dont return values anymore
             opcode::RET => {
-              if let Some(frame) = self.call_stack.pop() {
-                self.ip = frame.return_address;
-                self.module = frame.module;
-                self.function = frame.function;
-                self.local.pop_frame(frame.frame);
-              }
-              break Ok(None);
+              self.pop_call_stack();
+              break Ok(());
             }
-            opcode::RETURN => {
-              if let Some(frame) = self.call_stack.pop() {
-                self.ip = frame.return_address;
-                self.module = frame.module;
-                self.function = frame.function;
-                self.local.pop_frame(frame.frame);
-              }
-              // break Ok(Some(self.stack.pop()?));
-            }
+            opcode::RETURN => self.pop_call_stack(),
 
             opcode::ICONST_0 => self.stack.iconst_0(),
             opcode::ICONST_1 => self.stack.iconst_1(),
@@ -179,18 +146,12 @@ impl Runtime {
 
               let this_module = self.module.clone();
               let entry_index = modulebyte1 << 8 | modulebyte2;
-              // println!("cs: {:?}", &self.call_stack);
-              // println!("{:?}", this_module.constants);
               let PoolEntry::Module(module) = &this_module.constants[entry_index] else {
                 return Err(RtError::InvalidEntry(entry_index));
               };
               let function = functionbyte1 << 8 | functionbyte2;
-              // println!("call {module}#{function}");
 
               self.call(module, function)?;
-              // if let Some(value) = self.call(module, function)? {
-              //   self.stack.push(value);
-              // }
             }
 
             opcode::LOADCONST => {
@@ -342,6 +303,16 @@ impl Runtime {
 
     //   // println!("{}", opcode::TO_STR[instruction as usize]);
     // }
+  }
+
+  #[inline(always)]
+  fn pop_call_stack(&mut self) {
+    if let Some(frame) = self.call_stack.pop() {
+      self.ip = frame.return_address;
+      self.module = frame.module;
+      self.function = frame.function;
+      self.local.pop_frame(frame.local_frame);
+    }
   }
 
   #[inline(always)]
