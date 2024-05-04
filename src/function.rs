@@ -1,6 +1,8 @@
 pub mod builder;
+pub mod read;
+pub mod write;
 
-use crate::{heap::Heap, local::Local, read_bytes::ReadBytes, value::Value};
+use crate::{heap::Heap, local::Local, value::Value};
 use core::fmt;
 use std::rc::Rc;
 
@@ -46,22 +48,6 @@ impl Clone for Code {
   }
 }
 
-impl Function {
-  pub fn read<R: std::io::Read>(rd: &mut R) -> std::io::Result<Self> {
-    let name = rd.read_box_str()?;
-    let locals = rd.read_u16()?;
-    let arguments = rd.read_u8()?;
-
-    let code_length = rd.read_u16()?;
-    let mut code_buf = vec![0; code_length as usize];
-    rd.read_exact(&mut code_buf)?;
-
-    let code = Code::Bytecode(Rc::new(code_buf));
-
-    Ok(Self { identifier: usize::MAX, name, locals, arguments, code })
-  }
-}
-
 impl fmt::Debug for Code {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
@@ -83,21 +69,5 @@ impl Function {
       arguments: args,
       code: Code::Native(Rc::new(f)),
     }
-  }
-}
-
-impl Function {
-  pub fn write<W: std::io::Write>(&self, wr: &mut W) -> std::io::Result<()> {
-    let name_len = (self.name.len() as u16).to_be_bytes();
-    wr.write_all(&name_len)?;
-    wr.write_all(self.name.as_bytes())?;
-    wr.write_all(&self.locals.to_be_bytes())?;
-    wr.write_all(&self.arguments.to_be_bytes())?;
-    if let Code::Bytecode(code) = &self.code {
-      let code_length = (code.len() as u16).to_be_bytes();
-      wr.write_all(&code_length)?;
-      wr.write_all(code)?;
-    }
-    Ok(())
   }
 }

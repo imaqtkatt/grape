@@ -1,5 +1,3 @@
-//use std::fs::File;
-
 use function::builder::FunctionBuilder;
 use module::builder::ModuleBuilder;
 
@@ -22,6 +20,7 @@ pub mod read_bytes;
 pub mod runtime;
 pub mod stack;
 pub mod value;
+pub mod write_bytes;
 
 #[rustfmt::skip]
 fn main() -> Result<()> {
