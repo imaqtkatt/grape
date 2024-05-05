@@ -5,6 +5,7 @@ pub mod write;
 
 use crate::function::Function;
 use crate::runtime::{Error, Result};
+use std::rc::Rc;
 
 /// Bytecode Module representation.
 ///
@@ -26,7 +27,7 @@ pub struct Module {
   /// The constant pool.
   pub constants: Vec<PoolEntry>,
   /// The module functions.
-  pub functions: Vec<std::rc::Rc<Function>>,
+  pub functions: Vec<Rc<Function>>,
 }
 
 #[derive(Clone, Debug)]
@@ -45,7 +46,7 @@ impl PoolEntry {
 impl Module {
   pub const MAGIC: u32 = 0x75_76_61_73;
 
-  pub fn fetch_function_with_name(&self, name: &str) -> Result<std::rc::Rc<Function>> {
+  pub fn fetch_function_with_name(&self, name: &str) -> Result<Rc<Function>> {
     self
       .functions
       .iter()
@@ -54,7 +55,7 @@ impl Module {
       .cloned()
   }
 
-  pub fn fetch_function_with_identifier(&self, identifier: usize) -> std::rc::Rc<Function> {
+  pub fn fetch_function_with_identifier(&self, identifier: usize) -> Rc<Function> {
     unsafe { self.functions.get_unchecked(identifier).clone() }
   }
 }

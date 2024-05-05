@@ -1,10 +1,8 @@
 use std::{
-  collections::{hash_map::Entry, HashMap},
+  collections::{btree_map::Entry, BTreeMap},
   fs::File,
   rc::Rc,
 };
-
-use fxhash::FxBuildHasher;
 
 use crate::{
   module::Module,
@@ -14,7 +12,7 @@ use crate::{
 
 #[derive(Default)]
 pub struct Context {
-  pub modules: HashMap<Box<str>, Rc<Module>, FxBuildHasher>,
+  pub modules: BTreeMap<Box<str>, Rc<Module>>,
 }
 
 impl Context {
@@ -23,9 +21,8 @@ impl Context {
   }
 
   pub fn add_module(&mut self, module: Module) -> Result<Rc<Module>> {
-    let module_name = module.name.clone();
-    match self.modules.entry(module_name.clone()) {
-      Entry::Occupied(_) => Err(Error::ModuleAlreadyExists(module_name.to_string())),
+    match self.modules.entry(module.name.clone()) {
+      Entry::Occupied(o) => Err(Error::ModuleAlreadyExists(o.get().name.to_string())),
       Entry::Vacant(v) => Ok(v.insert(Rc::new(module)).to_owned()),
     }
   }
