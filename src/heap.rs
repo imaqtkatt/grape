@@ -9,10 +9,6 @@ pub struct Heap {
 }
 
 impl Heap {
-  pub fn empty() -> Self {
-    Self { mem: Vec::new() }
-  }
-
   pub fn new() -> Self {
     let mut mem = vec![Object::Null];
     mem.reserve(HEAP_MEM);

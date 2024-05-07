@@ -10,16 +10,16 @@ use crate::{
   runtime::{Error, Result},
 };
 
-#[derive(Default)]
 pub struct Context {
   pub modules: BTreeMap<Box<str>, Rc<Module>>,
 }
 
 impl Context {
-  pub fn new() -> Self {
-    Self::default()
+  pub const fn new() -> Self {
+    Self { modules: BTreeMap::new() }
   }
 
+  #[inline(always)]
   pub fn add_module(&mut self, module: Module) -> Result<Rc<Module>> {
     match self.modules.entry(module.name.clone()) {
       Entry::Occupied(o) => Err(Error::ModuleAlreadyExists(o.get().name.to_string())),
@@ -37,5 +37,11 @@ impl Context {
         self.add_module(module)
       }
     }
+  }
+}
+
+impl Default for Context {
+  fn default() -> Self {
+    Self::new()
   }
 }

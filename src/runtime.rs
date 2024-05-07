@@ -21,7 +21,7 @@ pub struct Runtime {
   module: Rc<Module>,
   function: Rc<Function>,
   heap: Heap,
-  stack: Stack,
+  pub stack: Stack,
   call_stack: Vec<Frame>,
 }
 
