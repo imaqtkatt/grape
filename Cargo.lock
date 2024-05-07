@@ -13,6 +13,7 @@ name = "grape"
 version = "0.1.0"
 dependencies = [
  "ordered-float",
+ "typed-arena",
 ]
 
 [[package]]
@@ -32,3 +33,9 @@ checksum = "a76df7075c7d4d01fdcb46c912dd17fba5b60c78ea480b475f2b6ab6f666584e"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "typed-arena"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6af6ae20167a9ece4bcb41af5b80f8a1f1df981f6391189ce00fd257af04126a"

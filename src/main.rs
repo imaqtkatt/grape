@@ -1,8 +1,8 @@
+use context::{Context, ContextArena};
 use function::builder::FunctionBuilder;
 use module::builder::ModuleBuilder;
 
 use crate::{
-  context::Context,
   module::PoolEntry,
   opcode::*,
   runtime::{Result, Runtime},
@@ -86,9 +86,9 @@ fn main() -> Result<()> {
   // let mut f = std::fs::File::options().append(true).create(true).open("main.grape").unwrap();
   // main.write(&mut f).unwrap();
 
-  let mut ctx = Context::new();
+  let ctx_arena = ContextArena::default();
+  let ctx = &mut Context::new(&ctx_arena);
   ctx.add_module(module::std_out::module()).expect("Add std:out module");
-  // ctx.add_module(main).expect("Add main module");
 
   let mut runtime = Runtime::boot(ctx)?;
   if let Err(e) = runtime.run() {

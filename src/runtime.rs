@@ -14,29 +14,29 @@ use crate::{
   value::{Int32, Reference, Value},
 };
 
-pub struct Runtime {
+pub struct Runtime<'c> {
   ip: usize,
-  ctx: Context,
+  ctx: &'c mut Context<'c>,
   local: Local,
-  module: Rc<Module>,
+  module: &'c Module,
   function: Rc<Function>,
   heap: Heap,
   stack: Stack,
-  call_stack: Vec<Frame>,
+  call_stack: Vec<Frame<'c>>,
 }
 
 pub trait RuntimeVisitor {
   fn visit(&self, rt: &Runtime);
 }
 
-struct Frame {
+struct Frame<'c> {
   return_address: usize,
   local_frame: usize,
-  module: Rc<Module>,
+  module: &'c Module,
   function: Rc<Function>,
 }
 
-impl fmt::Debug for Frame {
+impl fmt::Debug for Frame<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}:{}", self.module.name, self.function.name)
   }
@@ -46,8 +46,13 @@ const STACK_INIT: usize = 0x800;
 const MAIN: &str = "main";
 const IP_INIT: usize = 0;
 
-impl Runtime {
-  fn new(ctx: Context, local: Local, module: Rc<Module>, function: Rc<Function>) -> Self {
+impl<'c> Runtime<'c> {
+  fn new(
+    ctx: &'c mut Context<'c>,
+    local: Local,
+    module: &'c Module,
+    function: Rc<Function>,
+  ) -> Self {
     Self {
       ip: IP_INIT,
       ctx,
@@ -60,7 +65,7 @@ impl Runtime {
     }
   }
 
-  pub fn boot(mut ctx: Context) -> Result<Self> {
+  pub fn boot(ctx: &'c mut Context<'c>) -> Result<Runtime<'c>> {
     let module = ctx.fetch_module(MAIN)?;
     let function = module.fetch_function_with_name(MAIN)?;
     assert!(function.arguments == 0);
@@ -72,8 +77,7 @@ impl Runtime {
 
   fn call(&mut self, module: &str, function: usize) -> Result<()> {
     let module = self.ctx.fetch_module(module)?;
-    let to_fetch = module.clone();
-    let function = to_fetch.fetch_function_with_identifier(function);
+    let function = module.fetch_function_with_identifier(function);
 
     let frame = self.local.push_frame(function.locals as usize);
 
@@ -151,9 +155,8 @@ impl Runtime {
               let functionbyte1 = self.fetch(program) as usize;
               let functionbyte2 = self.fetch(program) as usize;
 
-              let this_module = self.module.clone();
               let entry_index = modulebyte1 << 8 | modulebyte2;
-              let PoolEntry::Module(module) = &this_module.constants[entry_index] else {
+              let PoolEntry::Module(module) = &self.module.constants[entry_index] else {
                 return Err(Error::InvalidEntry(entry_index));
               };
               let function = functionbyte1 << 8 | functionbyte2;
@@ -325,7 +328,7 @@ impl Runtime {
   }
 }
 
-impl Runtime {
+impl Runtime<'_> {
   pub fn accept(&self, visitor: impl RuntimeVisitor) {
     visitor.visit(self);
   }

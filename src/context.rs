@@ -1,7 +1,6 @@
 use std::{
   collections::{btree_map::Entry, BTreeMap},
   fs::File,
-  rc::Rc,
 };
 
 use crate::{
@@ -10,26 +9,31 @@ use crate::{
   runtime::{Error, Result},
 };
 
-pub struct Context {
-  pub modules: BTreeMap<Box<str>, Rc<Module>>,
+#[derive(Default)]
+pub struct ContextArena {
+  modules: typed_arena::Arena<Module>,
 }
 
-impl Context {
-  pub const fn new() -> Self {
-    Self { modules: BTreeMap::new() }
+pub struct Context<'c> {
+  arena: &'c ContextArena,
+  pub modules: BTreeMap<Box<str>, &'c Module>,
+}
+
+impl<'c> Context<'c> {
+  pub fn new(arena: &'c ContextArena) -> Self {
+    Self { arena, modules: BTreeMap::new() }
   }
 
-  #[inline(always)]
-  pub fn add_module(&mut self, module: Module) -> Result<Rc<Module>> {
+  pub fn add_module(&mut self, module: Module) -> Result<&'c Module> {
     match self.modules.entry(module.name.clone()) {
       Entry::Occupied(o) => Err(Error::ModuleAlreadyExists(o.get().name.to_string())),
-      Entry::Vacant(v) => Ok(v.insert(Rc::new(module)).to_owned()),
+      Entry::Vacant(v) => Ok(v.insert(self.arena.modules.alloc(module))),
     }
   }
 
-  pub fn fetch_module(&mut self, module_name: &str) -> Result<Rc<Module>> {
+  pub fn fetch_module(&mut self, module_name: &str) -> Result<&'c Module> {
     match self.modules.get(module_name) {
-      Some(module) => Ok(module.clone()),
+      Some(module) => Ok(module),
       None => {
         let mut file = File::open(module_path::from(module_name))
           .map_err(|_| Error::ModuleNotFound(module_name.to_string()))?;
@@ -37,11 +41,5 @@ impl Context {
         self.add_module(module)
       }
     }
-  }
-}
-
-impl Default for Context {
-  fn default() -> Self {
-    Self::new()
   }
 }
