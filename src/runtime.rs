@@ -11,7 +11,7 @@ use crate::{
   module::{Module, PoolEntry},
   opcode,
   stack::Stack,
-  value::{g_int, g_ref, Value},
+  value::{Int32, Reference, Value},
 };
 
 pub struct Runtime {
@@ -21,7 +21,7 @@ pub struct Runtime {
   module: Rc<Module>,
   function: Rc<Function>,
   heap: Heap,
-  pub stack: Stack,
+  stack: Stack,
   call_stack: Vec<Frame>,
 }
 
@@ -164,9 +164,9 @@ impl Runtime {
             opcode::LOADCONST => {
               let index = self.fetch(program) as usize;
               match self.module.constants[index].clone() {
-                crate::module::PoolEntry::String(s) => self.stack.push(self.heap.new_string(s)),
-                crate::module::PoolEntry::Integer(i) => self.stack.push(Value::Integer(i)),
-                crate::module::PoolEntry::Module(_) => return Err(Error::InvalidEntry(index)),
+                PoolEntry::String(s) => self.stack.push(self.heap.new_string(s)),
+                PoolEntry::Integer(i) => self.stack.push(Value::Integer(i)),
+                PoolEntry::Module(_) => return Err(Error::InvalidEntry(index)),
               }
             }
 
@@ -174,13 +174,13 @@ impl Runtime {
             opcode::SET_FIELD => {
               let value = self.stack.pop()?;
               let field = self.stack.pop()?;
-              let obj_ref: g_ref = self.stack.pop()?.into();
+              let obj_ref: Reference = self.stack.pop()?.into();
 
               self.heap.set_field(obj_ref, field, value);
             }
             opcode::GET_FIELD => {
               let field = self.stack.pop()?;
-              let obj_ref: g_ref = self.stack.pop()?.into();
+              let obj_ref: Reference = self.stack.pop()?.into();
               self.stack.push(self.heap.get_field(obj_ref, field));
             }
 
@@ -197,8 +197,8 @@ impl Runtime {
             opcode::POP => std::mem::drop(self.stack.pop()),
 
             opcode::IFEQ => {
-              let value2: g_int = self.stack.pop()?.into();
-              let value1: g_int = self.stack.pop()?.into();
+              let value2: Int32 = self.stack.pop()?.into();
+              let value1: Int32 = self.stack.pop()?.into();
               if value1 == value2 {
                 let branchbyte1 = self.fetch(program) as usize;
                 let branchbyte2 = self.fetch(program) as usize;
@@ -208,8 +208,8 @@ impl Runtime {
               }
             }
             opcode::IFNEQ => {
-              let value2: g_int = self.stack.pop()?.into();
-              let value1: g_int = self.stack.pop()?.into();
+              let value2: Int32 = self.stack.pop()?.into();
+              let value1: Int32 = self.stack.pop()?.into();
               if value1 != value2 {
                 let branchbyte1 = self.fetch(program) as usize;
                 let branchbyte2 = self.fetch(program) as usize;
@@ -219,8 +219,8 @@ impl Runtime {
               }
             }
             opcode::IFGT => {
-              let value2: g_int = self.stack.pop()?.into();
-              let value1: g_int = self.stack.pop()?.into();
+              let value2: Int32 = self.stack.pop()?.into();
+              let value1: Int32 = self.stack.pop()?.into();
               if value1 > value2 {
                 let branchbyte1 = self.fetch(program) as usize;
                 let branchbyte2 = self.fetch(program) as usize;
@@ -230,8 +230,8 @@ impl Runtime {
               }
             }
             opcode::IFGE => {
-              let value2: g_int = self.stack.pop()?.into();
-              let value1: g_int = self.stack.pop()?.into();
+              let value2: Int32 = self.stack.pop()?.into();
+              let value1: Int32 = self.stack.pop()?.into();
               if value1 >= value2 {
                 let branchbyte1 = self.fetch(program) as usize;
                 let branchbyte2 = self.fetch(program) as usize;
@@ -241,8 +241,8 @@ impl Runtime {
               }
             }
             opcode::IFLT => {
-              let value2: g_int = self.stack.pop()?.into();
-              let value1: g_int = self.stack.pop()?.into();
+              let value2: Int32 = self.stack.pop()?.into();
+              let value1: Int32 = self.stack.pop()?.into();
               if value1 < value2 {
                 let branchbyte1 = self.fetch(program) as usize;
                 let branchbyte2 = self.fetch(program) as usize;
@@ -252,8 +252,8 @@ impl Runtime {
               }
             }
             opcode::IFLE => {
-              let value2: g_int = self.stack.pop()?.into();
-              let value1: g_int = self.stack.pop()?.into();
+              let value2: Int32 = self.stack.pop()?.into();
+              let value1: Int32 = self.stack.pop()?.into();
               if value1 <= value2 {
                 let branchbyte1 = self.fetch(program) as usize;
                 let branchbyte2 = self.fetch(program) as usize;
@@ -281,21 +281,21 @@ impl Runtime {
             opcode::NEW_STRING => unimplemented!(),
 
             opcode::NEW_ARRAY => {
-              let size: g_int = self.stack.pop()?.into();
+              let size: Int32 = self.stack.pop()?.into();
               self.stack.push(self.heap.new_array(size));
             }
 
             opcode::ARRAY_GET => {
-              let index: g_int = self.stack.pop()?.into();
-              let array_ref: g_ref = self.stack.pop()?.into();
+              let index: Int32 = self.stack.pop()?.into();
+              let array_ref: Reference = self.stack.pop()?.into();
 
               self.stack.push(self.heap.array_get(array_ref, index));
             }
 
             opcode::ARRAY_SET => {
               let value = self.stack.pop()?;
-              let index: g_int = self.stack.pop()?.into();
-              let array_ref: g_ref = self.stack.pop()?.into();
+              let index: Int32 = self.stack.pop()?.into();
+              let array_ref: Reference = self.stack.pop()?.into();
 
               self.heap.array_set(array_ref, index, value);
             }

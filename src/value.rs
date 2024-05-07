@@ -1,19 +1,17 @@
-#![allow(non_camel_case_types)]
-
 use core::fmt;
 
 /// Grape int type.
-pub type g_int = i32;
+pub type Int32 = i32;
 /// Grape float type.
-pub type g_float = ordered_float::OrderedFloat<f32>;
+pub type Float32 = ordered_float::OrderedFloat<f32>;
 /// Grape reference type.
-pub type g_ref = usize;
+pub type Reference = usize;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Value {
-  Integer(g_int),
-  Float(g_float),
-  Reference(g_ref),
+  Integer(Int32),
+  Float(Float32),
+  Reference(Reference),
 }
 
 impl fmt::Debug for Value {
@@ -26,7 +24,7 @@ impl fmt::Debug for Value {
   }
 }
 
-impl From<Value> for g_int {
+impl From<Value> for Int32 {
   fn from(value: Value) -> Self {
     match value {
       Value::Integer(i) => i,
@@ -35,7 +33,7 @@ impl From<Value> for g_int {
   }
 }
 
-impl From<Value> for g_float {
+impl From<Value> for Float32 {
   fn from(value: Value) -> Self {
     match value {
       Value::Float(f) => f,
@@ -44,7 +42,7 @@ impl From<Value> for g_float {
   }
 }
 
-impl From<Value> for g_ref {
+impl From<Value> for Reference {
   fn from(value: Value) -> Self {
     match value {
       Value::Reference(r#ref) => r#ref,
