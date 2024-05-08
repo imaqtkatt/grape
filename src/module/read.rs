@@ -28,7 +28,7 @@ impl Module {
     for id in 0..functions_count {
       let mut function = Function::read(rd)?;
       function.identifier = id as usize;
-      functions.push(std::rc::Rc::new(function));
+      functions.push(function);
     }
 
     Ok(Self { name, constants, functions })

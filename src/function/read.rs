@@ -1,6 +1,5 @@
 use super::{Code, Function};
 use crate::read_bytes::ReadBytes;
-use std::rc::Rc;
 
 impl Function {
   pub fn read<R: std::io::Read>(rd: &mut R) -> std::io::Result<Self> {
@@ -12,7 +11,7 @@ impl Function {
     let mut code_buf = vec![0; code_length as usize];
     rd.read_exact(&mut code_buf)?;
 
-    let code = Code::Bytecode(Rc::new(code_buf));
+    let code = Code::Bytecode(Box::from(code_buf));
 
     Ok(Self { identifier: usize::MAX, name, locals, arguments, code })
   }

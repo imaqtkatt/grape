@@ -1,7 +1,6 @@
 pub mod stack_trace;
 
 use core::fmt;
-use std::rc::Rc;
 
 use crate::{
   context::Context,
@@ -19,7 +18,7 @@ pub struct Runtime<'c> {
   ctx: &'c mut Context<'c>,
   local: Local,
   module: &'c Module,
-  function: Rc<Function>,
+  function: &'c Function,
   heap: Heap,
   stack: Stack,
   call_stack: Vec<Frame<'c>>,
@@ -33,7 +32,7 @@ struct Frame<'c> {
   return_address: usize,
   local_frame: usize,
   module: &'c Module,
-  function: Rc<Function>,
+  function: &'c Function,
 }
 
 impl fmt::Debug for Frame<'_> {
@@ -51,7 +50,7 @@ impl<'c> Runtime<'c> {
     ctx: &'c mut Context<'c>,
     local: Local,
     module: &'c Module,
-    function: Rc<Function>,
+    function: &'c Function,
   ) -> Self {
     Self {
       ip: IP_INIT,
@@ -97,8 +96,8 @@ impl<'c> Runtime<'c> {
 
   pub fn run(&mut self) -> Result<()> {
     loop {
-      match self.function.code.clone() {
-        Code::Native(native) => {
+      match self.function.code {
+        Code::Native(ref native) => {
           if let Some(value) = native(&self.local, &self.heap) {
             self.stack.push(value);
           }

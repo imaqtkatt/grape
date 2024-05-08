@@ -4,7 +4,6 @@ pub mod write;
 
 use crate::{heap::Heap, local::Local, value::Value};
 use core::fmt;
-use std::rc::Rc;
 
 /// Bytecode Function representation.
 ///
@@ -35,17 +34,8 @@ pub struct Function {
 type NativeFn = dyn Fn(&Local, &Heap) -> Option<Value>;
 
 pub enum Code {
-  Bytecode(Rc<Vec<u8>>),
-  Native(Rc<NativeFn>),
-}
-
-impl Clone for Code {
-  fn clone(&self) -> Self {
-    match self {
-      Code::Bytecode(bytecode) => Code::Bytecode(bytecode.clone()),
-      Code::Native(native) => Code::Native(native.clone()),
-    }
-  }
+  Bytecode(Box<[u8]>),
+  Native(Box<NativeFn>),
 }
 
 impl fmt::Debug for Code {
@@ -67,7 +57,7 @@ impl Function {
       name: Box::from(name),
       locals: args as u16,
       arguments: args,
-      code: Code::Native(Rc::new(f)),
+      code: Code::Native(Box::new(f)),
     }
   }
 }

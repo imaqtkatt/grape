@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{heap::Heap, local::Local, value::Value};
 
 use super::{Code, Function};
@@ -35,7 +33,7 @@ impl FunctionBuilder {
   }
 
   pub fn with_bytecode(mut self, bytecode: &[u8]) -> Self {
-    self.code = Some(Code::Bytecode(Rc::new(bytecode.to_vec())));
+    self.code = Some(Code::Bytecode(Box::from(bytecode)));
     self
   }
 
@@ -43,7 +41,7 @@ impl FunctionBuilder {
   where
     NativeFnImpl: Fn(&Local, &Heap) -> Option<Value> + 'static,
   {
-    self.code = Some(Code::Native(Rc::new(native)));
+    self.code = Some(Code::Native(Box::new(native)));
     self
   }
 

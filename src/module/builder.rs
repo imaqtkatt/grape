@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::function::Function;
 
 use super::{Module, PoolEntry};
@@ -8,7 +6,7 @@ use super::{Module, PoolEntry};
 pub struct ModuleBuilder {
   name: String,
   constants: Vec<PoolEntry>,
-  functions: Vec<Rc<Function>>,
+  functions: Vec<Function>,
 }
 
 impl ModuleBuilder {
@@ -28,7 +26,7 @@ impl ModuleBuilder {
   }
 
   pub fn with_function(mut self, function: Function) -> Self {
-    self.functions.push(Rc::new(function));
+    self.functions.push(function);
     self
   }
 
