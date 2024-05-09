@@ -80,8 +80,9 @@ impl<'c> Runtime<'c> {
 
     let frame = self.local.push_frame(function.locals as usize);
 
-    for idx in (0..function.arguments).rev() {
-      self.local.store(idx as usize, self.stack.pop()?);
+    self.stack.check_underflow(function.arguments as usize)?;
+    for index in (0..function.arguments).rev() {
+      self.local.store(index as usize, self.stack.pop_unchecked());
     }
 
     self.call_stack.push(Frame {
@@ -142,33 +143,24 @@ impl<'c> Runtime<'c> {
             opcode::I2F => self.stack.i2f()?,
             opcode::F2I => self.stack.f2i()?,
 
-            opcode::GOTO => {
-              let indexbyte1 = self.fetch(program) as usize;
-              let indexbyte2 = self.fetch(program) as usize;
-              self.ip = indexbyte1 << 8 | indexbyte2;
-            }
+            opcode::GOTO => self.ip = self.fetch_2(program) as usize,
 
             opcode::CALL => {
-              let modulebyte1 = self.fetch(program) as usize;
-              let modulebyte2 = self.fetch(program) as usize;
-              let functionbyte1 = self.fetch(program) as usize;
-              let functionbyte2 = self.fetch(program) as usize;
-
-              let entry_index = modulebyte1 << 8 | modulebyte2;
-              let PoolEntry::Module(module) = &self.module.constants[entry_index] else {
-                return Err(Error::InvalidEntry(entry_index));
-              };
-              let function = functionbyte1 << 8 | functionbyte2;
-
-              self.call(module, function)?;
+              let module_index = self.fetch_2(program) as usize;
+              let function_index = self.fetch_2(program) as usize;
+              if let PoolEntry::Module(module) = &self.module.constants[module_index] {
+                self.call(module, function_index)?
+              } else {
+                Err(Error::InvalidEntry(module_index))?
+              }
             }
 
             opcode::LOADCONST => {
-              let index = self.fetch(program) as usize;
-              match self.module.constants[index].clone() {
+              let entry_index = self.fetch(program) as usize;
+              match self.module.constants[entry_index].clone() {
                 PoolEntry::String(s) => self.stack.push(self.heap.new_string(s)),
                 PoolEntry::Integer(i) => self.stack.push(Value::Integer(i)),
-                PoolEntry::Module(_) => return Err(Error::InvalidEntry(index)),
+                PoolEntry::Module(_) => return Err(Error::InvalidEntry(entry_index)),
               }
             }
 
@@ -191,7 +183,7 @@ impl<'c> Runtime<'c> {
               self.stack.push_byte(byte)
             }
             opcode::PUSH_SHORT => {
-              let short = (self.fetch(program) as u16) << 8 | self.fetch(program) as u16;
+              let short = self.fetch_2(program);
               self.stack.push_short(short);
             }
 
@@ -199,42 +191,42 @@ impl<'c> Runtime<'c> {
 
             opcode::I_IFEQ => {
               if self.stack.ifeq()? {
-                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
+                self.ip = self.fetch_2(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
             opcode::I_IFNEQ => {
               if self.stack.ifneq()? {
-                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
+                self.ip = self.fetch_2(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
             opcode::I_IFGT => {
               if self.stack.ifgt()? {
-                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
+                self.ip = self.fetch_2(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
             opcode::I_IFGE => {
               if self.stack.ifge()? {
-                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
+                self.ip = self.fetch_2(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
             opcode::I_IFLT => {
               if self.stack.iflt()? {
-                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
+                self.ip = self.fetch_2(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
             opcode::I_IFLE => {
               if self.stack.ifle()? {
-                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
+                self.ip = self.fetch_2(program) as usize;
               } else {
                 self.ip += 2;
               }
@@ -288,9 +280,7 @@ impl<'c> Runtime<'c> {
               let r#ref: Reference = self.stack.pop_unchecked().into();
 
               if r#ref == 0 {
-                let branchbyte1 = self.fetch(program) as usize;
-                let branchbyte2 = self.fetch(program) as usize;
-                self.ip = branchbyte1 << 8 | branchbyte2;
+                self.ip = self.fetch_2(program) as usize;
               } else {
                 self.ip += 2;
               }
@@ -301,9 +291,7 @@ impl<'c> Runtime<'c> {
               let r#ref: Reference = self.stack.pop_unchecked().into();
 
               if r#ref != 0 {
-                let branchbyte1 = self.fetch(program) as usize;
-                let branchbyte2 = self.fetch(program) as usize;
-                self.ip = branchbyte1 << 8 | branchbyte2;
+                self.ip = self.fetch_2(program) as usize;
               } else {
                 self.ip += 2;
               }
@@ -337,6 +325,24 @@ impl<'c> Runtime<'c> {
     let instruction = program[self.ip];
     self.ip += 1;
     instruction
+  }
+
+  #[inline(always)]
+  fn fetch_2(&mut self, program: &[u8]) -> u16 {
+    let r = (program[self.ip] as u16) << 8 | program[self.ip + 1] as u16;
+    self.ip += 2;
+    r
+  }
+
+  #[inline(always)]
+  #[allow(unused)]
+  fn fetch_4(&mut self, program: &[u8]) -> usize {
+    let r = (program[self.ip] as usize) << 24
+      | (program[self.ip + 1] as usize) << 16
+      | (program[self.ip + 2] as usize) << 8
+      | program[self.ip + 3] as usize;
+    self.ip += 4;
+    r
   }
 }
 
