@@ -1,5 +1,5 @@
 use std::{
-  collections::{btree_map::Entry, BTreeMap},
+  collections::{btree_map::Entry, BTreeMap, BTreeSet},
   fs::File,
 };
 
@@ -34,12 +34,32 @@ impl<'c> Context<'c> {
   pub fn fetch_module(&mut self, module_name: &str) -> Result<&'c Module> {
     match self.modules.get(module_name) {
       Some(module) => Ok(module),
-      None => {
-        let mut file = File::open(module_path::from(module_name))
-          .map_err(|_| Error::ModuleNotFound(module_name.to_string()))?;
-        let module = Module::read(&mut file).map_err(Error::other)?;
-        self.add_module(module)
+      None => self.read_module(module_name),
+    }
+  }
+
+  fn read_module(&mut self, module_name: &str) -> Result<&'c Module> {
+    let mut file = File::open(module_path::from(module_name))
+      .map_err(|_| Error::ModuleNotFound(module_name.to_string()))?;
+    let module = Module::read(&mut file).map_err(Error::other)?;
+    self.add_module(module)
+  }
+
+  pub fn load_eager(&mut self, module_name: &str) -> Result<()> {
+    let mut loaded = BTreeSet::new();
+    let mut to_load = vec![module_name];
+
+    while let Some(name) = to_load.pop() {
+      let module = self.fetch_module(name)?;
+      for constant in module.constants.iter() {
+        if let crate::module::PoolEntry::Module(name) = constant {
+          if loaded.insert(name) {
+            to_load.push(name);
+          }
+        }
       }
     }
+
+    Ok(())
   }
 }

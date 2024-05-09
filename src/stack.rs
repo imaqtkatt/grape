@@ -3,6 +3,7 @@ use crate::{
   value::{Float32, Int32, Value},
 };
 
+#[derive(Debug)]
 pub struct Stack {
   pub stack: Vec<Value>,
 }

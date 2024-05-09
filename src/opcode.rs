@@ -148,6 +148,9 @@ pub const ARRAY_GET: u8 = 0x30;
 /// Set element from array by index.
 pub const ARRAY_SET: u8 = 0x31;
 
+/// Increment local variable by value.
+pub const IINC: u8 = 0x32;
+
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
   "RET",
@@ -200,4 +203,5 @@ pub const TO_STR: &[&str] = &[
   "NEW_ARRAY",
   "ARRAY_GET",
   "ARRAY_SET",
+  "IINC",
 ];

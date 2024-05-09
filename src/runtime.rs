@@ -106,7 +106,7 @@ impl<'c> Runtime<'c> {
         Code::Bytecode(ref program) => {
           let instruction = self.fetch(program);
 
-          // println!("{}", opcode::TO_STR[instruction as usize]);
+          // println!("{} with {:?}", opcode::TO_STR[instruction as usize], self.stack);
           match instruction {
             opcode::HALT => {
               self.pop_frame();
@@ -300,6 +300,12 @@ impl<'c> Runtime<'c> {
               let array_ref: Reference = self.stack.pop()?.into();
 
               self.heap.array_set(array_ref, index, value);
+            }
+
+            opcode::IINC => {
+              let index = self.fetch(program) as usize;
+              let inc = self.fetch(program) as i32;
+              self.local.iinc(index, inc);
             }
 
             opcode => panic!("Unknown opcode {opcode:X?}"),

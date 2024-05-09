@@ -49,4 +49,10 @@ impl Local {
   pub fn load_3(&self) -> Value {
     self.load(3)
   }
+
+  pub fn iinc(&mut self, index: usize, inc: i32) {
+    if let Value::Integer(i) = &mut self.local[self.base + index] {
+      *i += inc;
+    }
+  }
 }
