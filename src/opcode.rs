@@ -67,23 +67,23 @@ pub const PUSH_SHORT: u8 = 0x15;
 /// Pop from stack.
 pub const POP: u8 = 0x16;
 
-/// If integer is equal.
-pub const IFEQ: u8 = 0x17;
+/// Branch if integer is equal.
+pub const I_IFEQ: u8 = 0x17;
 
-/// If integer is not equal.
-pub const IFNEQ: u8 = 0x18;
+/// Branch if integer is not equal.
+pub const I_IFNEQ: u8 = 0x18;
 
-/// If integer is greater than.
-pub const IFGT: u8 = 0x19;
+/// Branch if integer is greater than.
+pub const I_IFGT: u8 = 0x19;
 
-/// If integer is greater or equal.
-pub const IFGE: u8 = 0x1A;
+/// Branch if integer is greater or equal.
+pub const I_IFGE: u8 = 0x1A;
 
-/// If integer is less than.
-pub const IFLT: u8 = 0x1B;
+/// Branch if integer is less than.
+pub const I_IFLT: u8 = 0x1B;
 
-/// If integer is less or equal.
-pub const IFLE: u8 = 0x1C;
+/// Branch if integer is less or equal.
+pub const I_IFLE: u8 = 0x1C;
 
 /// Add integer.
 pub const IADD: u8 = 0x1D;
@@ -151,6 +151,21 @@ pub const ARRAY_SET: u8 = 0x31;
 /// Increment local variable by value.
 pub const IINC: u8 = 0x32;
 
+/// Branch if null.
+pub const IF_NULL: u8 = 0x33;
+
+/// Branch if not null.
+pub const IFNOT_NULL: u8 = 0x34;
+
+/// Push null constant to stack.
+pub const CONST_NULL: u8 = 0x35;
+
+/// Exponent from integer.
+pub const IEXP: u8 = 0x36;
+
+/// Push 0 or 1 if it is zero.
+pub const IS_ZERO: u8 = 0x37;
+
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
   "RET",
@@ -204,4 +219,7 @@ pub const TO_STR: &[&str] = &[
   "ARRAY_GET",
   "ARRAY_SET",
   "IINC",
+  "IF_NULL",
+  "IFNOT_NULL",
+  "CONST_NULL",
 ];

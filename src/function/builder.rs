@@ -39,7 +39,7 @@ impl FunctionBuilder {
 
   pub fn with_native<NativeFnImpl>(mut self, native: NativeFnImpl) -> Self
   where
-    NativeFnImpl: Fn(&Local, &Heap) -> Option<Value> + 'static,
+    NativeFnImpl: Fn(&Local, &Heap) -> Option<Value> + 'static + Send + Sync,
   {
     self.code = Some(Code::Native(Box::new(native)));
     self

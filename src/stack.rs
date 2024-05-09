@@ -25,6 +25,11 @@ impl Stack {
   }
 
   #[inline(always)]
+  pub fn pop_unchecked(&mut self) -> Value {
+    self.stack.pop().unwrap()
+  }
+
+  #[inline(always)]
   pub fn check_underflow(&self, len: usize) -> Result<()> {
     if self.stack.len() < len {
       Err(Error::StackUnderflow)
@@ -196,10 +201,82 @@ impl Stack {
   }
 
   #[inline(always)]
+  pub fn iexp(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let mut value2: Int32 = self.stack.pop().unwrap().into();
+    let mut value1: Int32 = self.stack.pop().unwrap().into();
+    let mut result: Int32 = 1;
+    while value2 != 0 {
+      if value2 & 1 == 1 {
+        result *= value1;
+      }
+      value2 >>= 1;
+      value1 *= value1;
+    }
+    self.push(Value::Integer(result));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn is_zero(&mut self) -> Result<()> {
+    self.check_underflow(1)?;
+    match self.stack.pop().unwrap() {
+      Value::Integer(i) => self.stack.push(Value::Integer(if i == 0 { 1 } else { 0 })),
+      Value::Float(f) => self.stack.push(Value::Float(if f.is_normal() {
+        ordered_float::OrderedFloat(1.)
+      } else {
+        ordered_float::OrderedFloat(0.)
+      })),
+      Value::Reference(..) => panic!("Invalid argument"),
+    }
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn ifeq(&mut self) -> Result<bool> {
+    self.check_underflow(2)?;
+    let value2: Int32 = self.stack.pop().unwrap().into();
+    let value1: Int32 = self.stack.pop().unwrap().into();
+    Ok(value1 != value2)
+  }
+
+  #[inline(always)]
+  pub fn ifneq(&mut self) -> Result<bool> {
+    self.check_underflow(2)?;
+    let value2: Int32 = self.stack.pop().unwrap().into();
+    let value1: Int32 = self.stack.pop().unwrap().into();
+    Ok(value1 != value2)
+  }
+
+  #[inline(always)]
+  pub fn ifgt(&mut self) -> Result<bool> {
+    self.check_underflow(2)?;
+    let value2: Int32 = self.stack.pop().unwrap().into();
+    let value1: Int32 = self.stack.pop().unwrap().into();
+    Ok(value1 > value2)
+  }
+
+  #[inline(always)]
+  pub fn ifge(&mut self) -> Result<bool> {
+    self.check_underflow(2)?;
+    let value2: Int32 = self.stack.pop().unwrap().into();
+    let value1: Int32 = self.stack.pop().unwrap().into();
+    Ok(value1 >= value2)
+  }
+
+  #[inline(always)]
   pub fn iflt(&mut self) -> Result<bool> {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
     Ok(value1 < value2)
+  }
+
+  #[inline(always)]
+  pub fn ifle(&mut self) -> Result<bool> {
+    self.check_underflow(2)?;
+    let value2: Int32 = self.stack.pop().unwrap().into();
+    let value1: Int32 = self.stack.pop().unwrap().into();
+    Ok(value1 <= value2)
   }
 }

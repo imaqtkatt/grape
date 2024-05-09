@@ -105,7 +105,7 @@ fn run() -> Result<()> {
         .with_bytecode(&[
           LOAD_0,
           PUSH_BYTE, 2,
-          IFLT, 0, 26,
+          I_IFLT, 0, 26,
           LOAD_0,
           PUSH_BYTE, 1,
           ISUB,
@@ -153,7 +153,7 @@ fn run() -> Result<()> {
           STORE, 4,
           LOAD, 4,
           LOAD_0,
-          IFGE, 0, 29, // jump return
+          I_IFGE, 0, 29, // jump return
           LOAD_2,
           STORE_1,
           LOAD_3,

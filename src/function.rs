@@ -31,7 +31,7 @@ pub struct Function {
   pub code: Code,
 }
 
-type NativeFn = dyn Fn(&Local, &Heap) -> Option<Value>;
+type NativeFn = dyn Fn(&Local, &Heap) -> Option<Value> + 'static + Send + Sync;
 
 pub enum Code {
   Bytecode(Box<[u8]>),
@@ -50,7 +50,7 @@ impl fmt::Debug for Code {
 impl Function {
   pub fn native<NativeFnImpl>(name: &str, id: usize, args: u8, f: NativeFnImpl) -> Self
   where
-    NativeFnImpl: Fn(&Local, &Heap) -> Option<Value> + 'static,
+    NativeFnImpl: Fn(&Local, &Heap) -> Option<Value> + 'static + Send + Sync,
   {
     Self {
       identifier: id,

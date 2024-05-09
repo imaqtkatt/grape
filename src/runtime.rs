@@ -191,75 +191,50 @@ impl<'c> Runtime<'c> {
               self.stack.push_byte(byte)
             }
             opcode::PUSH_SHORT => {
-              let shortbyte1 = self.fetch(program) as u16;
-              let shortbyte2 = self.fetch(program) as u16;
-              self.stack.push_short(shortbyte1 << 8 | shortbyte2);
+              let short = (self.fetch(program) as u16) << 8 | self.fetch(program) as u16;
+              self.stack.push_short(short);
             }
 
             opcode::POP => std::mem::drop(self.stack.pop()),
 
-            opcode::IFEQ => {
-              let value2: Int32 = self.stack.pop()?.into();
-              let value1: Int32 = self.stack.pop()?.into();
-              if value1 == value2 {
-                let branchbyte1 = self.fetch(program) as usize;
-                let branchbyte2 = self.fetch(program) as usize;
-                self.ip = branchbyte1 << 8 | branchbyte2;
+            opcode::I_IFEQ => {
+              if self.stack.ifeq()? {
+                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
-            opcode::IFNEQ => {
-              let value2: Int32 = self.stack.pop()?.into();
-              let value1: Int32 = self.stack.pop()?.into();
-              if value1 != value2 {
-                let branchbyte1 = self.fetch(program) as usize;
-                let branchbyte2 = self.fetch(program) as usize;
-                self.ip = branchbyte1 << 8 | branchbyte2;
+            opcode::I_IFNEQ => {
+              if self.stack.ifneq()? {
+                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
-            opcode::IFGT => {
-              let value2: Int32 = self.stack.pop()?.into();
-              let value1: Int32 = self.stack.pop()?.into();
-              if value1 > value2 {
-                let branchbyte1 = self.fetch(program) as usize;
-                let branchbyte2 = self.fetch(program) as usize;
-                self.ip = branchbyte1 << 8 | branchbyte2;
+            opcode::I_IFGT => {
+              if self.stack.ifgt()? {
+                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
-            opcode::IFGE => {
-              let value2: Int32 = self.stack.pop()?.into();
-              let value1: Int32 = self.stack.pop()?.into();
-              if value1 >= value2 {
-                let branchbyte1 = self.fetch(program) as usize;
-                let branchbyte2 = self.fetch(program) as usize;
-                self.ip = branchbyte1 << 8 | branchbyte2;
+            opcode::I_IFGE => {
+              if self.stack.ifge()? {
+                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
-            opcode::IFLT => {
-              let value2: Int32 = self.stack.pop()?.into();
-              let value1: Int32 = self.stack.pop()?.into();
-              if value1 < value2 {
-                let branchbyte1 = self.fetch(program) as usize;
-                let branchbyte2 = self.fetch(program) as usize;
-                self.ip = branchbyte1 << 8 | branchbyte2;
+            opcode::I_IFLT => {
+              if self.stack.iflt()? {
+                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
               } else {
                 self.ip += 2;
               }
             }
-            opcode::IFLE => {
-              let value2: Int32 = self.stack.pop()?.into();
-              let value1: Int32 = self.stack.pop()?.into();
-              if value1 <= value2 {
-                let branchbyte1 = self.fetch(program) as usize;
-                let branchbyte2 = self.fetch(program) as usize;
-                self.ip = branchbyte1 << 8 | branchbyte2;
+            opcode::I_IFLE => {
+              if self.stack.ifle()? {
+                self.ip = (self.fetch(program) as usize) << 8 | self.fetch(program) as usize;
               } else {
                 self.ip += 2;
               }
@@ -307,6 +282,38 @@ impl<'c> Runtime<'c> {
               let inc = self.fetch(program) as i32;
               self.local.iinc(index, inc);
             }
+
+            opcode::IF_NULL => {
+              self.stack.check_underflow(1)?;
+              let r#ref: Reference = self.stack.pop_unchecked().into();
+
+              if r#ref == 0 {
+                let branchbyte1 = self.fetch(program) as usize;
+                let branchbyte2 = self.fetch(program) as usize;
+                self.ip = branchbyte1 << 8 | branchbyte2;
+              } else {
+                self.ip += 2;
+              }
+            }
+
+            opcode::IFNOT_NULL => {
+              self.stack.check_underflow(1)?;
+              let r#ref: Reference = self.stack.pop_unchecked().into();
+
+              if r#ref != 0 {
+                let branchbyte1 = self.fetch(program) as usize;
+                let branchbyte2 = self.fetch(program) as usize;
+                self.ip = branchbyte1 << 8 | branchbyte2;
+              } else {
+                self.ip += 2;
+              }
+            }
+
+            opcode::CONST_NULL => self.stack.push(Value::Reference(0)),
+
+            opcode::IEXP => self.stack.iexp()?,
+
+            opcode::IS_ZERO => self.stack.is_zero()?,
 
             opcode => panic!("Unknown opcode {opcode:X?}"),
           }
