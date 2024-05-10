@@ -4,7 +4,7 @@
 
 ## Features
 
-- **Extensibility**: Deisgned to be easily extendable, allowing the addition of custom modules and function objects.
+- **Extensibility**: Designed to be easily extendable, allowing the addition of custom modules and function objects.
 
 - **Cross-Platform**: Made with Rust, works on a wide range of platforms like Linux, macOS and Windows.
 
