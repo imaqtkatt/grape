@@ -74,9 +74,16 @@ impl<'c> Runtime<'c> {
     Ok(Runtime::new(ctx, local, module, function))
   }
 
-  fn call(&mut self, module: &str, function: usize) -> Result<()> {
-    let module = self.ctx.fetch_module(module)?;
-    let function = module.fetch_function_with_identifier(function);
+  fn call(&mut self, module_name: &str, function_index: usize) -> Result<()> {
+    let module: &Module;
+    let function: &Function;
+    if *module_name == *self.module.name {
+      module = self.module;
+      function = module.fetch_function_with_identifier(function_index);
+    } else {
+      module = self.ctx.fetch_module(module_name)?;
+      function = module.fetch_function_with_identifier(function_index);
+    }
 
     let frame = self.local.push_frame(function.locals as usize);
 
