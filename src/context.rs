@@ -1,6 +1,7 @@
 use std::{
   collections::{btree_map::Entry, BTreeMap, BTreeSet},
   fs::File,
+  rc::Rc,
 };
 
 use crate::{
@@ -16,7 +17,7 @@ pub struct ContextArena {
 
 pub struct Context<'c> {
   arena: &'c ContextArena,
-  pub modules: BTreeMap<Box<str>, &'c Module>,
+  modules: BTreeMap<Rc<str>, &'c Module>,
 }
 
 impl<'c> Context<'c> {

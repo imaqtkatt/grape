@@ -1,6 +1,7 @@
 pub mod stack_trace;
 
 use core::fmt;
+use ordered_float as float;
 
 use crate::{
   context::Context,
@@ -45,6 +46,12 @@ const STACK_INIT: usize = 0x800;
 const MAIN: &str = "main";
 const IP_INIT: usize = 0;
 
+pub struct BootOptions<'c> {
+  pub eager: bool,
+  pub entrypoint_module: Option<String>,
+  pub context: &'c mut Context<'c>,
+}
+
 impl<'c> Runtime<'c> {
   fn new(
     ctx: &'c mut Context<'c>,
@@ -64,14 +71,22 @@ impl<'c> Runtime<'c> {
     }
   }
 
-  pub fn boot(ctx: &'c mut Context<'c>) -> Result<Runtime<'c>> {
-    let module = ctx.fetch_module(MAIN)?;
+  pub fn boot(opts: BootOptions<'c>) -> Result<Runtime<'c>> {
+    let module: &'c Module;
+    if let Some(entrypoint_module) = opts.entrypoint_module {
+      module = opts.context.fetch_module(&entrypoint_module)?;
+    } else {
+      module = opts.context.fetch_module(MAIN)?;
+    }
     let function = module.fetch_function_with_name(MAIN)?;
     assert!(function.arguments == 0);
+    if opts.eager {
+      opts.context.load_eager(&module.name)?;
+    }
 
     let local = Local::new(function.locals as usize);
 
-    Ok(Runtime::new(ctx, local, module, function))
+    Ok(Runtime::new(opts.context, local, module, function))
   }
 
   fn call(&mut self, module_name: &str, function_index: usize) -> Result<()> {
@@ -116,10 +131,8 @@ impl<'c> Runtime<'c> {
 
           // println!("{} with {:?}", opcode::TO_STR[instruction as usize], self.stack);
           match instruction {
-            opcode::HALT => {
-              self.pop_frame();
-              break Ok(());
-            }
+            opcode::HALT => break Ok(()),
+
             opcode::RETURN => self.pop_frame(),
 
             opcode::ICONST_0 => self.stack.iconst_0(),
@@ -164,10 +177,11 @@ impl<'c> Runtime<'c> {
 
             opcode::LOADCONST => {
               let entry_index = self.fetch(program) as usize;
-              match self.module.constants[entry_index].clone() {
-                PoolEntry::String(s) => self.stack.push(self.heap.new_string(s)),
-                PoolEntry::Integer(i) => self.stack.push(Value::Integer(i)),
+              match &self.module.constants[entry_index] {
+                PoolEntry::String(s) => self.stack.push(self.heap.new_string(s.clone())),
+                PoolEntry::Integer(i) => self.stack.push(Value::Integer(*i)),
                 PoolEntry::Module(_) => return Err(Error::InvalidEntry(entry_index)),
+                PoolEntry::Float(f) => self.stack.push(Value::Float(float::OrderedFloat(*f))),
               }
             }
 
@@ -310,7 +324,7 @@ impl<'c> Runtime<'c> {
 
             opcode::IS_ZERO => self.stack.is_zero()?,
 
-            opcode => panic!("Unknown opcode {opcode:X?}"),
+            opcode => unreachable!("Reached unknown opcode {opcode:X?}"),
           }
         }
       }

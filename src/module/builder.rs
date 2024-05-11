@@ -32,7 +32,7 @@ impl ModuleBuilder {
 
   pub fn build(self) -> Module {
     Module {
-      name: self.name.into_boxed_str(),
+      name: std::rc::Rc::from(self.name),
       constants: self.constants,
       functions: self.functions,
     }

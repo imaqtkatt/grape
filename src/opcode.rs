@@ -222,4 +222,6 @@ pub const TO_STR: &[&str] = &[
   "IF_NULL",
   "IFNOT_NULL",
   "CONST_NULL",
+  "IEXP",
+  "ISZERO",
 ];

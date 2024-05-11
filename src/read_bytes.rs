@@ -1,4 +1,4 @@
-use std::io::Result;
+use std::{io::Result, rc::Rc};
 
 pub trait ReadBytes {
   fn read_u8(&mut self) -> Result<u8>;
@@ -8,6 +8,8 @@ pub trait ReadBytes {
   fn read_u32(&mut self) -> Result<u32>;
 
   fn read_box_str(&mut self) -> Result<Box<str>>;
+
+  fn read_rc_str(&mut self) -> Result<Rc<str>>;
 
   fn read_string(&mut self) -> Result<String>;
 }
@@ -43,6 +45,17 @@ where
     let str = std::str::from_utf8(&str_buf).map_err(std::io::Error::other)?;
 
     Ok(Box::from(str))
+  }
+
+  fn read_rc_str(&mut self) -> Result<Rc<str>> {
+    let length = self.read_u16()?;
+
+    let mut str_buf = vec![0; length as usize];
+    self.read_exact(&mut str_buf)?;
+
+    let str = std::str::from_utf8(&str_buf).map_err(std::io::Error::other)?;
+
+    Ok(Rc::from(str))
   }
 
   fn read_string(&mut self) -> Result<String> {

@@ -1,6 +1,7 @@
 use context::{Context, ContextArena};
 use function::builder::FunctionBuilder;
 use module::builder::ModuleBuilder;
+use runtime::BootOptions;
 
 use crate::{
   module::PoolEntry,
@@ -21,6 +22,20 @@ pub mod runtime;
 pub mod stack;
 pub mod value;
 pub mod write_bytes;
+
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+  /// Name of the entrypoint module.
+  #[arg(long)]
+  entrypoint: Option<String>,
+
+  /// Load modules eagerly before running.
+  #[arg(long, default_value_t = false)]
+  eager: bool,
+}
 
 #[rustfmt::skip]
 fn run() -> Result<()> {
@@ -105,9 +120,9 @@ fn run() -> Result<()> {
         .with_bytecode(&[
           LOAD_0,
           PUSH_BYTE, 2,
-          I_IFLT, 0, 26,
+          I_IFLT, 0, 25,
           LOAD_0,
-          PUSH_BYTE, 1,
+          ICONST_1,
           ISUB,
           CALL, 0, 0, 0, 2, // main:fib(n - 1)
           LOAD_0,
@@ -175,13 +190,17 @@ fn run() -> Result<()> {
   // let mut f = std::fs::File::options().append(true).create(true).open("main.grape").unwrap();
   // main.write(&mut f).unwrap();
 
+  let args = Cli::parse();
+
   let ctx_arena = ContextArena::default();
   let ctx = &mut Context::new(&ctx_arena);
   ctx.add_module(module::std_out::module())?;
-  ctx.load_eager("main")?;
-  // ctx.add_module(main).expect("Add main module");
 
-  let mut runtime = Runtime::boot(ctx)?;
+  let mut runtime = Runtime::boot(BootOptions {
+    eager: args.eager,
+    entrypoint_module: args.entrypoint,
+    context: ctx
+  })?;
   if let Err(e) = runtime.run() {
     eprintln!("Error: {e}");
     runtime.accept(runtime::stack_trace::StackTrace);

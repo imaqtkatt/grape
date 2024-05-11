@@ -3,6 +3,8 @@ pub mod read;
 pub mod std_out;
 pub mod write;
 
+use std::rc::Rc;
+
 use crate::function::Function;
 use crate::runtime::{Error, Result};
 
@@ -22,7 +24,7 @@ use crate::runtime::{Error, Result};
 #[derive(Debug)]
 pub struct Module {
   /// The module name.
-  pub name: Box<str>,
+  pub name: Rc<str>,
   /// The constant pool.
   pub constants: Vec<PoolEntry>,
   /// The module functions.
@@ -34,12 +36,14 @@ pub enum PoolEntry {
   String(String),
   Integer(i32),
   Module(String),
+  Float(f32),
 }
 
 impl PoolEntry {
   pub const TAG_STRING: u8 = 0x1;
   pub const TAG_INTEGER: u8 = 0x2;
   pub const TAG_MODULE: u8 = 0x3;
+  pub const TAG_FLOAT: u8 = 0x4;
 }
 
 impl Module {
