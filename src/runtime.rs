@@ -324,6 +324,14 @@ impl<'c> Runtime<'c> {
 
             opcode::IS_ZERO => self.stack.is_zero()?,
 
+            opcode::TAILCALL => {
+              self.stack.check_underflow(self.function.arguments as usize)?;
+              for index in (0..self.function.arguments).rev() {
+                self.local.store(index as usize, self.stack.pop_unchecked());
+              }
+              self.ip = IP_INIT;
+            }
+
             opcode => unreachable!("Reached unknown opcode {opcode:X?}"),
           }
         }

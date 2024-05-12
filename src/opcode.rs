@@ -166,6 +166,8 @@ pub const IEXP: u8 = 0x36;
 /// Push 0 or 1 if it is zero.
 pub const IS_ZERO: u8 = 0x37;
 
+pub const TAILCALL: u8 = 0x38;
+
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
   "RET",
@@ -224,4 +226,5 @@ pub const TO_STR: &[&str] = &[
   "CONST_NULL",
   "IEXP",
   "ISZERO",
+  "TAILCALL",
 ];

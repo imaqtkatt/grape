@@ -237,7 +237,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    Ok(value1 != value2)
+    Ok(value1 == value2)
   }
 
   #[inline(always)]

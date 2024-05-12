@@ -39,7 +39,113 @@ struct Cli {
 
 #[rustfmt::skip]
 fn run() -> Result<()> {
-  let _main = ModuleBuilder::new()
+
+  // let mut f = std::fs::File::options().append(true).create(true).open("main.grape").unwrap();
+  // main.write(&mut f).unwrap();
+
+  let args = Cli::parse();
+
+  let ctx_arena = ContextArena::default();
+  let ctx = &mut Context::new(&ctx_arena);
+  ctx.add_module(module::std_out::module())?;
+  ctx.add_module(main_tailcall())?;
+
+  let mut runtime = Runtime::boot(BootOptions {
+    eager: args.eager,
+    entrypoint_module: args.entrypoint,
+    context: ctx
+  })?;
+  if let Err(e) = runtime.run() {
+    eprintln!("Error: {e}");
+    runtime.accept(runtime::stack_trace::StackTrace);
+  }
+
+  Ok(())
+}
+
+fn main() {
+  if let Err(e) = run() {
+    eprintln!("{e}");
+  }
+}
+
+#[rustfmt::skip]
+fn main_tailcall() -> module::Module {
+  ModuleBuilder::new()
+    .with_name("main")
+    .with_constant(PoolEntry::Integer(15))
+    .with_constant(PoolEntry::Module("std:out".to_string()))
+    .with_constant(PoolEntry::String("----------".to_string()))
+    .with_function(
+      FunctionBuilder::new()
+        .with_name_and_identifier("main", 0)
+        .with_locals(0)
+        .with_arguments(0)
+        .with_bytecode(&[
+          LOADCONST, 1,
+          ICONST_1,
+          CALL, 0, 0, 0, 1, // tail_fact(12, 1)
+          CALL, 0, 2, 0, 0, // std:out:print
+          LOADCONST, 3,
+          CALL, 0, 2, 0, 0, // std:out:print
+          LOADCONST, 1,
+          CALL, 0, 0, 0, 2, // fact(12)
+          CALL, 0, 2, 0, 0, // std:out:print
+          HALT
+        ])
+        .build(),
+    )
+    .with_function(
+      FunctionBuilder::new()
+        .with_name_and_identifier("tail_fact", 1)
+        .with_locals(2)
+        .with_arguments(2)
+        .with_bytecode(&[
+          LOAD_0,
+          ICONST_0,
+          I_IFEQ, 0, 12,
+          LOAD_0,
+          ICONST_1,
+          ISUB,
+          LOAD_1,
+          LOAD_0,
+          IMUL,
+          TAILCALL,
+          // return acc
+          LOAD_1,
+          RETURN,
+        ])
+        .build(),
+    )
+    .with_function(
+      FunctionBuilder::new()
+        .with_name_and_identifier("fact", 2)
+        .with_locals(1)
+        .with_arguments(1)
+        .with_bytecode(&[
+          LOAD_0,
+          ICONST_0,
+          I_IFEQ, 0, 16,
+          LOAD_0,
+          LOAD_0,
+          ICONST_1,
+          ISUB,
+          CALL, 0, 0, 0, 2,
+          IMUL,
+          RETURN,
+          // return 1
+          ICONST_1,
+          RETURN,
+        ])
+        .build(),
+    )
+    .build()
+}
+
+#[rustfmt::skip]
+#[allow(unused)]
+fn main_module() -> module::Module {
+  ModuleBuilder::new()
     .with_name("main")
     .with_constant(PoolEntry::String("oioiiooiiioioioiiiooiio".to_string()))
     .with_constant(PoolEntry::Module("std:out".to_string()))
@@ -80,12 +186,12 @@ fn run() -> Result<()> {
           CALL, 0, 2, 0, 2, // std:out:debug
           LOAD_1,
           CALL, 0, 2, 0, 0, // std:out:print
-          LOADCONST, 3,     // "rec fib(35):"
+          LOADCONST, 3, // "rec fib(35):"
           CALL, 0, 2, 0, 0, // std:out:print
           PUSH_BYTE, 35,
           CALL, 0, 0, 0, 2, // fib
           CALL, 0, 2, 0, 0, // std:out:print
-          LOADCONST, 4,     // "iter fib(35):"
+          LOADCONST, 4, // "iter fib(35):"
           CALL, 0, 2, 0, 0, // std:out:print
           PUSH_BYTE, 35,
           CALL, 0, 0, 0, 3, // fib2
@@ -156,14 +262,11 @@ fn run() -> Result<()> {
         .with_bytecode(&[
           // x = 0
           ICONST_0,
-          STORE_1,
-          // y = 1
+          STORE_1, // y = 1
           ICONST_1,
-          STORE_2,
-          // z = 1
+          STORE_2, // z = 1
           ICONST_1,
-          STORE_3,
-          // for (i = 0; i < n; i++)
+          STORE_3, // for (i = 0; i < n; i++)
           ICONST_0,
           STORE, 4,
           LOAD, 4,
@@ -178,39 +281,11 @@ fn run() -> Result<()> {
           IADD,
           STORE_3,
           IINC, 4, 1, // i++
-          GOTO, 0, 9,
-          // return ret
+          GOTO, 0, 9, // return ret
           LOAD_1,
           RETURN,
         ])
-        .build()
+        .build(),
     )
-    .build();
-
-  // let mut f = std::fs::File::options().append(true).create(true).open("main.grape").unwrap();
-  // main.write(&mut f).unwrap();
-
-  let args = Cli::parse();
-
-  let ctx_arena = ContextArena::default();
-  let ctx = &mut Context::new(&ctx_arena);
-  ctx.add_module(module::std_out::module())?;
-
-  let mut runtime = Runtime::boot(BootOptions {
-    eager: args.eager,
-    entrypoint_module: args.entrypoint,
-    context: ctx
-  })?;
-  if let Err(e) = runtime.run() {
-    eprintln!("Error: {e}");
-    runtime.accept(runtime::stack_trace::StackTrace);
-  }
-
-  Ok(())
-}
-
-fn main() {
-  if let Err(e) = run() {
-    eprintln!("{e}");
-  }
+    .build()
 }
