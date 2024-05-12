@@ -39,7 +39,6 @@ struct Cli {
 
 #[rustfmt::skip]
 fn run() -> Result<()> {
-
   // let mut f = std::fs::File::options().append(true).create(true).open("main.grape").unwrap();
   // main.write(&mut f).unwrap();
 
@@ -48,7 +47,7 @@ fn run() -> Result<()> {
   let ctx_arena = ContextArena::default();
   let ctx = &mut Context::new(&ctx_arena);
   ctx.add_module(module::std_out::module())?;
-  ctx.add_module(main_tailcall())?;
+  // ctx.add_module(main_tailcall())?;
 
   let mut runtime = Runtime::boot(BootOptions {
     eager: args.eager,
@@ -70,6 +69,7 @@ fn main() {
 }
 
 #[rustfmt::skip]
+#[allow(unused)]
 fn main_tailcall() -> module::Module {
   ModuleBuilder::new()
     .with_name("main")
