@@ -1,3 +1,5 @@
+use std::ops::Neg;
+
 use crate::{
   runtime::{Error, Result},
   value::{Float32, Int32, Value},
@@ -278,5 +280,58 @@ impl Stack {
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
     Ok(value1 <= value2)
+  }
+
+  #[inline(always)]
+  pub fn fadd(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Float32 = self.stack.pop().unwrap().into();
+    let value1: Float32 = self.stack.pop().unwrap().into();
+    self.push(Value::Float(value1 + value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn fsub(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Float32 = self.stack.pop().unwrap().into();
+    let value1: Float32 = self.stack.pop().unwrap().into();
+    self.push(Value::Float(value1 - value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn fmul(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Float32 = self.stack.pop().unwrap().into();
+    let value1: Float32 = self.stack.pop().unwrap().into();
+    self.push(Value::Float(value1 * value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn fdiv(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Float32 = self.stack.pop().unwrap().into();
+    let value1: Float32 = self.stack.pop().unwrap().into();
+    self.push(Value::Float(value1 / value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn frem(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Float32 = self.stack.pop().unwrap().into();
+    let value1: Float32 = self.stack.pop().unwrap().into();
+    self.push(Value::Float(value1 % value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn fneg(&mut self) -> Result<()> {
+    self.check_underflow(1)?;
+    let value: Float32 = self.stack.pop().unwrap().into();
+    self.push(Value::Float(value.neg()));
+    Ok(())
   }
 }

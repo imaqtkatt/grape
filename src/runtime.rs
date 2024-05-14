@@ -332,6 +332,13 @@ impl<'c> Runtime<'c> {
               self.ip = IP_INIT;
             }
 
+            opcode::FADD => self.stack.fadd()?,
+            opcode::FSUB => self.stack.fsub()?,
+            opcode::FMUL => self.stack.fmul()?,
+            opcode::FDIV => self.stack.fdiv()?,
+            opcode::FREM => self.stack.frem()?,
+            opcode::FNEG => self.stack.fneg()?,
+
             opcode => unreachable!("Reached unknown opcode {opcode:X?}"),
           }
         }

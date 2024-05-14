@@ -168,6 +168,24 @@ pub const IS_ZERO: u8 = 0x37;
 
 pub const TAILCALL: u8 = 0x38;
 
+/// Add float.
+pub const FADD: u8 = 0x39;
+
+/// Subtract float.
+pub const FSUB: u8 = 0x40;
+
+/// Multiply float.
+pub const FMUL: u8 = 0x41;
+
+/// Divide float.
+pub const FDIV: u8 = 0x42;
+
+/// Remainder of float.
+pub const FREM: u8 = 0x43;
+
+/// Negate float.
+pub const FNEG: u8 = 0x44;
+
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
   "RET",
@@ -227,4 +245,10 @@ pub const TO_STR: &[&str] = &[
   "IEXP",
   "ISZERO",
   "TAILCALL",
+  "FADD",
+  "FSUB",
+  "FMUL",
+  "FDIV",
+  "FREM",
+  "FNEG",
 ];

@@ -33,7 +33,7 @@ struct Cli {
   entrypoint: Option<String>,
 
   /// Load modules eagerly before running.
-  #[arg(long, default_value_t = false)]
+  #[arg(long)]
   eager: bool,
 }
 
