@@ -200,11 +200,11 @@ impl<'c> Runtime<'c> {
               self.stack.push(self.heap.get_field(obj_ref, field));
             }
 
-            opcode::PUSH_BYTE => {
+            opcode::I_PUSH_BYTE => {
               let byte = self.fetch(program);
               self.stack.push_byte(byte)
             }
-            opcode::PUSH_SHORT => {
+            opcode::I_PUSH_SHORT => {
               let short = self.fetch_2(program);
               self.stack.push_short(short);
             }
@@ -339,6 +339,23 @@ impl<'c> Runtime<'c> {
             opcode::FDIV => self.stack.fdiv()?,
             opcode::FREM => self.stack.frem()?,
             opcode::FNEG => self.stack.fneg()?,
+
+            opcode::PUSH_BYTE => {
+              let byte = self.fetch(program);
+              self.stack.push(Value::Byte(byte));
+            }
+
+            opcode::BADD => self.stack.badd()?,
+            opcode::BSUB => self.stack.bsub()?,
+            opcode::BMUL => self.stack.bmul()?,
+            opcode::BDIV => self.stack.bdiv()?,
+            opcode::BREM => self.stack.brem()?,
+            opcode::BAND => self.stack.band()?,
+            opcode::BOR => self.stack.bor()?,
+            opcode::BXOR => self.stack.bxor()?,
+            opcode::BSHL => self.stack.bshl()?,
+            opcode::BSHR => self.stack.bshr()?,
+            opcode::BNEG => self.stack.bneg()?,
 
             opcode => unreachable!("Reached unknown opcode {opcode:X?}"),
           }

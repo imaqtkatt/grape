@@ -59,10 +59,10 @@ pub const SET_FIELD: u8 = 0x12;
 pub const GET_FIELD: u8 = 0x13;
 
 /// Push 1 byte long integer.
-pub const PUSH_BYTE: u8 = 0x14;
+pub const I_PUSH_BYTE: u8 = 0x14;
 
 /// Push 2 bytes long integer.
-pub const PUSH_SHORT: u8 = 0x15;
+pub const I_PUSH_SHORT: u8 = 0x15;
 
 /// Pop from stack.
 pub const POP: u8 = 0x16;
@@ -172,19 +172,55 @@ pub const TAILCALL: u8 = 0x38;
 pub const FADD: u8 = 0x39;
 
 /// Subtract float.
-pub const FSUB: u8 = 0x40;
+pub const FSUB: u8 = 0x3A;
 
 /// Multiply float.
-pub const FMUL: u8 = 0x41;
+pub const FMUL: u8 = 0x3B;
 
 /// Divide float.
-pub const FDIV: u8 = 0x42;
+pub const FDIV: u8 = 0x3C;
 
 /// Remainder of float.
-pub const FREM: u8 = 0x43;
+pub const FREM: u8 = 0x3D;
 
 /// Negate float.
-pub const FNEG: u8 = 0x44;
+pub const FNEG: u8 = 0x3E;
+
+/// Push byte.
+pub const PUSH_BYTE: u8 = 0x3F;
+
+/// Add byte.
+pub const BADD: u8 = 0x40;
+
+/// Subtract byte.
+pub const BSUB: u8 = 0x41;
+
+/// Multiply byte.
+pub const BMUL: u8 = 0x42;
+
+/// Divide byte.
+pub const BDIV: u8 = 0x43;
+
+/// Remainder of byte.
+pub const BREM: u8 = 0x44;
+
+/// Byte bit AND.
+pub const BAND: u8 = 0x45;
+
+/// Byte bit OR.
+pub const BOR: u8 = 0x46;
+
+/// Byte bit XOR.
+pub const BXOR: u8 = 0x47;
+
+/// Byte bit shift left.
+pub const BSHL: u8 = 0x48;
+
+/// Byte bit shift right.
+pub const BSHR: u8 = 0x49;
+
+/// Negate byte.
+pub const BNEG: u8 = 0x4A;
 
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[

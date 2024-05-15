@@ -1,5 +1,6 @@
 use core::fmt;
 
+pub type Byte8 = u8;
 /// Grape int type.
 pub type Int32 = i32;
 /// Grape float type.
@@ -9,6 +10,7 @@ pub type Reference = usize;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Value {
+  Byte(Byte8),
   Integer(Int32),
   Float(Float32),
   Reference(Reference),
@@ -17,9 +19,19 @@ pub enum Value {
 impl fmt::Debug for Value {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
+      Value::Byte(b) => write!(f, "{b}"),
       Value::Integer(n) => write!(f, "{n}"),
       Value::Float(n) => write!(f, "{n}"),
       Value::Reference(r) => write!(f, "@{r:08x}"),
+    }
+  }
+}
+
+impl From<Value> for Byte8 {
+  fn from(value: Value) -> Self {
+    match value {
+      Value::Byte(b) => b,
+      other => panic!("Expected byte, found {other:?}"),
     }
   }
 }

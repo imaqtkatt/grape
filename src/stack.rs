@@ -2,7 +2,7 @@ use std::ops::Neg;
 
 use crate::{
   runtime::{Error, Result},
-  value::{Float32, Int32, Value},
+  value::{Byte8, Float32, Int32, Value},
 };
 
 #[derive(Debug)]
@@ -223,6 +223,7 @@ impl Stack {
   pub fn is_zero(&mut self) -> Result<()> {
     self.check_underflow(1)?;
     match self.stack.pop().unwrap() {
+      Value::Byte(b) => self.stack.push(Value::Byte(if b == 0 { 1 } else { 0 })),
       Value::Integer(i) => self.stack.push(Value::Integer(if i == 0 { 1 } else { 0 })),
       Value::Float(f) => self.stack.push(Value::Float(if f.is_normal() {
         ordered_float::OrderedFloat(1.)
@@ -332,6 +333,104 @@ impl Stack {
     self.check_underflow(1)?;
     let value: Float32 = self.stack.pop().unwrap().into();
     self.push(Value::Float(value.neg()));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn badd(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 + value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn bsub(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 - value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn bmul(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 * value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn bdiv(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 / value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn brem(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 % value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn band(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 & value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn bor(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 | value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn bxor(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 | value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn bshl(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 << value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn bshr(&mut self) -> Result<()> {
+    self.check_underflow(2)?;
+    let value2: Byte8 = self.stack.pop().unwrap().into();
+    let value1: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value1 >> value2));
+    Ok(())
+  }
+
+  #[inline(always)]
+  pub fn bneg(&mut self) -> Result<()> {
+    self.check_underflow(1)?;
+    let value: Byte8 = self.stack.pop().unwrap().into();
+    self.push(Value::Byte(value.wrapping_neg()));
     Ok(())
   }
 }

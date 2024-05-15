@@ -15,6 +15,7 @@ impl<F: Fn(&mut fmt::Formatter) -> fmt::Result> fmt::Display for Formatting<F> {
 
 pub fn display_value<'a>(v: &'a Value, heap: &'a Heap) -> impl fmt::Display + 'a {
   Formatting(move |f| match v {
+    Value::Byte(b) => write!(f, "{b}"),
     Value::Integer(n) => write!(f, "{n}"),
     Value::Float(n) => write!(f, "{n}"),
     Value::Reference(r#ref) => {

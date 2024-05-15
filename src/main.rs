@@ -188,7 +188,7 @@ fn main_module() -> module::Module {
           CALL, 0, 2, 0, 0, // std:out:print
           LOADCONST, 3, // "rec fib(35):"
           CALL, 0, 2, 0, 0, // std:out:print
-          PUSH_BYTE, 35,
+          I_PUSH_BYTE, 35,
           CALL, 0, 0, 0, 2, // fib
           CALL, 0, 2, 0, 0, // std:out:print
           LOADCONST, 4, // "iter fib(35):"
@@ -225,7 +225,7 @@ fn main_module() -> module::Module {
         .with_arguments(1)
         .with_bytecode(&[
           LOAD_0,
-          PUSH_BYTE, 2,
+          I_PUSH_BYTE, 2,
           I_IFLT, 0, 25,
           LOAD_0,
           ICONST_1,
