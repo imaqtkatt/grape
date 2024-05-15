@@ -48,6 +48,7 @@ fn run() -> Result<()> {
   let ctx = &mut Context::new(&ctx_arena);
   ctx.add_module(module::std_out::module())?;
   // ctx.add_module(main_tailcall())?;
+  // ctx.add_module(main_bytes())?;
 
   let mut runtime = Runtime::boot(BootOptions {
     eager: args.eager,
@@ -66,6 +67,35 @@ fn main() {
   if let Err(e) = run() {
     eprintln!("{e}");
   }
+}
+
+#[rustfmt::skip]
+#[allow(unused)]
+fn main_bytes() -> module::Module {
+  ModuleBuilder::new()
+    .with_name("main")
+    .with_constant(PoolEntry::Module("std:out".to_string()))
+    .with_function(
+      FunctionBuilder::new()
+        .with_name_and_identifier("main", 0)
+        .with_locals(1)
+        .with_arguments(0)
+        .with_bytecode(&[
+          PUSH_BYTE, 42,
+          PUSH_BYTE, 43,
+          PUSH_BYTE, 55,
+          NEW_BYTES, 0, 3,
+          STORE_0,
+          LOAD_0,
+          PUSH_BYTE, 88,
+          BYTES_PUSH,
+          LOAD_0,
+          CALL, 0, 1, 0, 0,
+          HALT,
+        ])
+        .build()
+    )
+    .build()
 }
 
 #[rustfmt::skip]

@@ -82,6 +82,20 @@ impl Heap {
   }
 
   #[inline(always)]
+  pub fn new_bytes(&mut self, bytes_vec: Vec<u8>) -> Value {
+    let r#ref = self.new_ref();
+    self.mem.push(Object::Bytes(ObjBytes { bytes: bytes_vec }));
+    Value::Reference(r#ref)
+  }
+
+  #[inline(always)]
+  pub fn bytes_push(&mut self, bytes_ref: usize, byte: u8) {
+    let bytes = &mut self.mem[bytes_ref];
+    let Object::Bytes(ObjBytes { bytes }) = bytes else { panic!() };
+    bytes.push(byte);
+  }
+
+  #[inline(always)]
   pub fn get(&self, index: usize) -> &Object {
     &self.mem[index]
   }
@@ -97,6 +111,7 @@ pub enum Object {
   String(ObjString),
   Map(ObjMap),
   Array(ObjArray),
+  Bytes(ObjBytes),
 }
 
 pub struct ObjString {
@@ -110,6 +125,10 @@ pub struct ObjMap {
 pub struct ObjArray {
   pub len: usize,
   pub arr: Box<[Value]>,
+}
+
+pub struct ObjBytes {
+  pub bytes: Vec<u8>,
 }
 
 impl Default for Heap {

@@ -222,6 +222,12 @@ pub const BSHR: u8 = 0x49;
 /// Negate byte.
 pub const BNEG: u8 = 0x4A;
 
+/// Create bytes object.
+pub const NEW_BYTES: u8 = 0x4B;
+
+/// Push byte to bytes object.
+pub const BYTES_PUSH: u8 = 0x4C;
+
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
   "RET",

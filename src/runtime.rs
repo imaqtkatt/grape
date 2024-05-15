@@ -11,7 +11,7 @@ use crate::{
   module::{Module, PoolEntry},
   opcode,
   stack::Stack,
-  value::{Int32, Reference, Value},
+  value::{Byte8, Int32, Reference, Value},
 };
 
 pub struct Runtime<'c> {
@@ -356,6 +356,24 @@ impl<'c> Runtime<'c> {
             opcode::BSHL => self.stack.bshl()?,
             opcode::BSHR => self.stack.bshr()?,
             opcode::BNEG => self.stack.bneg()?,
+
+            opcode::NEW_BYTES => {
+              let len = self.fetch_2(program) as usize;
+              self.stack.check_underflow(len)?;
+              let mut bytes_vec = Vec::with_capacity(len);
+              let mut len = len;
+              while len > 0 {
+                len -= 1;
+                bytes_vec.insert(0, self.stack.pop()?.into());
+              }
+              self.stack.push(self.heap.new_bytes(bytes_vec));
+            }
+
+            opcode::BYTES_PUSH => {
+              let byte: Byte8 = self.stack.pop()?.into();
+              let bytes_ref: Reference = self.stack.pop()?.into();
+              self.heap.bytes_push(bytes_ref, byte);
+            }
 
             opcode => unreachable!("Reached unknown opcode {opcode:X?}"),
           }

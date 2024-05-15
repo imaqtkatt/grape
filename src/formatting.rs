@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::{
-  heap::{Heap, ObjArray, ObjMap, ObjString, Object},
+  heap::{Heap, ObjArray, ObjBytes, ObjMap, ObjString, Object},
   value::Value,
 };
 
@@ -41,6 +41,13 @@ pub fn display_object(o: usize, heap: &Heap) -> impl fmt::Display + '_ {
         write!(f, "{};", display_value(value, heap))?;
       }
       write!(f, "]")
+    }
+    Object::Bytes(ObjBytes { bytes }) => {
+      write!(f, "<< ")?;
+      for byte in bytes {
+        write!(f, "{byte} ")?;
+      }
+      write!(f, ">>")
     }
   })
 }
