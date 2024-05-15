@@ -7,7 +7,7 @@ pub type Float32 = ordered_float::OrderedFloat<f32>;
 /// Grape reference type.
 pub type Reference = usize;
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Value {
   Integer(Int32),
   Float(Float32),

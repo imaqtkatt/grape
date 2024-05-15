@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::value::Value;
 
@@ -15,12 +15,14 @@ impl Heap {
     Self { mem }
   }
 
+  #[inline(always)]
   pub fn new_object(&mut self) -> Value {
     let r#ref = self.new_ref();
     self.mem.push(Object::Map(ObjMap { fields: Default::default() }));
     Value::Reference(r#ref)
   }
 
+  #[inline(always)]
   pub fn get_field(&self, obj_ref: usize, field: Value) -> Value {
     if let Object::Map(m) = &self.mem[obj_ref] {
       m.fields[&field]
@@ -29,6 +31,7 @@ impl Heap {
     }
   }
 
+  #[inline(always)]
   pub fn set_field(&mut self, obj_ref: usize, field: Value, value: Value) {
     if let Object::Map(m) = &mut self.mem[obj_ref] {
       m.fields.insert(field, value);
@@ -37,12 +40,14 @@ impl Heap {
     }
   }
 
+  #[inline(always)]
   pub fn new_string(&mut self, s: String) -> Value {
     let r#ref = self.new_ref();
     self.mem.push(Object::String(ObjString { contents: s }));
     Value::Reference(r#ref)
   }
 
+  #[inline(always)]
   pub fn new_array(&mut self, size: i32) -> Value {
     let r#ref = self.new_ref();
     self.mem.push(Object::Array(ObjArray {
@@ -52,6 +57,7 @@ impl Heap {
     Value::Reference(r#ref)
   }
 
+  #[inline(always)]
   pub fn array_get(&mut self, array_ref: usize, index: i32) -> Value {
     let arr = &mut self.mem[array_ref];
     let index = index as usize;
@@ -63,6 +69,7 @@ impl Heap {
     }
   }
 
+  #[inline(always)]
   pub fn array_set(&mut self, array_ref: usize, index: i32, value: Value) {
     let arr = &mut self.mem[array_ref];
     let index = index as usize;
@@ -74,6 +81,7 @@ impl Heap {
     }
   }
 
+  #[inline(always)]
   pub fn get(&self, index: usize) -> &Object {
     &self.mem[index]
   }
@@ -96,7 +104,7 @@ pub struct ObjString {
 }
 
 pub struct ObjMap {
-  pub fields: HashMap<Value, Value>,
+  pub fields: BTreeMap<Value, Value>,
 }
 
 pub struct ObjArray {

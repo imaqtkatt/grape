@@ -166,8 +166,9 @@ impl<'c> Runtime<'c> {
             opcode::GOTO => self.ip = self.fetch_2(program) as usize,
 
             opcode::CALL => {
-              let module_index = self.fetch_2(program) as usize;
-              let function_index = self.fetch_2(program) as usize;
+              let indexes = self.fetch_4(program);
+              let module_index = indexes >> 16;
+              let function_index = indexes & 0xFF;
               if let PoolEntry::Module(module) = &self.module.constants[module_index] {
                 self.call(module, function_index)?
               } else {

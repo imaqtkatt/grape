@@ -52,7 +52,7 @@ fn run() -> Result<()> {
   let mut runtime = Runtime::boot(BootOptions {
     eager: args.eager,
     entrypoint_module: args.entrypoint,
-    context: ctx
+    context: ctx,
   })?;
   if let Err(e) = runtime.run() {
     eprintln!("Error: {e}");
