@@ -49,7 +49,7 @@ impl Value {
 
   #[inline(always)]
   pub fn mk_float(float: f32) -> Self {
-    Self(Self::TAG_FLOAT << 32 | float as u64)
+    Self(Self::TAG_FLOAT << 32 | float.to_bits() as u64)
   }
 
   #[inline(always)]
@@ -64,7 +64,7 @@ impl Value {
 
   #[inline(always)]
   pub fn float(&self) -> f32 {
-    (self.0 & 0xFFFFFFFF) as f32
+    f32::from_bits((self.0 & 0xFFFFFFFFF) as u32)
   }
 }
 
@@ -72,9 +72,9 @@ impl fmt::Debug for Value {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.tag() {
       Self::TAG_REFERENCE => write!(f, "@{:08x}", self.raw()),
-      Self::TAG_BYTE => write!(f, "{}", self.raw()),
-      Self::TAG_INTEGER => write!(f, "{}", self.raw()),
-      Self::TAG_FLOAT => write!(f, "{}", self.raw()),
+      Self::TAG_BYTE => write!(f, "{}", self.byte()),
+      Self::TAG_INTEGER => write!(f, "{}", self.integer()),
+      Self::TAG_FLOAT => write!(f, "{}", self.float()),
       _ => unreachable!(),
     }
   }

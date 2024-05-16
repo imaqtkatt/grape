@@ -15,9 +15,9 @@ impl<F: Fn(&mut fmt::Formatter) -> fmt::Result> fmt::Display for Formatting<F> {
 
 pub fn display_value<'a>(v: &'a Value, heap: &'a Heap) -> impl fmt::Display + 'a {
   Formatting(move |f| match v.tag() {
-    Value::TAG_BYTE => write!(f, "{}", v.raw() as u8),
-    Value::TAG_INTEGER => write!(f, "{}", v.raw() as i32),
-    Value::TAG_FLOAT => write!(f, "{}", v.raw() as f32),
+    Value::TAG_BYTE => write!(f, "{}", v.byte()),
+    Value::TAG_INTEGER => write!(f, "{}", v.integer()),
+    Value::TAG_FLOAT => write!(f, "{}", v.float()),
     Value::TAG_REFERENCE => write!(f, "{}", display_object(v.raw() as usize, heap)),
     _ => unreachable!(),
   })

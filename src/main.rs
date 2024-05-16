@@ -49,6 +49,7 @@ fn run() -> Result<()> {
   ctx.add_module(module::std_out::module())?;
   // ctx.add_module(main_tailcall())?;
   // ctx.add_module(main_bytes())?;
+  // ctx.add_module(main_float())?;
 
   let mut runtime = Runtime::boot(BootOptions {
     eager: args.eager,
@@ -67,6 +68,31 @@ fn main() {
   if let Err(e) = run() {
     eprintln!("{e}");
   }
+}
+
+#[rustfmt::skip]
+#[allow(unused)]
+fn main_float() -> module::Module {
+  ModuleBuilder::new()
+    .with_name("main")
+    .with_constant(PoolEntry::Module("std:out".to_string()))
+    .with_constant(PoolEntry::Float(3.14))
+    .with_constant(PoolEntry::Float(5.))
+    .with_function(
+      FunctionBuilder::new()
+        .with_name_and_identifier("main", 0)
+        .with_locals(1)
+        .with_arguments(0)
+        .with_bytecode(&[
+          LOADCONST, 2,
+          // LOADCONST, 3,
+          // FMUL,
+          CALL, 0, 1, 0, 0,
+          HALT,
+        ])
+        .build()
+    )
+    .build()
 }
 
 #[rustfmt::skip]
