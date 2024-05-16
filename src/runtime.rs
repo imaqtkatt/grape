@@ -324,7 +324,7 @@ impl<'c> Runtime<'c> {
               }
             }
 
-            opcode::CONST_NULL => self.stack.push(Value::mk_reference(0)),
+            opcode::CONST_NULL => self.stack.push(Value::NULL),
 
             opcode::IEXP => self.stack.iexp()?,
 

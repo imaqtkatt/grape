@@ -53,7 +53,6 @@ impl Local {
   pub fn iinc(&mut self, index: usize, inc: i32) {
     let value = &mut self.local[self.base + index];
     assert!(value.tag() == Value::TAG_INTEGER);
-    *value.raw_mut() += inc as u64;
-    // *i += inc as u64;
+    unsafe { *value.integer_mut() += inc };
   }
 }
