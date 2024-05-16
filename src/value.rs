@@ -4,7 +4,7 @@ pub type Byte8 = u8;
 /// Grape int type.
 pub type Int32 = i32;
 /// Grape float type.
-pub type Float32 = ordered_float::OrderedFloat<f32>;
+pub type Float32 = f32;
 /// Grape reference type.
 pub type Reference = usize;
 
@@ -16,6 +16,11 @@ impl Value {
   pub const TAG_BYTE: u64 = 1 << 2;
   pub const TAG_INTEGER: u64 = 1 << 3;
   pub const TAG_FLOAT: u64 = 1 << 4;
+
+  const REFERENCE: u64 = 0x0000_0001_0000_0000;
+  const BYTE: u64 = 0x0000_0004_0000_0000;
+  const INTEGER: u64 = 0x0000_0008_0000_0000;
+  const FLOAT: u64 = 0x0000_0010_0000_0000;
 
   #[inline(always)]
   pub fn tag(&self) -> u64 {
@@ -34,22 +39,22 @@ impl Value {
 
   #[inline(always)]
   pub fn mk_reference(r#ref: usize) -> Self {
-    Self(Self::TAG_REFERENCE << 32 | r#ref as u64)
+    Self(Self::REFERENCE | r#ref as u64)
   }
 
   #[inline(always)]
   pub fn mk_byte(byte: u8) -> Self {
-    Self(Self::TAG_BYTE << 32 | byte as u64)
+    Self(Self::BYTE | byte as u64)
   }
 
   #[inline(always)]
   pub fn mk_integer(integer: i32) -> Self {
-    Self(Self::TAG_INTEGER << 32 | integer as u64)
+    Self(Self::INTEGER | integer as u64)
   }
 
   #[inline(always)]
   pub fn mk_float(float: f32) -> Self {
-    Self(Self::TAG_FLOAT << 32 | float.to_bits() as u64)
+    Self(Self::FLOAT | float.to_bits() as u64)
   }
 
   #[inline(always)]
@@ -97,7 +102,7 @@ impl From<Value> for Int32 {
 impl From<Value> for Float32 {
   fn from(value: Value) -> Self {
     assert!(value.tag() == Value::TAG_FLOAT);
-    ordered_float::OrderedFloat(value.raw() as f32)
+    value.float()
   }
 }
 

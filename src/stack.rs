@@ -198,7 +198,7 @@ impl Stack {
   pub fn f2i(&mut self) -> Result<()> {
     self.check_underflow(1)?;
     let value: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::mk_integer(value.into_inner() as Int32));
+    self.push(Value::mk_integer(value as Int32));
     Ok(())
   }
 
@@ -290,7 +290,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::mk_float((value1 + value2).0));
+    self.push(Value::mk_float(value1 + value2));
     Ok(())
   }
 
@@ -299,7 +299,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::mk_float((value1 - value2).0));
+    self.push(Value::mk_float(value1 - value2));
     Ok(())
   }
 
@@ -308,7 +308,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::mk_float((value1 * value2).0));
+    self.push(Value::mk_float(value1 * value2));
     Ok(())
   }
 
@@ -317,7 +317,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::mk_float((value1 / value2).0));
+    self.push(Value::mk_float(value1 / value2));
     Ok(())
   }
 
@@ -326,7 +326,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::mk_float((value1 % value2).0));
+    self.push(Value::mk_float(value1 % value2));
     Ok(())
   }
 
@@ -334,7 +334,7 @@ impl Stack {
   pub fn fneg(&mut self) -> Result<()> {
     self.check_underflow(1)?;
     let value: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::mk_float(value.neg().0));
+    self.push(Value::mk_float(value.neg()));
     Ok(())
   }
 

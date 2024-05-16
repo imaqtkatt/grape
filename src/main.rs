@@ -85,8 +85,8 @@ fn main_float() -> module::Module {
         .with_arguments(0)
         .with_bytecode(&[
           LOADCONST, 2,
-          // LOADCONST, 3,
-          // FMUL,
+          LOADCONST, 3,
+          FMUL,
           CALL, 0, 1, 0, 0,
           HALT,
         ])

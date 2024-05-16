@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub struct Runtime<'c> {
-  ip: usize,
+  ip: std::cell::RefCell<usize>,
   ctx: &'c mut Context<'c>,
   local: Local,
   module: &'c Module,
@@ -29,7 +29,7 @@ pub trait RuntimeVisitor {
 }
 
 struct Frame<'c> {
-  return_address: usize,
+  return_address: std::cell::RefCell<usize>,
   local_frame: usize,
   module: &'c Module,
   function: &'c Function,
@@ -59,7 +59,7 @@ impl<'c> Runtime<'c> {
     function: &'c Function,
   ) -> Self {
     Self {
-      ip: IP_INIT,
+      ip: std::cell::RefCell::new(IP_INIT),
       ctx,
       local,
       module,
@@ -107,7 +107,7 @@ impl<'c> Runtime<'c> {
     }
 
     self.call_stack.push(Frame {
-      return_address: std::mem::replace(&mut self.ip, IP_INIT),
+      return_address: std::mem::replace(&mut self.ip, std::cell::RefCell::new(IP_INIT)),
       local_frame: frame,
       module: std::mem::replace(&mut self.module, module),
       function: std::mem::replace(&mut self.function, function),
@@ -162,7 +162,7 @@ impl<'c> Runtime<'c> {
             opcode::I2F => self.stack.i2f()?,
             opcode::F2I => self.stack.f2i()?,
 
-            opcode::GOTO => self.ip = self.fetch_2(program) as usize,
+            opcode::GOTO => *self.ip.get_mut() = self.fetch_2(program) as usize,
 
             opcode::CALL => {
               let indexes = self.fetch_4(program);
@@ -187,15 +187,17 @@ impl<'c> Runtime<'c> {
 
             opcode::NEW_OBJECT => self.stack.push(self.heap.new_object()),
             opcode::SET_FIELD => {
-              let value = self.stack.pop()?;
-              let field = self.stack.pop()?;
-              let obj_ref: Reference = self.stack.pop()?.into();
+              self.stack.check_underflow(3)?;
+              let value = self.stack.pop_unchecked();
+              let field = self.stack.pop_unchecked();
+              let obj_ref: Reference = self.stack.pop_unchecked().into();
 
               self.heap.set_field(obj_ref, field, value);
             }
             opcode::GET_FIELD => {
-              let field = self.stack.pop()?;
-              let obj_ref: Reference = self.stack.pop()?.into();
+              self.stack.check_underflow(2)?;
+              let field = self.stack.pop_unchecked();
+              let obj_ref: Reference = self.stack.pop_unchecked().into();
               self.stack.push(self.heap.get_field(obj_ref, field));
             }
 
@@ -212,44 +214,44 @@ impl<'c> Runtime<'c> {
 
             opcode::I_IFEQ => {
               if self.stack.ifeq()? {
-                self.ip = self.fetch_2(program) as usize;
+                *self.ip.get_mut() = self.fetch_2(program) as usize;
               } else {
-                self.ip += 2;
+                *self.ip.get_mut() += 2;
               }
             }
             opcode::I_IFNEQ => {
               if self.stack.ifneq()? {
-                self.ip = self.fetch_2(program) as usize;
+                *self.ip.get_mut() = self.fetch_2(program) as usize;
               } else {
-                self.ip += 2;
+                *self.ip.get_mut() += 2;
               }
             }
             opcode::I_IFGT => {
               if self.stack.ifgt()? {
-                self.ip = self.fetch_2(program) as usize;
+                *self.ip.get_mut() = self.fetch_2(program) as usize;
               } else {
-                self.ip += 2;
+                *self.ip.get_mut() += 2;
               }
             }
             opcode::I_IFGE => {
               if self.stack.ifge()? {
-                self.ip = self.fetch_2(program) as usize;
+                *self.ip.get_mut() = self.fetch_2(program) as usize;
               } else {
-                self.ip += 2;
+                *self.ip.get_mut() += 2;
               }
             }
             opcode::I_IFLT => {
               if self.stack.iflt()? {
-                self.ip = self.fetch_2(program) as usize;
+                *self.ip.get_mut() = self.fetch_2(program) as usize;
               } else {
-                self.ip += 2;
+                *self.ip.get_mut() += 2;
               }
             }
             opcode::I_IFLE => {
               if self.stack.ifle()? {
-                self.ip = self.fetch_2(program) as usize;
+                *self.ip.get_mut() = self.fetch_2(program) as usize;
               } else {
-                self.ip += 2;
+                *self.ip.get_mut() += 2;
               }
             }
 
@@ -271,21 +273,24 @@ impl<'c> Runtime<'c> {
             opcode::NEW_STRING => unimplemented!(),
 
             opcode::NEW_ARRAY => {
-              let size: Int32 = self.stack.pop()?.into();
+              self.stack.check_underflow(1)?;
+              let size: Int32 = self.stack.pop_unchecked().into();
               self.stack.push(self.heap.new_array(size));
             }
 
             opcode::ARRAY_GET => {
-              let index: Int32 = self.stack.pop()?.into();
-              let array_ref: Reference = self.stack.pop()?.into();
+              self.stack.check_underflow(2)?;
+              let index: Int32 = self.stack.pop_unchecked().into();
+              let array_ref: Reference = self.stack.pop_unchecked().into();
 
               self.stack.push(self.heap.array_get(array_ref, index));
             }
 
             opcode::ARRAY_SET => {
-              let value = self.stack.pop()?;
-              let index: Int32 = self.stack.pop()?.into();
-              let array_ref: Reference = self.stack.pop()?.into();
+              self.stack.check_underflow(3)?;
+              let value = self.stack.pop_unchecked();
+              let index: Int32 = self.stack.pop_unchecked().into();
+              let array_ref: Reference = self.stack.pop_unchecked().into();
 
               self.heap.array_set(array_ref, index, value);
             }
@@ -301,9 +306,9 @@ impl<'c> Runtime<'c> {
               let r#ref: Reference = self.stack.pop_unchecked().into();
 
               if r#ref == 0 {
-                self.ip = self.fetch_2(program) as usize;
+                *self.ip.get_mut() = self.fetch_2(program) as usize;
               } else {
-                self.ip += 2;
+                *self.ip.get_mut() += 2;
               }
             }
 
@@ -312,9 +317,9 @@ impl<'c> Runtime<'c> {
               let r#ref: Reference = self.stack.pop_unchecked().into();
 
               if r#ref != 0 {
-                self.ip = self.fetch_2(program) as usize;
+                *self.ip.get_mut() = self.fetch_2(program) as usize;
               } else {
-                self.ip += 2;
+                *self.ip.get_mut() += 2;
               }
             }
 
@@ -329,7 +334,7 @@ impl<'c> Runtime<'c> {
               for index in (0..self.function.arguments).rev() {
                 self.local.store(index as usize, self.stack.pop_unchecked());
               }
-              self.ip = IP_INIT;
+              *self.ip.get_mut() = IP_INIT;
             }
 
             opcode::FADD => self.stack.fadd()?,
@@ -363,14 +368,15 @@ impl<'c> Runtime<'c> {
               let mut len = len;
               while len > 0 {
                 len -= 1;
-                bytes_vec.insert(0, self.stack.pop()?.into());
+                bytes_vec.insert(0, self.stack.pop_unchecked().into());
               }
               self.stack.push(self.heap.new_bytes(bytes_vec));
             }
 
             opcode::BYTES_PUSH => {
-              let byte: Byte8 = self.stack.pop()?.into();
-              let bytes_ref: Reference = self.stack.pop()?.into();
+              self.stack.check_underflow(2)?;
+              let byte: Byte8 = self.stack.pop_unchecked().into();
+              let bytes_ref: Reference = self.stack.pop_unchecked().into();
               self.heap.bytes_push(bytes_ref, byte);
             }
 
@@ -393,27 +399,30 @@ impl<'c> Runtime<'c> {
 
   #[inline(always)]
   fn fetch(&mut self, program: &[u8]) -> u8 {
-    let instruction = program[self.ip];
-    self.ip += 1;
+    let ip = self.ip.get_mut();
+    let instruction = program[*ip];
+    *ip += 1;
     instruction
   }
 
   #[inline(always)]
   fn fetch_2(&mut self, program: &[u8]) -> u16 {
-    let r = (program[self.ip] as u16) << 8 | program[self.ip + 1] as u16;
-    self.ip += 2;
-    r
+    let ip = self.ip.get_mut();
+    let instruction = (program[*ip] as u16) << 8 | program[*ip + 1] as u16;
+    *ip += 2;
+    instruction
   }
 
   #[inline(always)]
   #[allow(unused)]
   fn fetch_4(&mut self, program: &[u8]) -> usize {
-    let r = (program[self.ip] as usize) << 24
-      | (program[self.ip + 1] as usize) << 16
-      | (program[self.ip + 2] as usize) << 8
-      | program[self.ip + 3] as usize;
-    self.ip += 4;
-    r
+    let ip = self.ip.get_mut();
+    let instruction = (program[*ip] as usize) << 24
+      | (program[*ip + 1] as usize) << 16
+      | (program[*ip + 2] as usize) << 8
+      | program[*ip + 3] as usize;
+    *ip += 4;
+    instruction
   }
 }
 
