@@ -7,6 +7,8 @@ pub trait ReadBytes {
 
   fn read_u32(&mut self) -> Result<u32>;
 
+  fn read_f32(&mut self) -> Result<f32>;
+
   fn read_box_str(&mut self) -> Result<Box<str>>;
 
   fn read_rc_str(&mut self) -> Result<Rc<str>>;
@@ -34,6 +36,12 @@ where
     let mut buf = [0; 4];
     self.read_exact(&mut buf)?;
     Ok(u32::from_be_bytes(buf))
+  }
+
+  fn read_f32(&mut self) -> Result<f32> {
+    let mut buf = [0; 4];
+    self.read_exact(&mut buf)?;
+    Ok(f32::from_be_bytes(buf))
   }
 
   fn read_box_str(&mut self) -> Result<Box<str>> {
