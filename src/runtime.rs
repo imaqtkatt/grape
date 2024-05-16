@@ -1,7 +1,6 @@
 pub mod stack_trace;
 
 use core::fmt;
-use ordered_float as float;
 
 use crate::{
   context::Context,
@@ -180,9 +179,9 @@ impl<'c> Runtime<'c> {
               let entry_index = self.fetch(program) as usize;
               match &self.module.constants[entry_index] {
                 PoolEntry::String(s) => self.stack.push(self.heap.new_string(s.clone())),
-                PoolEntry::Integer(i) => self.stack.push(Value::Integer(*i)),
+                PoolEntry::Integer(i) => self.stack.push(Value::mk_integer(*i)),
                 PoolEntry::Module(_) => return Err(Error::InvalidEntry(entry_index)),
-                PoolEntry::Float(f) => self.stack.push(Value::Float(float::OrderedFloat(*f))),
+                PoolEntry::Float(f) => self.stack.push(Value::mk_float(*f)),
               }
             }
 
@@ -319,7 +318,7 @@ impl<'c> Runtime<'c> {
               }
             }
 
-            opcode::CONST_NULL => self.stack.push(Value::Reference(0)),
+            opcode::CONST_NULL => self.stack.push(Value::mk_reference(0)),
 
             opcode::IEXP => self.stack.iexp()?,
 
@@ -342,7 +341,7 @@ impl<'c> Runtime<'c> {
 
             opcode::PUSH_BYTE => {
               let byte = self.fetch(program);
-              self.stack.push(Value::Byte(byte));
+              self.stack.push(Value::mk_byte(byte));
             }
 
             opcode::BADD => self.stack.badd()?,

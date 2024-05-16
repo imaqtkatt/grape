@@ -8,13 +8,13 @@ pub struct Local {
 
 impl Local {
   pub fn new(capacity: usize) -> Self {
-    Self { local: vec![Value::Integer(0); capacity], base: 0 }
+    Self { local: vec![Value::mk_integer(0); capacity], base: 0 }
   }
 
   pub fn push_frame(&mut self, size: usize) -> usize {
     let old_base = self.base;
     let new_base = self.local.len();
-    self.local.resize(new_base + size, Value::Integer(0));
+    self.local.resize(new_base + size, Value::mk_integer(0));
     self.base = new_base;
     old_base
   }
@@ -51,8 +51,9 @@ impl Local {
   }
 
   pub fn iinc(&mut self, index: usize, inc: i32) {
-    if let Value::Integer(i) = &mut self.local[self.base + index] {
-      *i += inc;
-    }
+    let value = &mut self.local[self.base + index];
+    assert!(value.tag() == Value::TAG_INTEGER);
+    *value.raw_mut() += inc as u64;
+    // *i += inc as u64;
   }
 }

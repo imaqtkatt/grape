@@ -51,32 +51,32 @@ impl Stack {
 
   #[inline(always)]
   pub fn iconst_0(&mut self) {
-    self.push(Value::Integer(0));
+    self.push(Value::mk_integer(0));
   }
 
   #[inline(always)]
   pub fn iconst_1(&mut self) {
-    self.push(Value::Integer(1));
+    self.push(Value::mk_integer(1));
   }
 
   #[inline(always)]
   pub fn fconst_0(&mut self) {
-    self.push(Value::Float(ordered_float::OrderedFloat(0.)));
+    self.push(Value::mk_float(0.));
   }
 
   #[inline(always)]
   pub fn fconst_1(&mut self) {
-    self.push(Value::Float(ordered_float::OrderedFloat(1.)));
+    self.push(Value::mk_float(1.));
   }
 
   #[inline(always)]
   pub fn push_byte(&mut self, byte: u8) {
-    self.push(Value::Integer(byte as Int32));
+    self.push(Value::mk_integer(byte as Int32));
   }
 
   #[inline(always)]
   pub fn push_short(&mut self, short: u16) {
-    self.push(Value::Integer(short as Int32));
+    self.push(Value::mk_integer(short as Int32));
   }
 
   #[inline(always)]
@@ -84,7 +84,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 + value2));
+    self.push(Value::mk_integer(value1 + value2));
     Ok(())
   }
 
@@ -93,7 +93,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 - value2));
+    self.push(Value::mk_integer(value1 - value2));
     Ok(())
   }
 
@@ -102,7 +102,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 * value2));
+    self.push(Value::mk_integer(value1 * value2));
     Ok(())
   }
 
@@ -111,7 +111,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 / value2));
+    self.push(Value::mk_integer(value1 / value2));
     Ok(())
   }
 
@@ -120,7 +120,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 % value2));
+    self.push(Value::mk_integer(value1 % value2));
     Ok(())
   }
 
@@ -129,7 +129,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 & value2));
+    self.push(Value::mk_integer(value1 & value2));
     Ok(())
   }
 
@@ -138,7 +138,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 | value2));
+    self.push(Value::mk_integer(value1 | value2));
     Ok(())
   }
 
@@ -147,7 +147,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 ^ value2));
+    self.push(Value::mk_integer(value1 ^ value2));
     Ok(())
   }
 
@@ -156,7 +156,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 << value2));
+    self.push(Value::mk_integer(value1 << value2));
     Ok(())
   }
 
@@ -165,7 +165,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Int32 = self.stack.pop().unwrap().into();
     let value1: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value1 >> value2));
+    self.push(Value::mk_integer(value1 >> value2));
     Ok(())
   }
 
@@ -174,7 +174,7 @@ impl Stack {
     self.check_underflow(2)?;
     let rhs = Int32::from(self.stack.pop().unwrap()) as u32;
     let lhs = Int32::from(self.stack.pop().unwrap()) as u32;
-    self.push(Value::Integer((lhs >> rhs) as i32));
+    self.push(Value::mk_integer((lhs >> rhs) as i32));
     Ok(())
   }
 
@@ -182,7 +182,7 @@ impl Stack {
   pub fn ineg(&mut self) -> Result<()> {
     self.check_underflow(1)?;
     let value: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value.wrapping_neg()));
+    self.push(Value::mk_integer(value.wrapping_neg()));
     Ok(())
   }
 
@@ -190,7 +190,7 @@ impl Stack {
   pub fn i2f(&mut self) -> Result<()> {
     self.check_underflow(1)?;
     let value: Int32 = self.stack.pop().unwrap().into();
-    self.push(Value::Float(ordered_float::OrderedFloat(value as f32)));
+    self.push(Value::mk_float(value as f32));
     Ok(())
   }
 
@@ -198,7 +198,7 @@ impl Stack {
   pub fn f2i(&mut self) -> Result<()> {
     self.check_underflow(1)?;
     let value: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::Integer(value.into_inner() as Int32));
+    self.push(Value::mk_integer(value.into_inner() as Int32));
     Ok(())
   }
 
@@ -215,22 +215,24 @@ impl Stack {
       value2 >>= 1;
       value1 *= value1;
     }
-    self.push(Value::Integer(result));
+    self.push(Value::mk_integer(result));
     Ok(())
   }
 
   #[inline(always)]
   pub fn is_zero(&mut self) -> Result<()> {
     self.check_underflow(1)?;
-    match self.stack.pop().unwrap() {
-      Value::Byte(b) => self.stack.push(Value::Byte(if b == 0 { 1 } else { 0 })),
-      Value::Integer(i) => self.stack.push(Value::Integer(if i == 0 { 1 } else { 0 })),
-      Value::Float(f) => self.stack.push(Value::Float(if f.is_normal() {
-        ordered_float::OrderedFloat(1.)
-      } else {
-        ordered_float::OrderedFloat(0.)
-      })),
-      Value::Reference(..) => panic!("Invalid argument"),
+    let value = self.stack.pop().unwrap();
+    match value.tag() {
+      Value::TAG_BYTE => self.stack.push(Value::mk_byte(if value.byte() == 0 { 1 } else { 0 })),
+      Value::TAG_INTEGER => {
+        self.stack.push(Value::mk_integer(if value.integer() == 0 { 1 } else { 0 }))
+      }
+      Value::TAG_FLOAT => {
+        self.stack.push(Value::mk_float(if value.float() == 0. { 1. } else { 0. }))
+      }
+      Value::TAG_REFERENCE => panic!("Invalid argument"),
+      _ => unreachable!(),
     }
     Ok(())
   }
@@ -288,7 +290,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::Float(value1 + value2));
+    self.push(Value::mk_float((value1 + value2).0));
     Ok(())
   }
 
@@ -297,7 +299,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::Float(value1 - value2));
+    self.push(Value::mk_float((value1 - value2).0));
     Ok(())
   }
 
@@ -306,7 +308,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::Float(value1 * value2));
+    self.push(Value::mk_float((value1 * value2).0));
     Ok(())
   }
 
@@ -315,7 +317,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::Float(value1 / value2));
+    self.push(Value::mk_float((value1 / value2).0));
     Ok(())
   }
 
@@ -324,7 +326,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Float32 = self.stack.pop().unwrap().into();
     let value1: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::Float(value1 % value2));
+    self.push(Value::mk_float((value1 % value2).0));
     Ok(())
   }
 
@@ -332,7 +334,7 @@ impl Stack {
   pub fn fneg(&mut self) -> Result<()> {
     self.check_underflow(1)?;
     let value: Float32 = self.stack.pop().unwrap().into();
-    self.push(Value::Float(value.neg()));
+    self.push(Value::mk_float(value.neg().0));
     Ok(())
   }
 
@@ -341,7 +343,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 + value2));
+    self.push(Value::mk_byte(value1 + value2));
     Ok(())
   }
 
@@ -350,7 +352,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 - value2));
+    self.push(Value::mk_byte(value1 - value2));
     Ok(())
   }
 
@@ -359,7 +361,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 * value2));
+    self.push(Value::mk_byte(value1 * value2));
     Ok(())
   }
 
@@ -368,7 +370,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 / value2));
+    self.push(Value::mk_byte(value1 / value2));
     Ok(())
   }
 
@@ -377,7 +379,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 % value2));
+    self.push(Value::mk_byte(value1 % value2));
     Ok(())
   }
 
@@ -386,7 +388,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 & value2));
+    self.push(Value::mk_byte(value1 & value2));
     Ok(())
   }
 
@@ -395,7 +397,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 | value2));
+    self.push(Value::mk_byte(value1 | value2));
     Ok(())
   }
 
@@ -404,7 +406,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 | value2));
+    self.push(Value::mk_byte(value1 | value2));
     Ok(())
   }
 
@@ -413,7 +415,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 << value2));
+    self.push(Value::mk_byte(value1 << value2));
     Ok(())
   }
 
@@ -422,7 +424,7 @@ impl Stack {
     self.check_underflow(2)?;
     let value2: Byte8 = self.stack.pop().unwrap().into();
     let value1: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value1 >> value2));
+    self.push(Value::mk_byte(value1 >> value2));
     Ok(())
   }
 
@@ -430,7 +432,7 @@ impl Stack {
   pub fn bneg(&mut self) -> Result<()> {
     self.check_underflow(1)?;
     let value: Byte8 = self.stack.pop().unwrap().into();
-    self.push(Value::Byte(value.wrapping_neg()));
+    self.push(Value::mk_byte(value.wrapping_neg()));
     Ok(())
   }
 }

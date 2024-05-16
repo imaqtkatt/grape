@@ -9,56 +9,101 @@ pub type Float32 = ordered_float::OrderedFloat<f32>;
 pub type Reference = usize;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Value {
-  Byte(Byte8),
-  Integer(Int32),
-  Float(Float32),
-  Reference(Reference),
+pub struct Value(pub u64);
+
+impl Value {
+  pub const TAG_REFERENCE: u64 = 1;
+  pub const TAG_BYTE: u64 = 1 << 2;
+  pub const TAG_INTEGER: u64 = 1 << 3;
+  pub const TAG_FLOAT: u64 = 1 << 4;
+
+  #[inline(always)]
+  pub fn tag(&self) -> u64 {
+    self.0 >> 32
+  }
+
+  #[inline(always)]
+  pub fn raw(&self) -> u32 {
+    (self.0 & 0xFFFFFFFF) as u32
+  }
+
+  #[inline(always)]
+  pub fn raw_mut(&mut self) -> &mut u64 {
+    &mut self.0
+  }
+
+  #[inline(always)]
+  pub fn mk_reference(r#ref: usize) -> Self {
+    Self(Self::TAG_REFERENCE << 32 | r#ref as u64)
+  }
+
+  #[inline(always)]
+  pub fn mk_byte(byte: u8) -> Self {
+    Self(Self::TAG_BYTE << 32 | byte as u64)
+  }
+
+  #[inline(always)]
+  pub fn mk_integer(integer: i32) -> Self {
+    Self(Self::TAG_INTEGER << 32 | integer as u64)
+  }
+
+  #[inline(always)]
+  pub fn mk_float(float: f32) -> Self {
+    Self(Self::TAG_FLOAT << 32 | float as u64)
+  }
+
+  #[inline(always)]
+  pub fn byte(&self) -> u8 {
+    (self.0 & 0xF) as u8
+  }
+
+  #[inline(always)]
+  pub fn integer(&self) -> i32 {
+    (self.0 & 0xFFFFFFFF) as i32
+  }
+
+  #[inline(always)]
+  pub fn float(&self) -> f32 {
+    (self.0 & 0xFFFFFFFF) as f32
+  }
 }
 
 impl fmt::Debug for Value {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Value::Byte(b) => write!(f, "{b}"),
-      Value::Integer(n) => write!(f, "{n}"),
-      Value::Float(n) => write!(f, "{n}"),
-      Value::Reference(r) => write!(f, "@{r:08x}"),
+    match self.tag() {
+      Self::TAG_REFERENCE => write!(f, "@{:08x}", self.raw()),
+      Self::TAG_BYTE => write!(f, "{}", self.raw()),
+      Self::TAG_INTEGER => write!(f, "{}", self.raw()),
+      Self::TAG_FLOAT => write!(f, "{}", self.raw()),
+      _ => unreachable!(),
     }
   }
 }
 
 impl From<Value> for Byte8 {
   fn from(value: Value) -> Self {
-    match value {
-      Value::Byte(b) => b,
-      other => panic!("Expected byte, found {other:?}"),
-    }
+    assert!(value.tag() == Value::TAG_BYTE);
+    value.raw() as Byte8
   }
 }
 
 impl From<Value> for Int32 {
   fn from(value: Value) -> Self {
-    match value {
-      Value::Integer(i) => i,
-      other => panic!("Expected integer, found {other:?}"),
-    }
+    assert!(value.tag() == Value::TAG_INTEGER);
+    value.raw() as Int32
   }
 }
 
 impl From<Value> for Float32 {
   fn from(value: Value) -> Self {
-    match value {
-      Value::Float(f) => f,
-      other => panic!("Expected float, found {other:?}"),
-    }
+    assert!(value.tag() == Value::TAG_FLOAT);
+    ordered_float::OrderedFloat(value.raw() as f32)
   }
 }
 
 impl From<Value> for Reference {
   fn from(value: Value) -> Self {
-    match value {
-      Value::Reference(r#ref) => r#ref,
-      other => panic!("Expected a reference, found {other:?}"),
-    }
+    assert!(value.tag() == Value::TAG_REFERENCE);
+    value.raw() as Reference
   }
 }

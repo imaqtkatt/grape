@@ -19,7 +19,7 @@ impl Heap {
   pub fn new_object(&mut self) -> Value {
     let r#ref = self.new_ref();
     self.mem.push(Object::Map(ObjMap { fields: Default::default() }));
-    Value::Reference(r#ref)
+    Value::mk_reference(r#ref)
   }
 
   #[inline(always)]
@@ -44,7 +44,7 @@ impl Heap {
   pub fn new_string(&mut self, s: String) -> Value {
     let r#ref = self.new_ref();
     self.mem.push(Object::String(ObjString { contents: s }));
-    Value::Reference(r#ref)
+    Value::mk_reference(r#ref)
   }
 
   #[inline(always)]
@@ -52,9 +52,9 @@ impl Heap {
     let r#ref = self.new_ref();
     self.mem.push(Object::Array(ObjArray {
       len: size as usize,
-      arr: vec![Value::Reference(0); size as usize].into_boxed_slice(),
+      arr: vec![Value::mk_reference(0); size as usize].into_boxed_slice(),
     }));
-    Value::Reference(r#ref)
+    Value::mk_reference(r#ref)
   }
 
   #[inline(always)]
@@ -85,7 +85,7 @@ impl Heap {
   pub fn new_bytes(&mut self, bytes_vec: Vec<u8>) -> Value {
     let r#ref = self.new_ref();
     self.mem.push(Object::Bytes(ObjBytes { bytes: bytes_vec }));
-    Value::Reference(r#ref)
+    Value::mk_reference(r#ref)
   }
 
   #[inline(always)]
