@@ -31,11 +31,11 @@ pub struct Function {
   pub code: Code,
 }
 
-type NativeFn = dyn Fn(&Local, &Heap) -> Option<Value> + 'static + Send + Sync;
+pub type NativeFn = fn(&mut Local, &mut Heap) -> Option<Value>;
 
 pub enum Code {
   Bytecode(Box<[u8]>),
-  Native(Box<NativeFn>),
+  Native(NativeFn),
 }
 
 impl fmt::Debug for Code {
@@ -48,16 +48,13 @@ impl fmt::Debug for Code {
 }
 
 impl Function {
-  pub fn native<NativeFnImpl>(name: &str, id: usize, args: u8, f: NativeFnImpl) -> Self
-  where
-    NativeFnImpl: Fn(&Local, &Heap) -> Option<Value> + 'static + Send + Sync,
-  {
+  pub fn native(name: &str, id: usize, args: u8, f: NativeFn) -> Self {
     Self {
       identifier: id,
       name: Box::from(name),
       locals: args as u16,
       arguments: args,
-      code: Code::Native(Box::new(f)),
+      code: Code::Native(f),
     }
   }
 }

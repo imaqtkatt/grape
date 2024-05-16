@@ -23,26 +23,30 @@ pub mod stack;
 pub mod value;
 pub mod write_bytes;
 
-use clap::Parser;
-
-#[derive(Parser)]
-#[command(version, about, long_about = None)]
-struct Cli {
-  /// Name of the entrypoint module.
-  #[arg(long)]
-  entrypoint: Option<String>,
-
-  /// Load modules eagerly before running.
-  #[arg(long)]
-  eager: bool,
-}
-
 #[rustfmt::skip]
 fn run() -> Result<()> {
+  let matches = clap::Command::new("grape")
+    .about("Grape Virtual Machine")
+    .arg(
+      clap::Arg::new("eager")
+        .help("Load modules eagerly before running")
+        .required(false)
+        .long("eager")
+        .action(clap::ArgAction::SetTrue)
+    )
+    .arg(
+      clap::Arg::new("entrypoint")
+        .help("Name of the entrypoint module")
+        .required(false)
+        .long("entrypoint")
+        .default_value(None)
+    )
+    .get_matches();
+
   // let mut f = std::fs::File::options().append(true).create(true).open("main.grape").unwrap();
   // main.write(&mut f).unwrap();
 
-  let args = Cli::parse();
+  // let args = Cli::parse();
 
   let ctx_arena = ContextArena::default();
   let ctx = &mut Context::new(&ctx_arena);
@@ -52,8 +56,8 @@ fn run() -> Result<()> {
   // ctx.add_module(main_float())?;
 
   let mut runtime = Runtime::boot(BootOptions {
-    eager: args.eager,
-    entrypoint_module: args.entrypoint,
+    eager: matches.get_flag("eager"),
+    entrypoint_module: matches.get_one("entrypoint").map(|e: &String| e.to_string()),
     context: ctx,
   })?;
   if let Err(e) = runtime.run() {
@@ -76,7 +80,7 @@ fn main_float() -> module::Module {
   ModuleBuilder::new()
     .with_name("main")
     .with_constant(PoolEntry::Module("std:out".to_string()))
-    .with_constant(PoolEntry::Float(3.14))
+    .with_constant(PoolEntry::Float(std::f32::consts::PI))
     .with_constant(PoolEntry::Float(5.))
     .with_function(
       FunctionBuilder::new()

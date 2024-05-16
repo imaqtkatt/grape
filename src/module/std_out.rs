@@ -2,22 +2,22 @@ use crate::{formatting, function::Function, heap, local, value};
 
 use super::{builder::ModuleBuilder, Module};
 
-fn println(local: &local::Local, heap: &heap::Heap) -> Option<value::Value> {
+fn println(local: &mut local::Local, heap: &mut heap::Heap) -> Option<value::Value> {
   println!("{}", formatting::display_value(&local.load_0(), heap));
   None
 }
 
-fn print(local: &local::Local, heap: &heap::Heap) -> Option<value::Value> {
+fn print(local: &mut local::Local, heap: &mut heap::Heap) -> Option<value::Value> {
   print!("{}", formatting::display_value(&local.load_0(), heap));
   None
 }
 
-fn debug(local: &local::Local, _: &heap::Heap) -> Option<value::Value> {
+fn debug(local: &mut local::Local, _: &mut heap::Heap) -> Option<value::Value> {
   println!("{:?}", local.load_0());
   None
 }
 
-fn eprintln(local: &local::Local, heap: &heap::Heap) -> Option<value::Value> {
+fn eprintln(local: &mut local::Local, heap: &mut heap::Heap) -> Option<value::Value> {
   eprintln!("{}", formatting::display_value(&local.load_0(), heap));
   None
 }

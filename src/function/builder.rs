@@ -1,6 +1,4 @@
-use crate::{heap::Heap, local::Local, value::Value};
-
-use super::{Code, Function};
+use super::{Code, Function, NativeFn};
 
 #[derive(Default)]
 pub struct FunctionBuilder {
@@ -37,11 +35,8 @@ impl FunctionBuilder {
     self
   }
 
-  pub fn with_native<NativeFnImpl>(mut self, native: NativeFnImpl) -> Self
-  where
-    NativeFnImpl: Fn(&Local, &Heap) -> Option<Value> + 'static + Send + Sync,
-  {
-    self.code = Some(Code::Native(Box::new(native)));
+  pub fn with_native(mut self, native: NativeFn) -> Self {
+    self.code = Some(Code::Native(native));
     self
   }
 

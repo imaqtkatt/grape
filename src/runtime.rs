@@ -1,6 +1,7 @@
 pub mod stack_trace;
 
 use core::fmt;
+use std::cell::RefCell;
 
 use crate::{
   context::Context,
@@ -14,7 +15,7 @@ use crate::{
 };
 
 pub struct Runtime<'c> {
-  ip: std::cell::RefCell<usize>,
+  ip: RefCell<usize>,
   ctx: &'c mut Context<'c>,
   local: Local,
   module: &'c Module,
@@ -29,7 +30,7 @@ pub trait RuntimeVisitor {
 }
 
 struct Frame<'c> {
-  return_address: std::cell::RefCell<usize>,
+  return_address: RefCell<usize>,
   local_frame: usize,
   module: &'c Module,
   function: &'c Function,
@@ -59,7 +60,7 @@ impl<'c> Runtime<'c> {
     function: &'c Function,
   ) -> Self {
     Self {
-      ip: std::cell::RefCell::new(IP_INIT),
+      ip: RefCell::new(IP_INIT),
       ctx,
       local,
       module,
@@ -107,7 +108,7 @@ impl<'c> Runtime<'c> {
     }
 
     self.call_stack.push(Frame {
-      return_address: std::mem::replace(&mut self.ip, std::cell::RefCell::new(IP_INIT)),
+      return_address: std::mem::replace(&mut self.ip, RefCell::new(IP_INIT)),
       local_frame: frame,
       module: std::mem::replace(&mut self.module, module),
       function: std::mem::replace(&mut self.function, function),
@@ -120,7 +121,7 @@ impl<'c> Runtime<'c> {
     loop {
       match self.function.code {
         Code::Native(ref native) => {
-          if let Some(value) = native(&self.local, &self.heap) {
+          if let Some(value) = native(&mut self.local, &mut self.heap) {
             self.stack.push(value);
           }
           self.pop_frame();

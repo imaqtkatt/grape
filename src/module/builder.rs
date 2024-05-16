@@ -31,10 +31,11 @@ impl ModuleBuilder {
   }
 
   pub fn build(self) -> Module {
-    Module {
-      name: std::rc::Rc::from(self.name),
-      constants: self.constants,
-      functions: self.functions,
+    let mut functions = Vec::with_capacity(self.functions.len());
+    for function in self.functions {
+      let id = function.identifier;
+      functions.insert(id, function);
     }
+    Module { name: std::rc::Rc::from(self.name), constants: self.constants, functions }
   }
 }
