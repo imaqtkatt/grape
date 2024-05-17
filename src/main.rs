@@ -25,8 +25,9 @@ pub mod write_bytes;
 
 #[rustfmt::skip]
 fn run() -> Result<()> {
-  let matches = clap::Command::new("grape")
+  let matches = clap::Command::new("gvm")
     .about("Grape Virtual Machine")
+    .version("0.1.0")
     .arg(
       clap::Arg::new("eager")
         .help("Load modules eagerly before running")
@@ -50,7 +51,12 @@ fn run() -> Result<()> {
 
   let ctx_arena = ContextArena::default();
   let ctx = &mut Context::new(&ctx_arena);
-  ctx.add_module(module::std_out::module())?;
+  {
+    ctx.add_module(module::std_out::module())?;
+    ctx.add_module(module::file::module())?;
+  }
+  // ctx.add_module(module_test_file())?;
+  // ctx.add_module(main_module())?;
   // ctx.add_module(main_tailcall())?;
   // ctx.add_module(main_bytes())?;
   // ctx.add_module(main_float())?;
@@ -231,7 +237,7 @@ fn main_module() -> module::Module {
         .with_locals(2)
         .with_arguments(0)
         .with_bytecode(&[
-          PUSH_BYTE, 2,
+          I_PUSH_BYTE, 2,
           NEW_ARRAY,
           STORE_0,
           LOAD_0,
@@ -253,7 +259,7 @@ fn main_module() -> module::Module {
           CALL, 0, 2, 0, 0, // std:out:print
           LOADCONST, 4, // "iter fib(35):"
           CALL, 0, 2, 0, 0, // std:out:print
-          PUSH_BYTE, 35,
+          I_PUSH_BYTE, 35,
           CALL, 0, 0, 0, 3, // fib2
           CALL, 0, 2, 0, 0, // std:out:print
           HALT,
@@ -292,7 +298,7 @@ fn main_module() -> module::Module {
           ISUB,
           CALL, 0, 0, 0, 2, // main:fib(n - 1)
           LOAD_0,
-          PUSH_BYTE, 2,
+          I_PUSH_BYTE, 2,
           ISUB,
           CALL, 0, 0, 0, 2, // main:fib(n - 2)
           IADD,
@@ -346,6 +352,33 @@ fn main_module() -> module::Module {
           RETURN,
         ])
         .build(),
+    )
+    .build()
+}
+
+#[rustfmt::skip]
+#[allow(unused)]
+fn module_test_file() -> module::Module {
+  ModuleBuilder::new()
+    .with_name("main")
+    .with_constant(PoolEntry::String("main.wine".to_string()))
+    .with_constant(PoolEntry::Module("file".to_string()))
+    .with_constant(PoolEntry::Module("std:out".to_string()))
+    .with_function(
+      FunctionBuilder::new()
+        .with_name_and_identifier("main", 0)
+        .with_arguments(0)
+        .with_locals(0)
+        .with_bytecode(&[
+          LOADCONST, 1,
+          CALL, 0, 2, 0, 0, // file:read_to_string
+          CALL, 0, 3, 0, 0, // std:out:println
+          LOADCONST, 1,
+          CALL, 0, 2, 0, 1, // file:read_to_bytes
+          CALL, 0, 3, 0, 0, // std:out:println
+          HALT,
+        ])
+        .build()
     )
     .build()
 }

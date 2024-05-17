@@ -1,25 +1,30 @@
-use crate::{formatting, function::Function, heap, local, value};
+use crate::{
+  formatting,
+  function::{Function, NativeRet},
+  heap::Heap,
+  local::Local,
+};
 
 use super::{builder::ModuleBuilder, Module};
 
-fn println(local: &mut local::Local, heap: &mut heap::Heap) -> Option<value::Value> {
+fn println(local: &mut Local, heap: &mut Heap) -> NativeRet {
   println!("{}", formatting::display_value(&local.load_0(), heap));
-  None
+  Ok(None)
 }
 
-fn print(local: &mut local::Local, heap: &mut heap::Heap) -> Option<value::Value> {
+fn print(local: &mut Local, heap: &mut Heap) -> NativeRet {
   print!("{}", formatting::display_value(&local.load_0(), heap));
-  None
+  Ok(None)
 }
 
-fn debug(local: &mut local::Local, _: &mut heap::Heap) -> Option<value::Value> {
+fn debug(local: &mut Local, _: &mut Heap) -> NativeRet {
   println!("{:?}", local.load_0());
-  None
+  Ok(None)
 }
 
-fn eprintln(local: &mut local::Local, heap: &mut heap::Heap) -> Option<value::Value> {
+fn eprintln(local: &mut Local, heap: &mut Heap) -> NativeRet {
   eprintln!("{}", formatting::display_value(&local.load_0(), heap));
-  None
+  Ok(None)
 }
 
 pub fn module() -> Module {

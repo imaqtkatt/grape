@@ -2,8 +2,9 @@ pub mod builder;
 pub mod read;
 pub mod write;
 
-use crate::{heap::Heap, local::Local, value::Value};
 use core::fmt;
+
+use crate::{heap::Heap, local::Local, runtime::Result, value::Value};
 
 /// Bytecode Function representation.
 ///
@@ -31,7 +32,8 @@ pub struct Function {
   pub code: Code,
 }
 
-pub type NativeFn = fn(&mut Local, &mut Heap) -> Option<Value>;
+pub type NativeRet = Result<Option<Value>>;
+pub type NativeFn = fn(&mut Local, &mut Heap) -> NativeRet;
 
 pub enum Code {
   Bytecode(Box<[u8]>),

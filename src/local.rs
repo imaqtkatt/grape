@@ -50,6 +50,7 @@ impl Local {
     self.load(3)
   }
 
+  #[inline(always)]
   pub fn iinc(&mut self, index: usize, inc: i32) {
     let value = &mut self.local[self.base + index];
     assert!(value.tag() == Value::TAG_INTEGER);

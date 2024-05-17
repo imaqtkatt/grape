@@ -1,4 +1,5 @@
 pub mod builder;
+pub mod file;
 pub mod read;
 pub mod std_out;
 pub mod write;

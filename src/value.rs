@@ -71,6 +71,7 @@ impl Value {
   }
 
   #[inline(always)]
+  #[allow(clippy::missing_safety_doc)]
   pub unsafe fn integer_mut(&mut self) -> &mut i32 {
     &mut *(&mut self.0 as *mut u64 as *mut i32)
   }

@@ -121,7 +121,7 @@ impl<'c> Runtime<'c> {
     loop {
       match self.function.code {
         Code::Native(ref native) => {
-          if let Some(value) = native(&mut self.local, &mut self.heap) {
+          if let Some(value) = native(&mut self.local, &mut self.heap)? {
             self.stack.push(value);
           }
           self.pop_frame();
