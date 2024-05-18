@@ -19,16 +19,16 @@ impl Value {
   pub const TAG_INTEGER: u64 = 1 << 3;
   pub const TAG_FLOAT: u64 = 1 << 4;
 
-  const REFERENCE: u64 = 0x0000_0001_0000_0000;
-  const BYTE: u64 = 0x0000_0004_0000_0000;
-  const INTEGER: u64 = 0x0000_0008_0000_0000;
-  const FLOAT: u64 = 0x0000_0010_0000_0000;
+  const REFERENCE: u64 = 0x0001_0000_0000_0000;
+  const BYTE: u64 = 0x0004_0000_0000_0000;
+  const INTEGER: u64 = 0x0008_0000_0000_0000;
+  const FLOAT: u64 = 0x0010_0000_0000_0000;
 
   pub const NULL: Value = Self(Self::REFERENCE);
 
   #[inline(always)]
   pub const fn tag(&self) -> u64 {
-    self.0 >> 32
+    self.0 >> 48
   }
 
   #[inline(always)]
@@ -37,8 +37,8 @@ impl Value {
   }
 
   #[inline(always)]
-  pub const fn raw(&self) -> u32 {
-    (self.0 & 0xFFFF_FFFF) as u32
+  pub const fn raw(&self) -> u64 {
+    self.0 & 0xFFFF_FFFF_FFFF
   }
 
   #[inline(always)]
@@ -86,12 +86,17 @@ impl Value {
   pub fn float(&self) -> f32 {
     f32::from_bits((self.0 & 0xFFFF_FFFF) as u32)
   }
+
+  #[inline(always)]
+  pub fn reference(&self) -> Reference {
+    (self.0 & 0xFFFF_FFFF_FFFF) as Reference
+  }
 }
 
 impl fmt::Debug for Value {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.tag() {
-      Self::TAG_REFERENCE => write!(f, "@{:08x}", self.raw()),
+      Self::TAG_REFERENCE => write!(f, "@{:012x}", self.reference()),
       Self::TAG_BYTE => write!(f, "{}", self.byte()),
       Self::TAG_INTEGER => write!(f, "{}", self.integer()),
       Self::TAG_FLOAT => write!(f, "{}", self.float()),

@@ -1,13 +1,11 @@
+pub mod gc;
+
 use std::{
   cell::Cell,
   collections::{BTreeMap, BTreeSet, HashSet},
 };
 
-use crate::{
-  local::Local,
-  stack::Stack,
-  value::{Reference, Value},
-};
+use crate::value::{Reference, Value};
 
 pub const HEAP_MEMORY: usize = 0xFFFF;
 
@@ -18,48 +16,6 @@ pub struct Heap {
 }
 
 impl Heap {
-  pub fn gc(&mut self, local: &Local, stack: &Stack) {
-    for item in stack.iter() {
-      if item.is_reference_non_null() {
-        *self.memory[item.raw() as Reference].marked.get_mut() = true;
-      }
-    }
-
-    for item in local.iter() {
-      if item.is_reference_non_null() {
-        let got = &mut self.memory[item.raw() as Reference];
-        *got.marked.get_mut() = true;
-        let mut refs = got.value.refs();
-        while let Some(r#ref) = refs.pop_first() {
-          let got = &mut self.memory[r#ref];
-          *got.marked.get_mut() = true;
-          let value_refs = got.value.refs();
-          refs.extend(value_refs);
-        }
-      }
-    }
-
-    let mut to_free = Vec::new();
-    for i in 1..self.memory.len() {
-      let obj = &mut self.memory[i];
-      if !obj.marked.get() && self.free.insert(i) {
-        to_free.push(i);
-      } else {
-        *obj.marked.get_mut() = false;
-      }
-    }
-
-    if to_free.is_empty() {
-      return;
-    }
-
-    for r#ref in dbg!(to_free) {
-      println!("Freed {:?}", self.memory.get(r#ref));
-      self.freed.push(r#ref);
-      self.memory[r#ref] = Obj2::new(Object::Null);
-    }
-  }
-
   pub fn new() -> Self {
     let mut memory = vec![Obj2::marked(Object::Null)];
     memory.reserve_exact(HEAP_MEMORY);
@@ -178,20 +134,6 @@ pub enum Object {
   Bytes(ObjBytes),
 }
 
-impl Object {
-  pub fn refs(&self) -> BTreeSet<Reference> {
-    match self {
-      Object::String(_) | Object::Null | Object::Bytes(_) => BTreeSet::new(),
-      Object::Map(_) => todo!(),
-      Object::Array(arr) => arr
-        .arr
-        .iter()
-        .filter_map(|v| if v.is_reference_non_null() { Some(v.raw() as Reference) } else { None })
-        .collect(),
-    }
-  }
-}
-
 #[derive(Debug)]
 pub struct ObjString {
   pub contents: String,
@@ -215,5 +157,30 @@ pub struct ObjBytes {
 impl Default for Heap {
   fn default() -> Self {
     Self::new()
+  }
+}
+
+impl Object {
+  pub fn refs(&self) -> BTreeSet<Reference> {
+    match self {
+      Object::Null | Object::String(..) | Object::Bytes(..) => BTreeSet::new(),
+      Object::Map(map) => {
+        let mut set = BTreeSet::new();
+        for (key, value) in map.fields.iter() {
+          if key.is_reference_non_null() {
+            set.insert(key.reference());
+          }
+          if value.is_reference_non_null() {
+            set.insert(value.reference());
+          }
+        }
+        set
+      }
+      Object::Array(arr) => arr
+        .arr
+        .iter()
+        .filter_map(|v| if v.is_reference_non_null() { Some(v.reference()) } else { None })
+        .collect(),
+    }
   }
 }

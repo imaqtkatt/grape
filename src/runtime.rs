@@ -46,6 +46,7 @@ impl fmt::Debug for Frame<'_> {
 const STACK_INIT: usize = 0x800;
 const MAIN: &str = "main";
 const IP_INIT: usize = 0;
+const GC_TICK: usize = 100_000_000;
 
 pub struct BootOptions<'c> {
   pub eager: bool,
@@ -123,17 +124,16 @@ impl<'c> Runtime<'c> {
     loop {
       let tick = self.tick.get_mut();
       *tick += 1;
-      // if *tick == 3 {
-      //   *tick = 0;
-      //   self.heap.gc(&self.local, &self.stack);
-      // }
+      if *tick == GC_TICK {
+        *tick = 0;
+        self.heap.gc(&self.local, &self.stack);
+      }
       match self.function.code {
         Code::Native(ref native) => {
           if let Some(value) = native(&mut self.local, &mut self.heap)? {
             self.stack.push(value);
           }
           self.pop_frame();
-          self.heap.gc(&self.local, &self.stack);
         }
         Code::Bytecode(ref program) => {
           let instruction = self.fetch(program);
@@ -144,7 +144,6 @@ impl<'c> Runtime<'c> {
 
             opcode::RETURN => {
               self.pop_frame();
-              self.heap.gc(&self.local, &self.stack);
             }
 
             opcode::ICONST_0 => self.stack.iconst_0(),
