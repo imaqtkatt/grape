@@ -4,17 +4,19 @@ use super::{Heap, Obj2, Object};
 
 impl Heap {
   pub fn gc(&mut self, local: &Local, stack: &Stack) {
-    for item in stack.iter() {
-      if item.is_reference_non_null() {
-        *self.memory[item.reference()].marked.get_mut() = true;
+    for value in stack.iter() {
+      if value.is_reference_non_null() {
+        *self.memory[value.reference()].marked.get_mut() = true;
       }
     }
 
-    for item in local.iter() {
-      if item.is_reference_non_null() {
-        let got = &mut self.memory[item.reference()];
+    for value in local.iter() {
+      if value.is_reference_non_null() {
+        let got = &mut self.memory[value.reference()];
         *got.marked.get_mut() = true;
+
         let mut refs = got.value.refs();
+
         while let Some(r#ref) = refs.pop_first() {
           let got = &mut self.memory[r#ref];
           *got.marked.get_mut() = true;

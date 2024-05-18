@@ -8,4 +8,4 @@
 
 - **Cross-Platform**: Made with Rust, works on a wide range of platforms like Linux, macOS and Windows.
 
-- **Memory Management**: ~~Includes~~ a memory management system to efficiently allocate and deallocate memory as needed during program execution.
+- **Memory Management**: Includes a memory management system to efficiently allocate and deallocate memory as needed during program execution.
