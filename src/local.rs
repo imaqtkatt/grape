@@ -1,14 +1,20 @@
+use std::slice::Iter;
+
 use crate::value::Value;
 
 #[derive(Debug)]
 pub struct Local {
-  local: Vec<Value>,
+  pub local: Vec<Value>,
   base: usize,
 }
 
 impl Local {
   pub fn new(capacity: usize) -> Self {
     Self { local: vec![Value::mk_integer(0); capacity], base: 0 }
+  }
+
+  pub fn iter(&self) -> Iter<Value> {
+    self.local.iter()
   }
 
   pub fn push_frame(&mut self, size: usize) -> usize {

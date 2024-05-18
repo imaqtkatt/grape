@@ -23,6 +23,7 @@ pub struct Runtime<'c> {
   heap: Heap,
   stack: Stack,
   call_stack: Vec<Frame<'c>>,
+  tick: RefCell<usize>,
 }
 
 pub trait RuntimeVisitor {
@@ -68,6 +69,7 @@ impl<'c> Runtime<'c> {
       heap: Heap::new(),
       stack: Stack::new(STACK_INIT),
       call_stack: Vec::new(),
+      tick: RefCell::new(0),
     }
   }
 
@@ -119,6 +121,12 @@ impl<'c> Runtime<'c> {
 
   pub fn run(&mut self) -> Result<()> {
     loop {
+      let tick = self.tick.get_mut();
+      *tick += 1;
+      if *tick == 3 {
+        *tick = 0;
+        self.heap.gc(&self.local, &self.stack);
+      }
       match self.function.code {
         Code::Native(ref native) => {
           if let Some(value) = native(&mut self.local, &mut self.heap)? {

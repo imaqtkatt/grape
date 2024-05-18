@@ -6,34 +6,32 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct Stack {
-  pub stack: Vec<Value>,
-}
+pub struct Stack(pub Vec<Value>);
 
 impl Stack {
   #[inline(always)]
   pub fn new(capacity: usize) -> Self {
-    Self { stack: Vec::with_capacity(capacity) }
+    Self(Vec::with_capacity(capacity))
   }
 
   #[inline(always)]
   pub fn push(&mut self, value: Value) {
-    self.stack.push(value);
+    self.0.push(value);
   }
 
   #[inline(always)]
   pub fn pop(&mut self) -> Result<Value> {
-    self.stack.pop().ok_or(Error::StackUnderflow)
+    self.0.pop().ok_or(Error::StackUnderflow)
   }
 
   #[inline(always)]
   pub fn pop_unchecked(&mut self) -> Value {
-    self.stack.pop().unwrap()
+    self.0.pop().unwrap()
   }
 
   #[inline(always)]
   pub fn check_underflow(&self, len: usize) -> Result<()> {
-    if self.stack.len() < len {
+    if self.0.len() < len {
       Err(Error::StackUnderflow)
     } else {
       Ok(())
@@ -43,7 +41,7 @@ impl Stack {
   #[inline(always)]
   pub fn dup(&mut self) -> Result<()> {
     self.check_underflow(1)?;
-    let value = self.stack.pop().unwrap();
+    let value = self.pop_unchecked();
     self.push(value);
     self.push(value);
     Ok(())
@@ -82,8 +80,8 @@ impl Stack {
   #[inline(always)]
   pub fn iadd(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 + value2));
     Ok(())
   }
@@ -91,8 +89,8 @@ impl Stack {
   #[inline(always)]
   pub fn isub(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 - value2));
     Ok(())
   }
@@ -100,8 +98,8 @@ impl Stack {
   #[inline(always)]
   pub fn imul(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 * value2));
     Ok(())
   }
@@ -109,8 +107,8 @@ impl Stack {
   #[inline(always)]
   pub fn idiv(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 / value2));
     Ok(())
   }
@@ -118,8 +116,8 @@ impl Stack {
   #[inline(always)]
   pub fn irem(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 % value2));
     Ok(())
   }
@@ -127,8 +125,8 @@ impl Stack {
   #[inline(always)]
   pub fn iand(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 & value2));
     Ok(())
   }
@@ -136,8 +134,8 @@ impl Stack {
   #[inline(always)]
   pub fn ior(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 | value2));
     Ok(())
   }
@@ -145,8 +143,8 @@ impl Stack {
   #[inline(always)]
   pub fn ixor(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 ^ value2));
     Ok(())
   }
@@ -154,8 +152,8 @@ impl Stack {
   #[inline(always)]
   pub fn ishl(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 << value2));
     Ok(())
   }
@@ -163,8 +161,8 @@ impl Stack {
   #[inline(always)]
   pub fn ishr(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value1 >> value2));
     Ok(())
   }
@@ -172,8 +170,8 @@ impl Stack {
   #[inline(always)]
   pub fn iushr(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let rhs = Int32::from(self.stack.pop().unwrap()) as u32;
-    let lhs = Int32::from(self.stack.pop().unwrap()) as u32;
+    let rhs = Int32::from(self.pop_unchecked()) as u32;
+    let lhs = Int32::from(self.pop_unchecked()) as u32;
     self.push(Value::mk_integer((lhs >> rhs) as i32));
     Ok(())
   }
@@ -181,7 +179,7 @@ impl Stack {
   #[inline(always)]
   pub fn ineg(&mut self) -> Result<()> {
     self.check_underflow(1)?;
-    let value: Int32 = self.stack.pop().unwrap().into();
+    let value: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value.wrapping_neg()));
     Ok(())
   }
@@ -189,7 +187,7 @@ impl Stack {
   #[inline(always)]
   pub fn i2f(&mut self) -> Result<()> {
     self.check_underflow(1)?;
-    let value: Int32 = self.stack.pop().unwrap().into();
+    let value: Int32 = self.pop_unchecked().into();
     self.push(Value::mk_float(value as f32));
     Ok(())
   }
@@ -197,7 +195,7 @@ impl Stack {
   #[inline(always)]
   pub fn f2i(&mut self) -> Result<()> {
     self.check_underflow(1)?;
-    let value: Float32 = self.stack.pop().unwrap().into();
+    let value: Float32 = self.pop_unchecked().into();
     self.push(Value::mk_integer(value as Int32));
     Ok(())
   }
@@ -205,8 +203,8 @@ impl Stack {
   #[inline(always)]
   pub fn iexp(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let mut value2: Int32 = self.stack.pop().unwrap().into();
-    let mut value1: Int32 = self.stack.pop().unwrap().into();
+    let mut value2: Int32 = self.pop_unchecked().into();
+    let mut value1: Int32 = self.pop_unchecked().into();
     let mut result: Int32 = 1;
     while value2 != 0 {
       if value2 & 1 == 1 {
@@ -222,15 +220,13 @@ impl Stack {
   #[inline(always)]
   pub fn is_zero(&mut self) -> Result<()> {
     self.check_underflow(1)?;
-    let value = self.stack.pop().unwrap();
+    let value = self.pop_unchecked();
     match value.tag() {
-      Value::TAG_BYTE => self.stack.push(Value::mk_byte(if value.byte() == 0 { 1 } else { 0 })),
+      Value::TAG_BYTE => self.0.push(Value::mk_byte(if value.byte() == 0 { 1 } else { 0 })),
       Value::TAG_INTEGER => {
-        self.stack.push(Value::mk_integer(if value.integer() == 0 { 1 } else { 0 }))
+        self.0.push(Value::mk_integer(if value.integer() == 0 { 1 } else { 0 }))
       }
-      Value::TAG_FLOAT => {
-        self.stack.push(Value::mk_float(if value.float() == 0. { 1. } else { 0. }))
-      }
+      Value::TAG_FLOAT => self.0.push(Value::mk_float(if value.float() == 0. { 1. } else { 0. })),
       Value::TAG_REFERENCE => panic!("Invalid argument"),
       _ => unreachable!(),
     }
@@ -240,56 +236,56 @@ impl Stack {
   #[inline(always)]
   pub fn ifeq(&mut self) -> Result<bool> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     Ok(value1 == value2)
   }
 
   #[inline(always)]
   pub fn ifneq(&mut self) -> Result<bool> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     Ok(value1 != value2)
   }
 
   #[inline(always)]
   pub fn ifgt(&mut self) -> Result<bool> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     Ok(value1 > value2)
   }
 
   #[inline(always)]
   pub fn ifge(&mut self) -> Result<bool> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     Ok(value1 >= value2)
   }
 
   #[inline(always)]
   pub fn iflt(&mut self) -> Result<bool> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     Ok(value1 < value2)
   }
 
   #[inline(always)]
   pub fn ifle(&mut self) -> Result<bool> {
     self.check_underflow(2)?;
-    let value2: Int32 = self.stack.pop().unwrap().into();
-    let value1: Int32 = self.stack.pop().unwrap().into();
+    let value2: Int32 = self.pop_unchecked().into();
+    let value1: Int32 = self.pop_unchecked().into();
     Ok(value1 <= value2)
   }
 
   #[inline(always)]
   pub fn fadd(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Float32 = self.stack.pop().unwrap().into();
-    let value1: Float32 = self.stack.pop().unwrap().into();
+    let value2: Float32 = self.pop_unchecked().into();
+    let value1: Float32 = self.pop_unchecked().into();
     self.push(Value::mk_float(value1 + value2));
     Ok(())
   }
@@ -297,8 +293,8 @@ impl Stack {
   #[inline(always)]
   pub fn fsub(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Float32 = self.stack.pop().unwrap().into();
-    let value1: Float32 = self.stack.pop().unwrap().into();
+    let value2: Float32 = self.pop_unchecked().into();
+    let value1: Float32 = self.pop_unchecked().into();
     self.push(Value::mk_float(value1 - value2));
     Ok(())
   }
@@ -306,8 +302,8 @@ impl Stack {
   #[inline(always)]
   pub fn fmul(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Float32 = self.stack.pop().unwrap().into();
-    let value1: Float32 = self.stack.pop().unwrap().into();
+    let value2: Float32 = self.pop_unchecked().into();
+    let value1: Float32 = self.pop_unchecked().into();
     self.push(Value::mk_float(value1 * value2));
     Ok(())
   }
@@ -315,8 +311,8 @@ impl Stack {
   #[inline(always)]
   pub fn fdiv(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Float32 = self.stack.pop().unwrap().into();
-    let value1: Float32 = self.stack.pop().unwrap().into();
+    let value2: Float32 = self.pop_unchecked().into();
+    let value1: Float32 = self.pop_unchecked().into();
     self.push(Value::mk_float(value1 / value2));
     Ok(())
   }
@@ -324,8 +320,8 @@ impl Stack {
   #[inline(always)]
   pub fn frem(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Float32 = self.stack.pop().unwrap().into();
-    let value1: Float32 = self.stack.pop().unwrap().into();
+    let value2: Float32 = self.pop_unchecked().into();
+    let value1: Float32 = self.pop_unchecked().into();
     self.push(Value::mk_float(value1 % value2));
     Ok(())
   }
@@ -333,7 +329,7 @@ impl Stack {
   #[inline(always)]
   pub fn fneg(&mut self) -> Result<()> {
     self.check_underflow(1)?;
-    let value: Float32 = self.stack.pop().unwrap().into();
+    let value: Float32 = self.pop_unchecked().into();
     self.push(Value::mk_float(value.neg()));
     Ok(())
   }
@@ -341,8 +337,8 @@ impl Stack {
   #[inline(always)]
   pub fn badd(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 + value2));
     Ok(())
   }
@@ -350,8 +346,8 @@ impl Stack {
   #[inline(always)]
   pub fn bsub(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 - value2));
     Ok(())
   }
@@ -359,8 +355,8 @@ impl Stack {
   #[inline(always)]
   pub fn bmul(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 * value2));
     Ok(())
   }
@@ -368,8 +364,8 @@ impl Stack {
   #[inline(always)]
   pub fn bdiv(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 / value2));
     Ok(())
   }
@@ -377,8 +373,8 @@ impl Stack {
   #[inline(always)]
   pub fn brem(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 % value2));
     Ok(())
   }
@@ -386,8 +382,8 @@ impl Stack {
   #[inline(always)]
   pub fn band(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 & value2));
     Ok(())
   }
@@ -395,8 +391,8 @@ impl Stack {
   #[inline(always)]
   pub fn bor(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 | value2));
     Ok(())
   }
@@ -404,8 +400,8 @@ impl Stack {
   #[inline(always)]
   pub fn bxor(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 | value2));
     Ok(())
   }
@@ -413,8 +409,8 @@ impl Stack {
   #[inline(always)]
   pub fn bshl(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 << value2));
     Ok(())
   }
@@ -422,8 +418,8 @@ impl Stack {
   #[inline(always)]
   pub fn bshr(&mut self) -> Result<()> {
     self.check_underflow(2)?;
-    let value2: Byte8 = self.stack.pop().unwrap().into();
-    let value1: Byte8 = self.stack.pop().unwrap().into();
+    let value2: Byte8 = self.pop_unchecked().into();
+    let value1: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value1 >> value2));
     Ok(())
   }
@@ -431,7 +427,7 @@ impl Stack {
   #[inline(always)]
   pub fn bneg(&mut self) -> Result<()> {
     self.check_underflow(1)?;
-    let value: Byte8 = self.stack.pop().unwrap().into();
+    let value: Byte8 = self.pop_unchecked().into();
     self.push(Value::mk_byte(value.wrapping_neg()));
     Ok(())
   }

@@ -55,6 +55,7 @@ fn run() -> Result<()> {
     ctx.add_module(module::std_out::module())?;
     ctx.add_module(module::file::module())?;
   }
+  ctx.add_module(main_sla())?;
   // ctx.add_module(module_test_file())?;
   // ctx.add_module(main_module())?;
   // ctx.add_module(main_tailcall())?;
@@ -78,6 +79,53 @@ fn main() {
   if let Err(e) = run() {
     eprintln!("{e}");
   }
+}
+
+#[rustfmt::skip]
+#[allow(unused)]
+fn main_sla() -> module::Module {
+  ModuleBuilder::new()
+    .with_name("main")
+    .with_constant(PoolEntry::String("Hello, World".to_string()))
+    .with_constant(PoolEntry::Module("std:out".to_string()))
+    .with_function(
+      FunctionBuilder::new()
+        .with_name_and_identifier("main", 0)
+        .with_arguments(0)
+        .with_locals(1)
+        .with_bytecode(&[
+          LOADCONST, 1,
+          STORE_0,
+          CALL, 0, 0, 0, 1,
+          LOAD_0,
+          CALL, 0, 2, 0, 0,
+          ICONST_0,
+          ICONST_0,
+          IADD,
+          POP,
+          LOAD_0,
+          CALL, 0, 2, 0, 0,
+          HALT,
+        ])
+        .build()
+    )
+    .with_function(
+      FunctionBuilder::new()
+        .with_name_and_identifier("allocs_string", 1)
+        .with_arguments(0)
+        .with_locals(1)
+        .with_bytecode(&[
+          LOADCONST, 1,
+          STORE_0,
+          ICONST_0,
+          ICONST_0,
+          IADD,
+          POP,
+          RETURN,
+        ])
+        .build()
+    )
+    .build()
 }
 
 #[rustfmt::skip]

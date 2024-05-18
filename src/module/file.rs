@@ -12,7 +12,7 @@ use super::{builder::ModuleBuilder, Module};
 
 fn read_to_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
   let file_string: Reference = local.load_0().into();
-  let Object::String(ObjString { contents: path }) = heap.get(file_string) else {
+  let Object::String(ObjString { contents: path }) = &*heap.get(file_string).value else {
     panic!();
   };
   let mut file = fs::File::open(path).map_err(Error::other)?;
@@ -23,7 +23,7 @@ fn read_to_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
 
 fn read_to_bytes(local: &mut Local, heap: &mut Heap) -> NativeRet {
   let file_string: Reference = local.load_0().into();
-  let Object::String(ObjString { contents: path }) = heap.get(file_string) else {
+  let Object::String(ObjString { contents: path }) = &*heap.get(file_string).value else {
     panic!();
   };
   let mut file = fs::File::open(path).map_err(Error::other)?;

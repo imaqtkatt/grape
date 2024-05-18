@@ -24,7 +24,7 @@ pub fn display_value<'a>(v: &'a Value, heap: &'a Heap) -> impl fmt::Display + 'a
 }
 
 pub fn display_object(o: usize, heap: &Heap) -> impl fmt::Display + '_ {
-  Formatting(move |f| match heap.get(o) {
+  Formatting(move |f| match &*heap.get(o).value {
     Object::Null => write!(f, "null"),
     Object::String(ObjString { contents }) => write!(f, "{contents}"),
     Object::Map(ObjMap { fields }) => {
