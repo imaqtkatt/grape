@@ -1,4 +1,4 @@
-use std::ops::Neg;
+use std::{ops::Neg, slice::Iter};
 
 use crate::{
   runtime::{Error, Result},
@@ -12,6 +12,10 @@ impl Stack {
   #[inline(always)]
   pub fn new(capacity: usize) -> Self {
     Self(Vec::with_capacity(capacity))
+  }
+
+  pub(crate) fn iter(&self) -> Iter<Value> {
+    self.0.iter()
   }
 
   #[inline(always)]

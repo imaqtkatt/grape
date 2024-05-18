@@ -1,5 +1,6 @@
 use core::fmt;
 
+/// Grape byte type.
 pub type Byte8 = u8;
 /// Grape int type.
 pub type Int32 = i32;
@@ -28,6 +29,11 @@ impl Value {
   #[inline(always)]
   pub const fn tag(&self) -> u64 {
     self.0 >> 32
+  }
+
+  #[inline(always)]
+  pub const fn is_reference_non_null(&self) -> bool {
+    self.tag() == Self::TAG_REFERENCE && self.raw() != 0
   }
 
   #[inline(always)]

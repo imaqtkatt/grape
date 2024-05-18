@@ -34,9 +34,9 @@ pub fn display_object(o: usize, heap: &Heap) -> impl fmt::Display + '_ {
       }
       write!(f, "}}")
     }
-    Object::Array(ObjArray { len, arr }) => {
+    Object::Array(ObjArray { arr }) => {
       write!(f, "[")?;
-      for value in arr.iter().take(*len) {
+      for value in arr.iter() {
         write!(f, "{};", display_value(value, heap))?;
       }
       write!(f, "]")

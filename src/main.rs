@@ -55,7 +55,7 @@ fn run() -> Result<()> {
     ctx.add_module(module::std_out::module())?;
     ctx.add_module(module::file::module())?;
   }
-  ctx.add_module(main_sla())?;
+  // ctx.add_module(main_gc())?;
   // ctx.add_module(module_test_file())?;
   // ctx.add_module(main_module())?;
   // ctx.add_module(main_tailcall())?;
@@ -83,10 +83,11 @@ fn main() {
 
 #[rustfmt::skip]
 #[allow(unused)]
-fn main_sla() -> module::Module {
+fn main_gc() -> module::Module {
   ModuleBuilder::new()
     .with_name("main")
-    .with_constant(PoolEntry::String("Hello, World".to_string()))
+    .with_constant(PoolEntry::String("Hello, World 1".to_string()))
+    .with_constant(PoolEntry::String("Hello, World 2".to_string()))
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_function(
       FunctionBuilder::new()
@@ -98,13 +99,13 @@ fn main_sla() -> module::Module {
           STORE_0,
           CALL, 0, 0, 0, 1,
           LOAD_0,
-          CALL, 0, 2, 0, 0,
+          CALL, 0, 3, 0, 0,
           ICONST_0,
           ICONST_0,
           IADD,
           POP,
           LOAD_0,
-          CALL, 0, 2, 0, 0,
+          CALL, 0, 3, 0, 0,
           HALT,
         ])
         .build()
@@ -115,7 +116,7 @@ fn main_sla() -> module::Module {
         .with_arguments(0)
         .with_locals(1)
         .with_bytecode(&[
-          LOADCONST, 1,
+          LOADCONST, 2,
           STORE_0,
           ICONST_0,
           ICONST_0,
@@ -300,12 +301,12 @@ fn main_module() -> module::Module {
           CALL, 0, 2, 0, 2, // std:out:debug
           LOAD_1,
           CALL, 0, 2, 0, 0, // std:out:print
-          LOADCONST, 3, // "rec fib(35):"
+          LOADCONST, 3,     // "rec fib(35):"
           CALL, 0, 2, 0, 0, // std:out:print
           I_PUSH_BYTE, 35,
           CALL, 0, 0, 0, 2, // fib
           CALL, 0, 2, 0, 0, // std:out:print
-          LOADCONST, 4, // "iter fib(35):"
+          LOADCONST, 4,     // "iter fib(35):"
           CALL, 0, 2, 0, 0, // std:out:print
           I_PUSH_BYTE, 35,
           CALL, 0, 0, 0, 3, // fib2

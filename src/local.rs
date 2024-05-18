@@ -13,7 +13,7 @@ impl Local {
     Self { local: vec![Value::mk_integer(0); capacity], base: 0 }
   }
 
-  pub fn iter(&self) -> Iter<Value> {
+  pub(crate) fn iter(&self) -> Iter<Value> {
     self.local.iter()
   }
 
