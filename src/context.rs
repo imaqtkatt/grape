@@ -22,7 +22,12 @@ pub struct Context<'c> {
 
 impl<'c> Context<'c> {
   pub fn new(arena: &'c ContextArena) -> Self {
-    Self { arena, modules: BTreeMap::new() }
+    let std_out: &'c Module = arena.modules.alloc(crate::module::std_out::module());
+    let file: &'c Module = arena.modules.alloc(crate::module::file::module());
+    let mut modules = BTreeMap::new();
+    modules.insert(Rc::from("std:out"), std_out);
+    modules.insert(Rc::from("file"), file);
+    Self { arena, modules }
   }
 
   pub fn add_module(&mut self, module: Module) -> Result<&'c Module> {

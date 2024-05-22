@@ -92,19 +92,21 @@ impl<'c> Runtime<'c> {
     Ok(Runtime::new(opts.context, local, module, function))
   }
 
-  fn call(&mut self, module_name: &str, function_index: usize) -> Result<()> {
+  fn call(&mut self, module_name: &str, function_name: &str) -> Result<()> {
     let module: &Module;
     let function: &Function;
     if *module_name == *self.module.name {
       module = self.module;
-      function = module.fetch_function_with_identifier(function_index);
+      function = module.fetch_function_with_name_unsafe(function_name);
     } else {
       module = self.ctx.fetch_module(module_name)?;
-      function = module.fetch_function_with_identifier(function_index);
+      function = module.fetch_function_with_name_unsafe(function_name);
     }
 
     let frame = self.local.push_frame(function.locals as usize);
 
+    // TODO: Would this be better to be a vm instruction?
+    // opcode::LOAD_PARAMS <count:u8>
     self.stack.check_underflow(function.arguments as usize)?;
     for index in (0..function.arguments).rev() {
       self.local.store(index as usize, self.stack.pop_unchecked());
@@ -180,10 +182,11 @@ impl<'c> Runtime<'c> {
               let indexes = self.fetch_4(program);
               let module_index = indexes >> 16;
               let function_index = indexes & 0xFF;
-              if let PoolEntry::Module(module) = &self.module.constants[module_index] {
-                self.call(module, function_index)?
-              } else {
-                Err(Error::InvalidEntry(module_index))?
+              match (&self.module.constants[module_index], &self.module.constants[function_index]) {
+                (PoolEntry::Module(module_name), PoolEntry::String(function_name)) => {
+                  self.call(module_name, function_name)?
+                }
+                _ => Err(Error::InvalidEntry(module_index))?,
               }
             }
 

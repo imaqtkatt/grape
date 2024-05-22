@@ -2,7 +2,7 @@ use std::{fs, io::Read};
 
 use crate::{
   function::{Function, NativeRet},
-  heap::{Heap, ObjString, Object},
+  heap::{Heap, ObjString, ObjectType},
   local::Local,
   runtime::Error,
   value::Reference,
@@ -12,7 +12,7 @@ use super::{builder::ModuleBuilder, Module};
 
 fn read_to_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
   let file_string: Reference = local.load_0().into();
-  let Object::String(ObjString { contents: path }) = &*heap.get(file_string).value else {
+  let ObjectType::String(ObjString { contents: path }) = &*heap.get(file_string).value else {
     panic!();
   };
   let mut file = fs::File::open(path).map_err(Error::other)?;
@@ -23,7 +23,7 @@ fn read_to_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
 
 fn read_to_bytes(local: &mut Local, heap: &mut Heap) -> NativeRet {
   let file_string: Reference = local.load_0().into();
-  let Object::String(ObjString { contents: path }) = &*heap.get(file_string).value else {
+  let ObjectType::String(ObjString { contents: path }) = &*heap.get(file_string).value else {
     panic!();
   };
   let mut file = fs::File::open(path).map_err(Error::other)?;
@@ -35,7 +35,7 @@ fn read_to_bytes(local: &mut Local, heap: &mut Heap) -> NativeRet {
 pub fn module() -> Module {
   ModuleBuilder::new()
     .with_name("file")
-    .with_function(Function::native("read_to_string", 0, 1, read_to_string))
-    .with_function(Function::native("read_to_bytes", 1, 1, read_to_bytes))
+    .with_function(Function::native("read_to_string", 1, read_to_string))
+    .with_function(Function::native("read_to_bytes", 1, read_to_bytes))
     .build()
 }

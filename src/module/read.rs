@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use super::{Module, PoolEntry};
 use crate::{function::Function, read_bytes::ReadBytes};
 
@@ -25,11 +27,11 @@ impl Module {
     }
 
     let functions_count = rd.read_u16()?;
-    let mut functions = Vec::with_capacity(functions_count as usize);
-    for id in 0..functions_count {
-      let mut function = Function::read(rd)?;
-      function.identifier = id as usize;
-      functions.push(function);
+    let mut functions = BTreeMap::new();
+    for _ in 0..functions_count {
+      let function = Function::read(rd)?;
+      let name = function.name.clone();
+      functions.insert(name, function);
     }
 
     Ok(Self { name, constants, functions })

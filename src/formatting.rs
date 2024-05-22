@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::{
-  heap::{Heap, ObjArray, ObjBytes, ObjMap, ObjString, Object},
+  heap::{Heap, ObjArray, ObjBytes, ObjMap, ObjString, ObjectType},
   value::Value,
 };
 
@@ -25,23 +25,23 @@ pub fn display_value<'a>(v: &'a Value, heap: &'a Heap) -> impl fmt::Display + 'a
 
 pub fn display_object(o: usize, heap: &Heap) -> impl fmt::Display + '_ {
   Formatting(move |f| match &*heap.get(o).value {
-    Object::Null => write!(f, "null"),
-    Object::String(ObjString { contents }) => write!(f, "{contents}"),
-    Object::Map(ObjMap { fields }) => {
+    ObjectType::Null => write!(f, "null"),
+    ObjectType::String(ObjString { contents }) => write!(f, "{contents}"),
+    ObjectType::Map(ObjMap { fields }) => {
       writeln!(f, "{{")?;
       for (k, v) in fields.iter() {
         writeln!(f, "  {} -> {}", display_value(k, heap), display_value(v, heap))?
       }
       write!(f, "}}")
     }
-    Object::Array(ObjArray { arr }) => {
+    ObjectType::Array(ObjArray { arr }) => {
       write!(f, "[")?;
       for value in arr.iter() {
         write!(f, "{};", display_value(value, heap))?;
       }
       write!(f, "]")
     }
-    Object::Bytes(ObjBytes { bytes }) => {
+    ObjectType::Bytes(ObjBytes { bytes }) => {
       write!(f, "<< ")?;
       for byte in bytes {
         write!(f, "{byte} ")?;

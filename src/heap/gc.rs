@@ -1,6 +1,6 @@
 use crate::{local::Local, stack::Stack};
 
-use super::{Heap, Obj2, Object};
+use super::{Heap, Object, ObjectType};
 
 impl Heap {
   pub fn gc(&mut self, local: &Local, stack: &Stack) {
@@ -42,7 +42,7 @@ impl Heap {
 
     for r#ref in to_free {
       self.freed.push(r#ref);
-      self.memory[r#ref] = Obj2::new(Object::Null);
+      self.memory[r#ref] = Object::new(ObjectType::Null);
     }
   }
 }

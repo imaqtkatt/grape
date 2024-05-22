@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use crate::function::Function;
 
 use super::{Module, PoolEntry};
@@ -31,10 +33,11 @@ impl ModuleBuilder {
   }
 
   pub fn build(self) -> Module {
-    let mut functions = Vec::with_capacity(self.functions.len());
+    // let mut functions = Vec::with_capacity(self.functions.len());
+    let mut functions = BTreeMap::new();
     for function in self.functions {
-      let id = function.identifier;
-      functions.insert(id, function);
+      let name = function.name.clone();
+      functions.insert(name, function);
     }
     Module { name: std::rc::Rc::from(self.name), constants: self.constants, functions }
   }

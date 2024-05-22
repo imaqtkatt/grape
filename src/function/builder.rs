@@ -2,7 +2,6 @@ use super::{Code, Function, NativeFn};
 
 #[derive(Default)]
 pub struct FunctionBuilder {
-  identifier: usize,
   name: Box<str>,
   locals: u16,
   arguments: u8,
@@ -14,9 +13,8 @@ impl FunctionBuilder {
     Self::default()
   }
 
-  pub fn with_name_and_identifier(mut self, name: &str, identifier: usize) -> Self {
+  pub fn with_name(mut self, name: &str) -> Self {
     self.name = Box::from(name);
-    self.identifier = identifier;
     self
   }
 
@@ -44,8 +42,7 @@ impl FunctionBuilder {
     assert!(self.code.is_some());
 
     Function {
-      identifier: self.identifier,
-      name: self.name,
+      name: self.name.into(),
       locals: self.locals,
       arguments: self.arguments,
       code: self.code.unwrap(),

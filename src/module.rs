@@ -4,6 +4,7 @@ pub mod read;
 pub mod std_out;
 pub mod write;
 
+use std::collections::BTreeMap;
 use std::rc::Rc;
 
 use crate::function::Function;
@@ -29,7 +30,7 @@ pub struct Module {
   /// The constant pool.
   pub constants: Vec<PoolEntry>,
   /// The module functions.
-  pub functions: Vec<Function>,
+  pub functions: BTreeMap<Rc<str>, Function>,
 }
 
 #[derive(Clone, Debug)]
@@ -51,14 +52,10 @@ impl Module {
   pub const MAGIC: u32 = 0x75_76_61_73;
 
   pub fn fetch_function_with_name(&self, name: &str) -> Result<&Function> {
-    self
-      .functions
-      .iter()
-      .find(|f| f.name.as_ref() == name)
-      .ok_or(Error::FunctionNotFound(name.to_string()))
+    self.functions.get(name).ok_or(Error::FunctionNotFound(name.to_string()))
   }
 
-  pub fn fetch_function_with_identifier(&self, identifier: usize) -> &Function {
-    unsafe { self.functions.get_unchecked(identifier) }
+  pub fn fetch_function_with_name_unsafe(&self, name: &str) -> &Function {
+    &self.functions[name]
   }
 }

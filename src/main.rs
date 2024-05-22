@@ -51,10 +51,6 @@ fn run() -> Result<()> {
 
   let ctx_arena = ContextArena::default();
   let ctx = &mut Context::new(&ctx_arena);
-  {
-    ctx.add_module(module::std_out::module())?;
-    ctx.add_module(module::file::module())?;
-  }
   // ctx.add_module(main_gc())?;
   // ctx.add_module(module_test_file())?;
   // ctx.add_module(main_module())?;
@@ -91,7 +87,7 @@ fn main_gc() -> module::Module {
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_function(
       FunctionBuilder::new()
-        .with_name_and_identifier("main", 0)
+        .with_name("main")
         .with_arguments(0)
         .with_locals(1)
         .with_bytecode(&[
@@ -112,7 +108,7 @@ fn main_gc() -> module::Module {
     )
     .with_function(
       FunctionBuilder::new()
-        .with_name_and_identifier("allocs_string", 1)
+        .with_name("allocs_string")
         .with_arguments(0)
         .with_locals(1)
         .with_bytecode(&[
@@ -139,7 +135,7 @@ fn main_float() -> module::Module {
     .with_constant(PoolEntry::Float(5.))
     .with_function(
       FunctionBuilder::new()
-        .with_name_and_identifier("main", 0)
+        .with_name("main")
         .with_locals(1)
         .with_arguments(0)
         .with_bytecode(&[
@@ -162,7 +158,7 @@ fn main_bytes() -> module::Module {
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_function(
       FunctionBuilder::new()
-        .with_name_and_identifier("main", 0)
+        .with_name("main")
         .with_locals(1)
         .with_arguments(0)
         .with_bytecode(&[
@@ -193,7 +189,7 @@ fn main_tailcall() -> module::Module {
     .with_constant(PoolEntry::String("----------".to_string()))
     .with_function(
       FunctionBuilder::new()
-        .with_name_and_identifier("main", 0)
+        .with_name("main")
         .with_locals(0)
         .with_arguments(0)
         .with_bytecode(&[
@@ -212,7 +208,7 @@ fn main_tailcall() -> module::Module {
     )
     .with_function(
       FunctionBuilder::new()
-        .with_name_and_identifier("tail_fact", 1)
+        .with_name("tail_fact")
         .with_locals(2)
         .with_arguments(2)
         .with_bytecode(&[
@@ -234,7 +230,7 @@ fn main_tailcall() -> module::Module {
     )
     .with_function(
       FunctionBuilder::new()
-        .with_name_and_identifier("fact", 2)
+        .with_name("fact")
         .with_locals(1)
         .with_arguments(1)
         .with_bytecode(&[
@@ -266,6 +262,10 @@ fn main_module() -> module::Module {
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_constant(PoolEntry::String("rec fib(35):".to_string()))
     .with_constant(PoolEntry::String("iter fib(35):".to_string()))
+    .with_constant(PoolEntry::String("fib".to_string()))
+    .with_constant(PoolEntry::String("fib2".to_string()))
+    .with_constant(PoolEntry::String("println".to_string()))
+    .with_constant(PoolEntry::String("debug".to_string()))
     .with_function(
       // proc main() {
       //   let arr = [!2]
@@ -282,7 +282,7 @@ fn main_module() -> module::Module {
       //   std:out:print(fib2(35));
       // }
       FunctionBuilder::new()
-        .with_name_and_identifier("main", 0)
+        .with_name("main")
         .with_locals(2)
         .with_arguments(0)
         .with_bytecode(&[
@@ -294,23 +294,23 @@ fn main_module() -> module::Module {
           ICONST_0,
           ARRAY_SET,
           LOAD_0,
-          CALL, 0, 2, 0, 0, // std:out:print
+          CALL, 0, 2, 0, 7, // std:out:print
           LOADCONST, 1,
           STORE_1,
           LOAD_1,
-          CALL, 0, 2, 0, 2, // std:out:debug
+          CALL, 0, 2, 0, 8, // std:out:debug
           LOAD_1,
-          CALL, 0, 2, 0, 0, // std:out:print
+          CALL, 0, 2, 0, 7, // std:out:print
           LOADCONST, 3,     // "rec fib(35):"
-          CALL, 0, 2, 0, 0, // std:out:print
+          CALL, 0, 2, 0, 7, // std:out:print
           I_PUSH_BYTE, 35,
-          CALL, 0, 0, 0, 2, // fib
-          CALL, 0, 2, 0, 0, // std:out:print
+          CALL, 0, 0, 0, 5, // fib
+          CALL, 0, 2, 0, 7, // std:out:print
           LOADCONST, 4,     // "iter fib(35):"
-          CALL, 0, 2, 0, 0, // std:out:print
+          CALL, 0, 2, 0, 7, // std:out:print
           I_PUSH_BYTE, 35,
-          CALL, 0, 0, 0, 3, // fib2
-          CALL, 0, 2, 0, 0, // std:out:print
+          CALL, 0, 0, 0, 6, // fib2
+          CALL, 0, 2, 0, 7, // std:out:print
           HALT,
         ])
         .build(),
@@ -320,7 +320,7 @@ fn main_module() -> module::Module {
       //   a
       // }
       FunctionBuilder::new()
-        .with_name_and_identifier("snd", 1)
+        .with_name("snd")
         .with_locals(2)
         .with_arguments(2)
         .with_bytecode(&[LOAD_1, RETURN])
@@ -335,7 +335,7 @@ fn main_module() -> module::Module {
       //   }
       // }
       FunctionBuilder::new()
-        .with_name_and_identifier("fib", 2)
+        .with_name("fib")
         .with_locals(1)
         .with_arguments(1)
         .with_bytecode(&[
@@ -345,11 +345,11 @@ fn main_module() -> module::Module {
           LOAD_0,
           ICONST_1,
           ISUB,
-          CALL, 0, 0, 0, 2, // main:fib(n - 1)
+          CALL, 0, 0, 0, 5, // main:fib(n - 1)
           LOAD_0,
           I_PUSH_BYTE, 2,
           ISUB,
-          CALL, 0, 0, 0, 2, // main:fib(n - 2)
+          CALL, 0, 0, 0, 5, // main:fib(n - 2)
           IADD,
           RETURN,
           //
@@ -373,7 +373,7 @@ fn main_module() -> module::Module {
       FunctionBuilder::new()
         .with_arguments(1)
         .with_locals(5)
-        .with_name_and_identifier("fib2", 3)
+        .with_name("fib2")
         .with_bytecode(&[
           // x = 0
           ICONST_0,
@@ -415,7 +415,7 @@ fn module_test_file() -> module::Module {
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_function(
       FunctionBuilder::new()
-        .with_name_and_identifier("main", 0)
+        .with_name("main")
         .with_arguments(0)
         .with_locals(0)
         .with_bytecode(&[

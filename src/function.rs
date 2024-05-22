@@ -3,6 +3,7 @@ pub mod read;
 pub mod write;
 
 use core::fmt;
+use std::rc::Rc;
 
 use crate::{heap::Heap, local::Local, runtime::Result, value::Value};
 
@@ -20,10 +21,8 @@ use crate::{heap::Heap, local::Local, runtime::Result, value::Value};
 /// ```
 #[derive(Debug)]
 pub struct Function {
-  /// The function lookup identifier.
-  pub identifier: usize,
   /// The function name.
-  pub name: Box<str>,
+  pub name: Rc<str>,
   /// The locals used in the code.
   pub locals: u16,
   /// The function arguments.
@@ -50,13 +49,7 @@ impl fmt::Debug for Code {
 }
 
 impl Function {
-  pub fn native(name: &str, id: usize, args: u8, f: NativeFn) -> Self {
-    Self {
-      identifier: id,
-      name: Box::from(name),
-      locals: args as u16,
-      arguments: args,
-      code: Code::Native(f),
-    }
+  pub fn native(name: &str, args: u8, f: NativeFn) -> Self {
+    Self { name: Rc::from(name), locals: args as u16, arguments: args, code: Code::Native(f) }
   }
 }

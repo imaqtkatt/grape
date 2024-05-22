@@ -30,9 +30,9 @@ fn eprintln(local: &mut Local, heap: &mut Heap) -> NativeRet {
 pub fn module() -> Module {
   ModuleBuilder::new()
     .with_name("std:out")
-    .with_function(Function::native("println", 0, 1, println))
-    .with_function(Function::native("print", 1, 1, print))
-    .with_function(Function::native("debug", 2, 1, debug))
-    .with_function(Function::native("eprintln", 3, 1, eprintln))
+    .with_function(Function::native("println", 1, println))
+    .with_function(Function::native("print", 1, print))
+    .with_function(Function::native("debug", 1, debug))
+    .with_function(Function::native("eprintln", 1, eprintln))
     .build()
 }

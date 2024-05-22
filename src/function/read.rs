@@ -3,7 +3,7 @@ use crate::read_bytes::ReadBytes;
 
 impl Function {
   pub fn read<R: std::io::Read>(rd: &mut R) -> std::io::Result<Self> {
-    let name = rd.read_box_str()?;
+    let name = rd.read_rc_str()?;
     let locals = rd.read_u16()?;
     let arguments = rd.read_u8()?;
 
@@ -13,6 +13,6 @@ impl Function {
 
     let code = Code::Bytecode(Box::from(code_buf));
 
-    Ok(Self { identifier: usize::MAX, name, locals, arguments, code })
+    Ok(Self { name, locals, arguments, code })
   }
 }
