@@ -7,8 +7,6 @@ use std::{
 
 use crate::value::{Reference, Value};
 
-pub const HEAP_MEMORY: usize = 0xFFFF;
-
 pub struct Heap {
   memory: Vec<Object>,
   free: HashSet<Reference>,
@@ -17,9 +15,7 @@ pub struct Heap {
 
 impl Heap {
   pub fn new() -> Self {
-    let mut memory = vec![Object::marked(ObjectType::Null)];
-    memory.reserve_exact(HEAP_MEMORY);
-    Self { memory, free: HashSet::new(), freed: Vec::new() }
+    Self { memory: vec![Object::marked(ObjectType::Null)], free: HashSet::new(), freed: Vec::new() }
   }
 
   #[inline(always)]
@@ -116,6 +112,10 @@ pub struct Object {
 }
 
 impl Object {
+  pub fn null() -> Self {
+    Self::new(ObjectType::Null)
+  }
+
   pub fn new(object: ObjectType) -> Self {
     Self { marked: Cell::new(false), value: Box::new(object) }
   }

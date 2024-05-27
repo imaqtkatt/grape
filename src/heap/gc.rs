@@ -1,16 +1,11 @@
 use crate::{local::Local, stack::Stack};
 
-use super::{Heap, Object, ObjectType};
+use super::{Heap, Object};
 
 impl Heap {
   pub fn gc(&mut self, local: &Local, stack: &Stack) {
-    for value in stack.iter() {
-      if value.is_reference_non_null() {
-        *self.memory[value.reference()].marked.get_mut() = true;
-      }
-    }
-
-    for value in local.iter() {
+    let mut stack_and_local = stack.iter().chain(local.iter());
+    while let Some(value) = stack_and_local.next() {
       if value.is_reference_non_null() {
         let got = &mut self.memory[value.reference()];
         *got.marked.get_mut() = true;
@@ -42,7 +37,7 @@ impl Heap {
 
     for r#ref in to_free {
       self.freed.push(r#ref);
-      self.memory[r#ref] = Object::new(ObjectType::Null);
+      self.memory[r#ref] = Object::null();
     }
   }
 }
