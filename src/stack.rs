@@ -6,36 +6,52 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct Stack(pub Vec<Value>);
+pub struct Stack<const SIZE: usize> {
+  memory: [Value; SIZE],
+  sp: usize,
+}
 
-impl Stack {
+impl<const SIZE: usize> Default for Stack<SIZE> {
+  fn default() -> Self {
+    Self { memory: [Value::mk_integer(0); SIZE], sp: 0 }
+  }
+}
+
+impl<const SIZE: usize> Stack<SIZE> {
   #[inline(always)]
-  pub fn new(capacity: usize) -> Self {
-    Self(Vec::with_capacity(capacity))
+  pub fn new() -> Self {
+    Self::default()
   }
 
   pub(crate) fn iter(&self) -> Iter<Value> {
-    self.0.iter()
+    self.memory.iter()
   }
 
   #[inline(always)]
   pub fn push(&mut self, value: Value) {
-    self.0.push(value);
+    self.memory[self.sp] = value;
+    self.sp += 1;
   }
 
   #[inline(always)]
   pub fn pop(&mut self) -> Result<Value> {
-    self.0.pop().ok_or(Error::StackUnderflow)
+    if self.sp == 0 {
+      Err(Error::StackUnderflow)
+    } else {
+      self.sp -= 1;
+      Ok(self.memory[self.sp])
+    }
   }
 
   #[inline(always)]
   pub fn pop_unchecked(&mut self) -> Value {
-    self.0.pop().unwrap()
+    self.sp -= 1;
+    self.memory[self.sp]
   }
 
   #[inline(always)]
   pub fn check_underflow(&self, len: usize) -> Result<()> {
-    if self.0.len() < len {
+    if self.sp.overflowing_sub(len).1 {
       Err(Error::StackUnderflow)
     } else {
       Ok(())
@@ -226,11 +242,9 @@ impl Stack {
     self.check_underflow(1)?;
     let value = self.pop_unchecked();
     match value.tag() {
-      Value::TAG_BYTE => self.0.push(Value::mk_byte(if value.byte() == 0 { 1 } else { 0 })),
-      Value::TAG_INTEGER => {
-        self.0.push(Value::mk_integer(if value.integer() == 0 { 1 } else { 0 }))
-      }
-      Value::TAG_FLOAT => self.0.push(Value::mk_float(if value.float() == 0. { 1. } else { 0. })),
+      Value::TAG_BYTE => self.push(Value::mk_byte(if value.byte() == 0 { 1 } else { 0 })),
+      Value::TAG_INTEGER => self.push(Value::mk_integer(if value.integer() == 0 { 1 } else { 0 })),
+      Value::TAG_FLOAT => self.push(Value::mk_float(if value.float() == 0. { 1. } else { 0. })),
       Value::TAG_REFERENCE => panic!("Invalid argument"),
       _ => unreachable!(),
     }

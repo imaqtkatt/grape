@@ -3,9 +3,9 @@ use crate::{local::Local, stack::Stack};
 use super::{Heap, Object};
 
 impl Heap {
-  pub fn gc(&mut self, local: &Local, stack: &Stack) {
-    let mut stack_and_local = stack.iter().chain(local.iter());
-    while let Some(value) = stack_and_local.next() {
+  pub fn gc<const SIZE: usize>(&mut self, local: &Local, stack: &Stack<SIZE>) {
+    let stack_and_local = stack.iter().chain(local.iter());
+    for value in stack_and_local {
       if value.is_reference_non_null() {
         let got = &mut self.memory[value.reference()];
         *got.marked.get_mut() = true;

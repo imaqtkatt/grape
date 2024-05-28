@@ -166,6 +166,7 @@ pub const IEXP: u8 = 0x36;
 /// Push 0 or 1 if it is zero.
 pub const IS_ZERO: u8 = 0x37;
 
+/// Tailcall the current function.
 pub const TAILCALL: u8 = 0x38;
 
 /// Add float.
@@ -250,8 +251,8 @@ pub const TO_STR: &[&str] = &[
   "NEW_OBJECT",
   "SET_FIELD",
   "GET_FIELD",
-  "PUSH_BYTE",
-  "PUSH_SHORT",
+  "I_PUSH_BYTE",
+  "I_PUSH_SHORT",
   "POP",
   "IFEQ",
   "IFNEQ",
@@ -293,4 +294,18 @@ pub const TO_STR: &[&str] = &[
   "FDIV",
   "FREM",
   "FNEG",
+  "PUSH_BYTE",
+  "BADD",
+  "BSUB",
+  "BMUL",
+  "BDIV",
+  "BREM",
+  "BAND",
+  "BOR",
+  "BXOR",
+  "BSHL",
+  "BSHR",
+  "BNEG",
+  "NEW_BYTES",
+  "BYTES_PUSH",
 ];

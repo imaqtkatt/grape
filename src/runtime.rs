@@ -21,7 +21,7 @@ pub struct Runtime<'c> {
   module: &'c Module,
   function: &'c Function,
   heap: Heap,
-  stack: Stack,
+  stack: Stack<STACK_SIZE>,
   call_stack: Vec<Frame<'c>>,
   tick: RefCell<usize>,
 }
@@ -43,7 +43,7 @@ impl fmt::Debug for Frame<'_> {
   }
 }
 
-const STACK_INIT: usize = 0x800;
+const STACK_SIZE: usize = 0x800;
 const MAIN: &str = "main";
 const IP_INIT: usize = 0;
 const GC_TICK: usize = 100_000_000;
@@ -68,7 +68,7 @@ impl<'c> Runtime<'c> {
       module,
       function,
       heap: Heap::new(),
-      stack: Stack::new(STACK_INIT),
+      stack: Stack::<STACK_SIZE>::new(),
       call_stack: Vec::new(),
       tick: RefCell::new(0),
     }
@@ -105,8 +105,6 @@ impl<'c> Runtime<'c> {
 
     let frame = self.local.push_frame(function.locals as usize);
 
-    // TODO: Would this be better to be a vm instruction?
-    // opcode::LOAD_PARAMS <count:u8>
     self.stack.check_underflow(function.arguments as usize)?;
     for index in (0..function.arguments).rev() {
       self.local.store(index as usize, self.stack.pop_unchecked());
