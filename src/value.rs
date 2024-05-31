@@ -58,17 +58,17 @@ impl Value {
 
   #[inline(always)]
   pub const fn mk_byte(byte: u8) -> Self {
-    Self((Self::TAG_BYTE << TAG_DISPLACER) | byte as u64)
+    Self::new(Self::TAG_BYTE, byte as u64)
   }
 
   #[inline(always)]
   pub const fn mk_integer(integer: i32) -> Self {
-    Self((Self::TAG_INTEGER << TAG_DISPLACER) | integer as u64)
+    Self::new(Self::TAG_INTEGER, integer as u64)
   }
 
   #[inline(always)]
   pub fn mk_float(float: f32) -> Self {
-    Self((Self::TAG_FLOAT << TAG_DISPLACER) | float.to_bits() as u64)
+    Self::new(Self::TAG_FLOAT, float.to_bits() as u64)
   }
 
   #[inline(always)]
