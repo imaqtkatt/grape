@@ -13,22 +13,22 @@ pub type Reference = usize;
 #[repr(transparent)]
 pub struct Value(pub u64);
 
+pub(crate) const TAG_BITS: u64 = 16;
+pub(crate) const TAG_DISPLACER: u64 = 64 - TAG_BITS;
+pub(crate) const VALUE_MASK: u64 = (1 << (64 - TAG_BITS)) - 1;
+pub(crate) const TAG_MASK: u64 = !VALUE_MASK;
+
 impl Value {
-  pub const TAG_REFERENCE: u64 = 1;
-  pub const TAG_BYTE: u64 = 1 << 2;
-  pub const TAG_INTEGER: u64 = 1 << 3;
-  pub const TAG_FLOAT: u64 = 1 << 4;
+  pub const TAG_REFERENCE: u64 = 0x0;
+  pub const TAG_BYTE: u64 = 0x2;
+  pub const TAG_INTEGER: u64 = 0x4;
+  pub const TAG_FLOAT: u64 = 0x8;
 
-  const REFERENCE: u64 = 0x0001_0000_0000_0000;
-  const BYTE: u64 = 0x0004_0000_0000_0000;
-  const INTEGER: u64 = 0x0008_0000_0000_0000;
-  const FLOAT: u64 = 0x0010_0000_0000_0000;
-
-  pub const NULL: Value = Self(Self::REFERENCE);
+  pub const NULL: Value = Self(Self::TAG_REFERENCE);
 
   #[inline(always)]
   pub const fn tag(&self) -> u64 {
-    self.0 >> 48
+    self.0 >> TAG_DISPLACER
   }
 
   #[inline(always)]
@@ -38,7 +38,7 @@ impl Value {
 
   #[inline(always)]
   pub const fn raw(&self) -> u64 {
-    self.0 & 0xFFFF_FFFF_FFFF
+    self.0 & VALUE_MASK
   }
 
   #[inline(always)]
@@ -47,23 +47,28 @@ impl Value {
   }
 
   #[inline(always)]
+  pub const fn new(tag: u64, value: u64) -> Self {
+    Self((tag << TAG_DISPLACER) | value)
+  }
+
+  #[inline(always)]
   pub const fn mk_reference(r#ref: usize) -> Self {
-    Self(Self::REFERENCE | r#ref as u64)
+    Self((Self::TAG_REFERENCE << TAG_DISPLACER) | r#ref as u64)
   }
 
   #[inline(always)]
   pub const fn mk_byte(byte: u8) -> Self {
-    Self(Self::BYTE | byte as u64)
+    Self((Self::TAG_BYTE << TAG_DISPLACER) | byte as u64)
   }
 
   #[inline(always)]
   pub const fn mk_integer(integer: i32) -> Self {
-    Self(Self::INTEGER | integer as u64)
+    Self((Self::TAG_INTEGER << TAG_DISPLACER) | integer as u64)
   }
 
   #[inline(always)]
   pub fn mk_float(float: f32) -> Self {
-    Self(Self::FLOAT | float.to_bits() as u64)
+    Self((Self::TAG_FLOAT << TAG_DISPLACER) | float.to_bits() as u64)
   }
 
   #[inline(always)]
@@ -89,7 +94,7 @@ impl Value {
 
   #[inline(always)]
   pub fn reference(&self) -> Reference {
-    (self.0 & 0xFFFF_FFFF_FFFF) as Reference
+    (self.0 & !TAG_MASK) as Reference
   }
 }
 
