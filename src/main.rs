@@ -70,6 +70,51 @@ fn main() {
 
 #[rustfmt::skip]
 #[allow(unused)]
+fn main_tcp() -> module::Module {
+  ModuleBuilder::new()
+    .with_name("main")
+    .with_constant(PoolEntry::String("127.0.0.1:8080".to_string()))
+    .with_constant(PoolEntry::String("HTTP/1.1 200 OK\r\n\r\noi kkkkk".to_string()))
+    .with_constant(PoolEntry::Module("tcp".to_string()))
+    .with_constant(PoolEntry::Function("new_listener".to_string()))
+    .with_constant(PoolEntry::Function("accept".to_string()))
+    .with_constant(PoolEntry::Function("recv_string".to_string()))
+    .with_constant(PoolEntry::Module("std:out".to_string()))
+    .with_constant(PoolEntry::Function("println".to_string()))
+    .with_constant(PoolEntry::Function("send_string".to_string()))
+    .with_constant(PoolEntry::Function("destroy".to_string()))
+    .with_function(
+      FunctionBuilder::new()
+        .with_name("main")
+        .with_arguments(0)
+        .with_locals(2)
+        .with_bytecode(&[
+          LOADCONST, 0x1,
+          CALL, 0, 3, 0, 4,
+          STORE_0,
+          // loop
+          LOAD_0,
+          CALL, 0, 3, 0, 5,
+          STORE_1,
+          LOAD_1,
+          CALL, 0, 3, 0, 6,
+          CALL, 0, 7, 0, 8,
+          LOAD_1,
+          LOADCONST, 0x2,
+          CALL, 0, 3, 0, 9,
+          LOAD_1,
+          CALL, 0, 3, 0, 10,
+          GOTO, 0, 8, // loop
+          //
+          HALT,
+        ])
+        .build()
+    )
+    .build()
+}
+
+#[rustfmt::skip]
+#[allow(unused)]
 fn main_gc() -> module::Module {
   ModuleBuilder::new()
     .with_name("main")

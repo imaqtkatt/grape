@@ -24,9 +24,11 @@ impl<'c> Context<'c> {
   pub fn new(arena: &'c ContextArena) -> Self {
     let std_out: &'c Module = arena.modules.alloc(crate::module::std_out::module());
     let file: &'c Module = arena.modules.alloc(crate::module::file::module());
+    let tcp: &'c Module = arena.modules.alloc(crate::module::tcp::module());
     let mut modules = BTreeMap::new();
     modules.insert(Rc::from("std:out"), std_out);
     modules.insert(Rc::from("file"), file);
+    modules.insert(Rc::from("tcp"), tcp);
     Self { arena, modules }
   }
 

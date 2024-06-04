@@ -92,7 +92,7 @@ impl Heap {
   }
 
   #[inline(always)]
-  fn alloc(&mut self, obj: Object) -> Value {
+  pub fn alloc(&mut self, obj: Object) -> Value {
     if let Some(r#ref) = self.freed.pop() {
       self.free.remove(&r#ref);
       self.memory[r#ref] = obj;
@@ -102,6 +102,13 @@ impl Heap {
       self.memory.push(obj);
       Value::mk_reference(r#ref)
     }
+  }
+
+  #[inline(always)]
+  pub fn free(&mut self, r#ref: usize) {
+    self.memory[r#ref] = Object::null();
+    self.free.insert(r#ref);
+    self.freed.push(r#ref);
   }
 }
 
@@ -132,6 +139,7 @@ pub enum ObjectType {
   Map(ObjMap),
   Array(ObjArray),
   Bytes(ObjBytes),
+  Native(Box<dyn std::any::Any>),
 }
 
 #[derive(Debug)]
@@ -163,7 +171,6 @@ impl Default for Heap {
 impl ObjectType {
   pub fn refs(&self) -> BTreeSet<Reference> {
     match self {
-      ObjectType::Null | ObjectType::String(..) | ObjectType::Bytes(..) => BTreeSet::new(),
       ObjectType::Map(map) => {
         let mut set = BTreeSet::new();
         for (key, value) in map.fields.iter() {
@@ -181,6 +188,10 @@ impl ObjectType {
         .iter()
         .filter_map(|v| if v.is_not_null() { Some(v.reference()) } else { None })
         .collect(),
+      ObjectType::Null
+      | ObjectType::String(..)
+      | ObjectType::Bytes(..)
+      | ObjectType::Native(..) => BTreeSet::new(),
     }
   }
 }

@@ -48,5 +48,6 @@ pub fn display_object(o: usize, heap: &Heap) -> impl fmt::Display + '_ {
       }
       write!(f, ">>")
     }
+    ObjectType::Native(_) => write!(f, "<native>"),
   })
 }
