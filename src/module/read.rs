@@ -22,6 +22,7 @@ impl Module {
         PoolEntry::TAG_INTEGER => constants.push(PoolEntry::Integer(rd.read_u32()? as i32)),
         PoolEntry::TAG_MODULE => constants.push(PoolEntry::Module(rd.read_string()?)),
         PoolEntry::TAG_FLOAT => constants.push(PoolEntry::Float(rd.read_f32()?)),
+        PoolEntry::TAG_FUNCTION => constants.push(PoolEntry::Function(rd.read_string()?)),
         _ => unreachable!(),
       }
     }

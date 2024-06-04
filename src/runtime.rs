@@ -138,7 +138,7 @@ impl<'c> Runtime<'c> {
         Code::Bytecode(ref program) => {
           let instruction = self.fetch(program);
 
-          // println!("{} with {:?}", opcode::TO_STR[instruction as usize], self.stack);
+          // println!("{}", opcode::TO_STR[instruction as usize]);
           match instruction {
             opcode::HALT => break Ok(()),
 
@@ -180,11 +180,14 @@ impl<'c> Runtime<'c> {
               let indexes = self.fetch_4(program);
               let module_index = indexes >> 16;
               let function_index = indexes & 0xFF;
-              match (&self.module.constants[module_index], &self.module.constants[function_index]) {
-                (PoolEntry::Module(module_name), PoolEntry::String(function_name)) => {
+              if let PoolEntry::Module(module_name) = &self.module.constants[module_index] {
+                if let PoolEntry::Function(function_name) = &self.module.constants[function_index] {
                   self.call(module_name, function_name)?
+                } else {
+                  Err(Error::InvalidEntry(function_index))?
                 }
-                _ => Err(Error::InvalidEntry(module_index))?,
+              } else {
+                Err(Error::InvalidEntry(module_index))?
               }
             }
 
@@ -193,8 +196,10 @@ impl<'c> Runtime<'c> {
               match &self.module.constants[entry_index] {
                 PoolEntry::String(s) => self.stack.push(self.heap.new_string(s.clone())),
                 PoolEntry::Integer(i) => self.stack.push(Value::mk_integer(*i)),
-                PoolEntry::Module(_) => return Err(Error::InvalidEntry(entry_index)),
                 PoolEntry::Float(f) => self.stack.push(Value::mk_float(*f)),
+                PoolEntry::Module(_) | PoolEntry::Function(_) => {
+                  Err(Error::InvalidEntry(entry_index))?
+                }
               }
             }
 

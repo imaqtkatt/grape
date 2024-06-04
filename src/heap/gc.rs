@@ -6,7 +6,7 @@ impl Heap {
   pub fn gc<const SIZE: usize>(&mut self, local: &Local, stack: &Stack<SIZE>) {
     let stack_and_local = stack.iter().chain(local.iter());
     for value in stack_and_local {
-      if value.is_reference_non_null() {
+      if value.is_not_null() {
         let got = &mut self.memory[value.reference()];
         *got.marked.get_mut() = true;
 

@@ -26,6 +26,10 @@ impl Module {
           wr.write_u8(PoolEntry::TAG_FLOAT)?;
           wr.write_all(&f.to_be_bytes())?;
         }
+        PoolEntry::Function(f) => {
+          wr.write_u8(PoolEntry::TAG_FUNCTION)?;
+          wr.write_str(f)?;
+        }
       }
     }
 

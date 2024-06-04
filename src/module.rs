@@ -39,6 +39,7 @@ pub enum PoolEntry {
   Integer(i32),
   Module(String),
   Float(f32),
+  Function(String),
 }
 
 impl PoolEntry {
@@ -46,6 +47,7 @@ impl PoolEntry {
   pub const TAG_INTEGER: u8 = 0x2;
   pub const TAG_MODULE: u8 = 0x3;
   pub const TAG_FLOAT: u8 = 0x4;
+  pub const TAG_FUNCTION: u8 = 0x5;
 }
 
 impl Module {

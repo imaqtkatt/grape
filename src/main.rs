@@ -262,10 +262,10 @@ fn main_module() -> module::Module {
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_constant(PoolEntry::String("rec fib(35):".to_string()))
     .with_constant(PoolEntry::String("iter fib(35):".to_string()))
-    .with_constant(PoolEntry::String("fib".to_string()))
-    .with_constant(PoolEntry::String("fib2".to_string()))
-    .with_constant(PoolEntry::String("println".to_string()))
-    .with_constant(PoolEntry::String("debug".to_string()))
+    .with_constant(PoolEntry::Function("fib".to_string()))
+    .with_constant(PoolEntry::Function("fib2".to_string()))
+    .with_constant(PoolEntry::Function("println".to_string()))
+    .with_constant(PoolEntry::Function("debug".to_string()))
     .with_function(
       // proc main() {
       //   let arr = [!2]

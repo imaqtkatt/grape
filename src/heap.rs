@@ -167,10 +167,10 @@ impl ObjectType {
       ObjectType::Map(map) => {
         let mut set = BTreeSet::new();
         for (key, value) in map.fields.iter() {
-          if key.is_reference_non_null() {
+          if key.is_not_null() {
             set.insert(key.reference());
           }
-          if value.is_reference_non_null() {
+          if value.is_not_null() {
             set.insert(value.reference());
           }
         }
@@ -179,7 +179,7 @@ impl ObjectType {
       ObjectType::Array(arr) => arr
         .arr
         .iter()
-        .filter_map(|v| if v.is_reference_non_null() { Some(v.reference()) } else { None })
+        .filter_map(|v| if v.is_not_null() { Some(v.reference()) } else { None })
         .collect(),
     }
   }

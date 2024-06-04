@@ -11,6 +11,7 @@ pub type Reference = usize;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
+#[must_use]
 pub struct Value(pub u64);
 
 pub(crate) const TAG_BITS: u64 = 16;
@@ -32,7 +33,7 @@ impl Value {
   }
 
   #[inline(always)]
-  pub const fn is_reference_non_null(&self) -> bool {
+  pub const fn is_not_null(&self) -> bool {
     self.tag() == Self::TAG_REFERENCE && self.raw() != 0
   }
 
