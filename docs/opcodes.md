@@ -4,8 +4,8 @@ This file provides an overview of the operation codes (opcodes) supported by the
 
 | opcode   | form                        | operands | description              |
 | -------- | --------------------------- | -------- | ------------------------ |
-| HALT     | 0x0                         |          | abrupt stop              |
-| RETURN   | 0x1                         |          | return from call         |
+| HALT     | 0x0                         |          | Abrupt stop              |
+| RETURN   | 0x1                         |          | Return from call         |
 | ICONST_0 | 0x2                         |          | Push integer 0 constant  |
 | ICONST_1 | 0x3                         |          | Push integer 1 constant  |
 | LOAD     | 0x4, index                  |          | Load from local variable |
