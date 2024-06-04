@@ -27,7 +27,7 @@ pub mod write_bytes;
 fn run() -> Result<()> {
   let matches = clap::Command::new("gvm")
     .about("Grape Virtual Machine")
-    .version("0.1.0")
+    .version(env!("CARGO_PKG_VERSION"))
     .arg(
       clap::Arg::new("eager")
         .help("Load modules eagerly before running")
@@ -44,19 +44,8 @@ fn run() -> Result<()> {
     )
     .get_matches();
 
-  // let mut f = std::fs::File::options().append(true).create(true).open("main.grape").unwrap();
-  // main.write(&mut f).unwrap();
-
-  // let args = Cli::parse();
-
   let ctx_arena = ContextArena::default();
   let ctx = &mut Context::new(&ctx_arena);
-  // ctx.add_module(main_gc())?;
-  // ctx.add_module(module_test_file())?;
-  // ctx.add_module(main_module())?;
-  // ctx.add_module(main_tailcall())?;
-  // ctx.add_module(main_bytes())?;
-  // ctx.add_module(main_float())?;
 
   let mut runtime = Runtime::boot(BootOptions {
     eager: matches.get_flag("eager"),
@@ -76,6 +65,8 @@ fn main() {
     eprintln!("{e}");
   }
 }
+
+// TODO: move this
 
 #[rustfmt::skip]
 #[allow(unused)]
@@ -175,80 +166,6 @@ fn main_bytes() -> module::Module {
           HALT,
         ])
         .build()
-    )
-    .build()
-}
-
-#[rustfmt::skip]
-#[allow(unused)]
-fn main_tailcall() -> module::Module {
-  ModuleBuilder::new()
-    .with_name("main")
-    .with_constant(PoolEntry::Integer(15))
-    .with_constant(PoolEntry::Module("std:out".to_string()))
-    .with_constant(PoolEntry::String("----------".to_string()))
-    .with_function(
-      FunctionBuilder::new()
-        .with_name("main")
-        .with_locals(0)
-        .with_arguments(0)
-        .with_bytecode(&[
-          LOADCONST, 1,
-          ICONST_1,
-          CALL, 0, 0, 0, 1, // tail_fact(12, 1)
-          CALL, 0, 2, 0, 0, // std:out:print
-          LOADCONST, 3,
-          CALL, 0, 2, 0, 0, // std:out:print
-          LOADCONST, 1,
-          CALL, 0, 0, 0, 2, // fact(12)
-          CALL, 0, 2, 0, 0, // std:out:print
-          HALT
-        ])
-        .build(),
-    )
-    .with_function(
-      FunctionBuilder::new()
-        .with_name("tail_fact")
-        .with_locals(2)
-        .with_arguments(2)
-        .with_bytecode(&[
-          LOAD_0,
-          ICONST_0,
-          I_IFEQ, 0, 12,
-          LOAD_0,
-          ICONST_1,
-          ISUB,
-          LOAD_1,
-          LOAD_0,
-          IMUL,
-          TAILCALL,
-          // return acc
-          LOAD_1,
-          RETURN,
-        ])
-        .build(),
-    )
-    .with_function(
-      FunctionBuilder::new()
-        .with_name("fact")
-        .with_locals(1)
-        .with_arguments(1)
-        .with_bytecode(&[
-          LOAD_0,
-          ICONST_0,
-          I_IFEQ, 0, 16,
-          LOAD_0,
-          LOAD_0,
-          ICONST_1,
-          ISUB,
-          CALL, 0, 0, 0, 2,
-          IMUL,
-          RETURN,
-          // return 1
-          ICONST_1,
-          RETURN,
-        ])
-        .build(),
     )
     .build()
 }
