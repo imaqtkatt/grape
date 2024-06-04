@@ -1,175 +1,83 @@
 # Grape Virtual Machine Opcodes
 
-This documentation provides a overview of the operation codes (opcodes) supported by the Grape Virtual Machine, including specifics behaviors for each opcode.
+This file provides an overview of the operation codes (opcodes) supported by the Grape Virtual Machine.
 
-## Arithmetic Operations
-
-### `IADD`
-
-- **Description**: Adds the top two integer values from the stack.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `ISUB`
-
-- **Description**: Subtracts the top stack value from the second-top stack value.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `IMUL`
-
-- **Description**: Multiplies the top two stack values.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `IDIV`
-
-- **Description**: Divides the second-top stack value by the top stack value.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `IREM`
-
-- **Description**: Computes the remainder of the division of the second-top stack value by the top stack value.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `INEG`
-
-- **Description**: Negates the top integer on the stack.
-- **Stack Behavior**: Pops 1 value, pushes the result (1 value).
-
-## Logical Operations
-
-### `IAND`
-
-- **Description**: Performs a bitwise AND on the top two stack values.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `IOR`
-
-- **Description**: Performs a bitwise OR on the top two stack values.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `IXOR`
-
-- **Description**: Performs a bitwise XOR on the top two stack values.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `ISHL`
-
-- **Description**: Shifts the second-top stack value left by the number of bits specified by the top stack value.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `ISHR`
-
-- **Description**: Shifts the second-top stack value right by the number of bits specified by the top stack value, preserving the sign.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-### `IUSHR`
-
-- **Description**: Shifts the second-top stack value right (unsigned) by the number of bits specified by the top stack value.
-- **Stack Behavior**: Pops 2 values, pushes the result (1 value).
-
-## Stack Manipulation
-
-### `DUP`
-
-- **Description**: Duplicates the top value on the stack.
-- **Stack Behavior**: Pops 0 values, pushes 1 duplicate value.
-
-### `POP`
-
-- **Description**: Removes the top value from the stack.
-- **Stack Behavior**: Pops 1 value, pushes 0 values.
-
-## Constants Loading
-
-### `ICONST_0`, `ICONST_1`, `FCONST_0`, `FCONST_1`
-
-- **Description**: Pushes specified constant values onto the stack (`0` or `1`, integer or float accordingly).
-- **Stack Behavior**: Pops 0 values, pushes 1 value.
-
-### `LOADCONST`
-
-- **Description**: Loads a specific constant from the constants pool and pushes it onto the stack.
-- **Operands**:
-  The index of the constant in the constant pool.
-- **Stack Behavior**: Pops 0 values, pushes 1 value.
-
-## Type Conversion
-
-### `I2F`
-
-- **Description**: Converts the top integer on the stack to a float.
-- **Stack Behavior**: Pops 1 value, pushes the result (1 value).
-
-### `F2I`
-
-- **Description**: Converts the top float on the stack to an integer.
-- **Stack Behavior**: Pops 1 value, pushes the result (1 value).
-
-## Branching
-
-### `GOTO`, `IFEQ`, `IFNEQ`, `IFGT`, `IFGE`, `IFLT`, `IFLE`
-
-- **Description**: Alters the flow of execution based on conditionals or unconditionally (`GOTO`).
-- **Stack Behavior**:
-  - `GOTO`: Pops 0 values, pushes 0 values.
-    - **Operands**: The jump address, 2 bytes long.
-  - Conditionals: Pops 2 values for comparison, pushes 0 values.
-
-## Function Call
-
-### `CALL`
-
-- **Description**: Calls a function by module and function indices.
-- **Operands**:
-  - The module index, 2 bytes long.
-  - The function index, 2 bytes long.
-- **Stack Behavior**: Depends on the function's definition. Generally, it pops arguments and pushes the result if any.
-
-## Local Variables
-
-### `LOAD`, `STORE`
-
-- **Stack Behavior**:
-  - `LOAD`:
-    - **Operands**: The local variable index.
-  - `STORE`:
-    - **Operands**: The local variable index.
-
-## Memory Operations
-
-### `NEW_OBJECT`, `NEW_ARRAY`, `ARRAY_GET`, `ARRAY_SET`
-
-- **Description**: Perform various memory operations like loading and storing values, creating objects and arrays, and accessing array elements.
-  - `NEW_OBJECT`, `NEW_ARRAY`: Pops 0 or 1 value (size for arrays), pushes 1 value (reference to created object/array).
-  - `ARRAY_GET`: Pops 2 values (array reference and index), pushes 1 value (element at index).
-  - `ARRAY_SET`: Pops 3 values (array reference, index, and the value to set), pushes 0 values.
-
-## Field Operations
-
-### `SET_FIELD`, `GET_FIELD`
-
-- **Description**: Sets or gets the value of a field in an object.
-- **Stack Behavior**:
-  - `SET_FIELD`: Pops 3 values (object reference, field identifier, and value to set), pushes 0 values.
-  - `GET_FIELD`: Pops 2 values (object reference and field identifier), pushes 1 value (field value).
-
-## Return Operations
-
-### `RET`, `RETURN`
-
-- **Description**: Returns control flow from a function, optionally with a value.
-- **Stack Behavior**:
-  - `RET`: Pops 0 values, pushes 0 values.
-  - `RETURN`: Pops 1 value (the return value), pushes 0 values.
-
-## Misc
-
-### `PUSH_BYTE` and `PUSH_SHORT`
-
-- **Description**: Pushes a literal byte or short value onto the stack.
-- **Operands**:
-  - **PUSH_BYTE**:
-    - **Operands**: A single byte value.
-    - **Usage**: The next byte specifies the Integer value to push onto the stack.
-  - **PUSH_SHORT**:
-    - **Operands**: Two bytes forming a short value.
-    - **Usage**: Uses next two bytes to form a Integer value to push onto the stack.
+| opcode   | form                        | operands | description              |
+| -------- | --------------------------- | -------- | ------------------------ |
+| HALT     | 0x0                         |          | abrupt stop              |
+| RETURN   | 0x1                         |          | return from call         |
+| ICONST_0 | 0x2                         |          | Push integer 0 constant  |
+| ICONST_1 | 0x3                         |          | Push integer 1 constant  |
+| LOAD     | 0x4, index                  |          | Load from local variable |
+| STORE    | 0x5, index                  |          | Store to local variable  |
+| FCONST_0 | 0x6                         |          | Push float 0 constant    |
+| FCONST_1 | 0x7                         |          | Push float 1 constant    |
+| LOAD_0   | 0x8                         |          | Load from local variable 0 |
+| LOAD_1   | 0x9                         |          | Load from local variable 1 |
+| LOAD_2   | 0xA                         |          | Load from local variable 2 |
+| LOAD_3   | 0xB                         |          | Load from local variable 3 |
+| I2F      | 0xC                         |          | Convert integer to float |
+| F2I      | 0xD                         |          | Convert float to integer |
+| GOTO     | 0xE, index1, index2         |          | Always branch, u16 index |
+| CALL     | 0xF, mod_index1, mod_index2, fun_index1, fun_index2 | args... -> | Call function, u16 indexes, module and function should point to a valid Module/Function entry in the constant pool |
+| LOADCONST | 0x10, index         |          | Load and push item from constant pool |
+| NEW_OBJECT | 0x11               |          | Create new object, push a reference to the stack |
+| SET_FIELD  | 0x12               | ref, field, value -> | Set a value in the object field  |
+| GET_FIELD  | 0x13               | ref, field -> value  | Get value from object field  |
+| I_PUSH_BYTE  | 0x14, byte           |        | Push 1 byte long integer |
+| I_PUSH_SHORT | 0x15, short1, short2 |        | Push 2 byte long integer |
+| POP          | 0x16                 |        | Pop 1 value from stack |
+| I_IFEQ  | 0x17, index1, index2 | value1, value2 -> | Branch if integer is equal |
+| I_IFNEQ | 0x18, index1, index2 | value1, value2 -> | Branch if integer is not equal |
+| I_IFGT | 0x19, index1, index2 | value1, value2 -> | Branch if integer is greater than |
+| I_IFGE | 0x1A, index1, index2 | value1, value2 -> | Branch if integer is greater or equal |
+| I_IFLT | 0x1B, index1, index2 | value1, value2 -> | Branch if integer is less than |
+| I_IFLE | 0x1C, index1, index2 | value1, value2 -> | Branch if integer is less or equal |
+| IADD  | 0x1D | value1, value2 -> result | Add integer |
+| ISUB  | 0x1E | value1, value2 -> result | Subtract integer |
+| IMUL  | 0x1F | value1, value2 -> result | Multiply integer |
+| IDIV  | 0x20 | value1, value2 -> result | Divide integer |
+| IREM  | 0x21 | value1, value2 -> result | Remainder of integer |
+| IAND  | 0x22 | value1, value2 -> result | Integer bit AND |
+| IOR   | 0x23 | value1, value2 -> result | Integer bit OR |
+| IXOR  | 0x24 | value1, value2 -> result | Integer bit XOR |
+| ISHL  | 0x25 | value1, value2 -> result | Integer bit shift left |
+| ISHR  | 0x26 | value1, value2 -> result | Integer bit shift right |
+| IUSHR | 0x27 | value1, value2 -> result | Integer logical bit shift right |
+| INEG  | 0x28 | value -> result          | Negate integer |
+| STORE_0 | 0x29 |     | Store to local variable 0 |
+| STORE_1 | 0x2A |     | Store to local variable 1 |
+| STORE_2 | 0x2B |     | Store to local variable 2 |
+| STORE_3 | 0x2C |     | Store to local variable 3 |
+| DUP     | 0x2D | value -> value, value | Duplicate from stack |
+| ~       | 0x2E |         | Reserved, not implemented |
+| NEW_ARRAY | 0x2F | size -> ref | Allocate new sized array |
+| ARRAY_GET | 0x30 | ref, index -> ref | Get index from array |
+| ARRAY_SET | 0x31 | ref, index, value -> | Set index to array |
+| IINC      | 0x32, index, inc |  | 1 Byte local variable increment |
+| IF_NULL    | 0x33, index1, index2 | value -> | Branch if null |
+| IFNOT_NULL | 0x34, index1, index2 | value -> | Branch if not null |
+| CONST_NULL | 0x35                 |          | Push null constant |
+| IEXP       | 0x36 | value1, value2 -> result | Integer exponent |
+| IS_ZERO    | 0x37 | value | Push integer 1 if value is zero |
+| TAILCALL   | 0x38 | args... -> | Tailcall the current function |
+| FADD | 0x39 | value1, value2 -> result | Add float |
+| FSUB | 0x3A | value1, value2 -> result | Subtract float |
+| FMUL | 0x3B | value1, value2 -> result | Multiply float |
+| FDIV | 0x3C | value1, value2 -> result | Divide float |
+| FREM | 0x3D | value1, value2 -> result | Remainder of float |
+| FNEG | 0x3E | value -> result          | Negate float |
+| PUSH_BYTE | 0x3F, byte | | Push byte literal |
+| BADD | 0x40 | value1, value2 -> result | Add byte |
+| BSUB | 0x41 | value1, value2 -> result | Subtract byte |
+| BMUL | 0x42 | value1, value2 -> result | Multiply byte |
+| BDIV | 0x43 | value1, value2 -> result | Divide byte |
+| BREM | 0x44 | value1, value2 -> result | Remainder of byte |
+| BAND | 0x45 | value1, value2 -> result | Byte bit AND |
+| BOR  | 0x46 | value1, value2 -> result | Byte bit OR |
+| BXOR | 0x47 | value1, value2 -> result | Byte bit XOR |
+| BSHL | 0x48 | value1, value2 -> result | Byte bit shift left |
+| BSHR | 0x49 | value1, value2 -> result | Byte bit shift right |
+| BNEG | 0x4A | value -> result          | Negate byte |
+| NEW_BYTES | 0x4B, len1, len2 | bytes... -> | Create bytes object |
+| BYTES_PUSH | 0x4C | ref, byte -> | Push byte to bytes object |
