@@ -81,11 +81,6 @@ fn send_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
 pub fn module() -> Module {
   ModuleBuilder::new()
     .with_name("tcp")
-    // .with_constant(PoolEntry::Function("new_listener".into()))
-    // .with_constant(PoolEntry::Function("destroy".into()))
-    // .with_constant(PoolEntry::Function("accept".into()))
-    // .with_constant(PoolEntry::Function("recv_string".into()))
-    // .with_constant(PoolEntry::Function("send_string".into()))
     .with_function(Function::native("new_listener", 1, new_listener))
     .with_function(Function::native("destroy", 1, destroy))
     .with_function(Function::native("accept", 1, accept))

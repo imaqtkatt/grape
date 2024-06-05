@@ -58,7 +58,7 @@ impl Module {
     self.functions.get(name).ok_or(Error::FunctionNotFound(name.to_string()))
   }
 
-  pub fn fetch_function_with_name_unsafe(&self, name: &str) -> &Function {
+  pub fn fetch_function_with_name_unchecked(&self, name: &str) -> &Function {
     &self.functions[name]
   }
 }

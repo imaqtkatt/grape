@@ -50,9 +50,7 @@ where
     let mut str_buf = vec![0; length as usize];
     self.read_exact(&mut str_buf)?;
 
-    let str = std::str::from_utf8(&str_buf).map_err(std::io::Error::other)?;
-
-    Ok(Box::from(str))
+    std::str::from_utf8(&str_buf).map_err(std::io::Error::other).map(Box::from)
   }
 
   fn read_rc_str(&mut self) -> Result<Rc<str>> {
@@ -61,9 +59,7 @@ where
     let mut str_buf = vec![0; length as usize];
     self.read_exact(&mut str_buf)?;
 
-    let str = std::str::from_utf8(&str_buf).map_err(std::io::Error::other)?;
-
-    Ok(Rc::from(str))
+    std::str::from_utf8(&str_buf).map_err(std::io::Error::other).map(Rc::from)
   }
 
   fn read_string(&mut self) -> Result<String> {

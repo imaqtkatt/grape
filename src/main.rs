@@ -29,13 +29,6 @@ fn run() -> Result<()> {
     .about("Grape Virtual Machine")
     .version(env!("CARGO_PKG_VERSION"))
     .arg(
-      clap::Arg::new("eager")
-        .help("Load modules eagerly before running")
-        .required(false)
-        .long("eager")
-        .action(clap::ArgAction::SetTrue)
-    )
-    .arg(
       clap::Arg::new("entrypoint")
         .help("Name of the entrypoint module")
         .required(false)
@@ -48,7 +41,6 @@ fn run() -> Result<()> {
   let ctx = &mut Context::new(&ctx_arena);
 
   let mut runtime = Runtime::boot(BootOptions {
-    eager: matches.get_flag("eager"),
     entrypoint_module: matches.get_one("entrypoint").map(|e: &String| e.to_string()),
     context: ctx,
   })?;

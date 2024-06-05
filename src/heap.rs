@@ -9,13 +9,17 @@ use crate::value::{Reference, Value};
 
 pub struct Heap {
   memory: Vec<Object>,
-  free: HashSet<Reference>,
+  free: HashSet<Reference, nohash_hasher::BuildNoHashHasher<Reference>>,
   freed: Vec<Reference>,
 }
 
 impl Heap {
   pub fn new() -> Self {
-    Self { memory: vec![Object::marked(ObjectType::Null)], free: HashSet::new(), freed: Vec::new() }
+    Self {
+      memory: vec![Object::marked(ObjectType::Null)],
+      free: Default::default(),
+      freed: Vec::new(),
+    }
   }
 
   #[inline(always)]
@@ -25,14 +29,14 @@ impl Heap {
 
   #[inline(always)]
   pub fn get_field(&self, obj_ref: Reference, field: Value) -> Value {
-    let ObjectType::Map(m) = &*self.memory[obj_ref].value else { panic!("Is not an object") };
-    m.fields[&field]
+    let ObjectType::Map(map) = &*self.memory[obj_ref].value else { panic!("Is not an object") };
+    map.fields[&field]
   }
 
   #[inline(always)]
   pub fn set_field(&mut self, obj_ref: Reference, field: Value, value: Value) {
-    if let ObjectType::Map(m) = &mut *self.memory[obj_ref].value {
-      m.fields.insert(field, value);
+    if let ObjectType::Map(map) = &mut *self.memory[obj_ref].value {
+      map.fields.insert(field, value);
     } else {
       panic!("Is not an object")
     }

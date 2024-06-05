@@ -49,7 +49,6 @@ const IP_INIT: usize = 0;
 const GC_TICK: usize = 100_000_000;
 
 pub struct BootOptions<'c> {
-  pub eager: bool,
   pub entrypoint_module: Option<String>,
   pub context: &'c mut Context<'c>,
 }
@@ -83,9 +82,7 @@ impl<'c> Runtime<'c> {
     }
     let function = module.fetch_function_with_name(MAIN)?;
     assert!(function.arguments == 0);
-    if opts.eager {
-      opts.context.load_eager(&module.name)?;
-    }
+    opts.context.load_eager(&module.name)?;
 
     let local = Local::new(function.locals as usize);
 
@@ -97,10 +94,10 @@ impl<'c> Runtime<'c> {
     let function: &Function;
     if *module_name == *self.module.name {
       module = self.module;
-      function = module.fetch_function_with_name_unsafe(function_name);
+      function = module.fetch_function_with_name_unchecked(function_name);
     } else {
       module = self.ctx.fetch_module(module_name)?;
-      function = module.fetch_function_with_name_unsafe(function_name);
+      function = module.fetch_function_with_name_unchecked(function_name);
     }
 
     let frame = self.local.push_frame(function.locals as usize);
