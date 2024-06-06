@@ -14,16 +14,16 @@ pub type Reference = usize;
 #[must_use]
 pub struct Value(pub u64);
 
-pub(crate) const TAG_BITS: u64 = 16;
+pub(crate) const TAG_BITS: u64 = 4;
 pub(crate) const TAG_DISPLACER: u64 = 64 - TAG_BITS;
 pub(crate) const VALUE_MASK: u64 = (1 << (64 - TAG_BITS)) - 1;
 pub(crate) const TAG_MASK: u64 = !VALUE_MASK;
 
 impl Value {
   pub const TAG_REFERENCE: u64 = 0x0;
-  pub const TAG_BYTE: u64 = 0x2;
-  pub const TAG_INTEGER: u64 = 0x4;
-  pub const TAG_FLOAT: u64 = 0x8;
+  pub const TAG_BYTE: u64 = 0x1;
+  pub const TAG_INTEGER: u64 = 0x2;
+  pub const TAG_FLOAT: u64 = 0x3;
 
   pub const NULL: Value = Self(Self::TAG_REFERENCE);
 

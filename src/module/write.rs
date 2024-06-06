@@ -10,25 +10,22 @@ impl Module {
     wr.write_u16(self.constants.len() as u16)?;
     for element in self.constants.iter() {
       match element {
-        PoolEntry::String(s) => {
-          wr.write_u8(PoolEntry::TAG_STRING)?;
-          wr.write_str(s)?;
-        }
         PoolEntry::Integer(i) => {
           wr.write_u8(PoolEntry::TAG_INTEGER)?;
           wr.write_all(&i.to_be_bytes())?;
-        }
-        PoolEntry::Module(m) => {
-          wr.write_u8(PoolEntry::TAG_MODULE)?;
-          wr.write_str(m)?;
         }
         PoolEntry::Float(f) => {
           wr.write_u8(PoolEntry::TAG_FLOAT)?;
           wr.write_all(&f.to_be_bytes())?;
         }
-        PoolEntry::Function(f) => {
-          wr.write_u8(PoolEntry::TAG_FUNCTION)?;
-          wr.write_str(f)?;
+        PoolEntry::String(s) | PoolEntry::Module(s) | PoolEntry::Function(s) => {
+          match element {
+            PoolEntry::String(..) => wr.write_u8(PoolEntry::TAG_STRING)?,
+            PoolEntry::Module(..) => wr.write_u8(PoolEntry::TAG_MODULE)?,
+            PoolEntry::Function(..) => wr.write_u8(PoolEntry::TAG_FUNCTION)?,
+            _ => unreachable!(),
+          }
+          wr.write_str(s)?;
         }
       }
     }
