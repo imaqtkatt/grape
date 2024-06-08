@@ -1,3 +1,5 @@
+use std::{collections::BTreeMap, rc::Rc};
+
 use crate::function::Function;
 
 use super::{Module, PoolEntry};
@@ -6,6 +8,7 @@ use super::{Module, PoolEntry};
 pub struct ModuleBuilder {
   name: String,
   constants: Vec<PoolEntry>,
+  functions_map: BTreeMap<Rc<str>, u16>,
   functions: Vec<Function>,
 }
 
@@ -26,12 +29,19 @@ impl ModuleBuilder {
   }
 
   pub fn with_function(mut self, function: Function) -> Self {
+    let id = self.functions.len() as u16;
+    self.functions_map.insert(function.name.clone(), id);
     self.functions.push(function);
     self
   }
 
   pub fn build(self) -> Module {
-    let functions = self.functions.into_iter().map(|f| (f.name.clone(), f)).collect();
-    Module { name: std::rc::Rc::from(self.name), constants: self.constants, functions }
+    Module {
+      id: u16::MAX,
+      name: Rc::from(self.name),
+      constants: self.constants,
+      functions_map: self.functions_map,
+      functions: self.functions,
+    }
   }
 }

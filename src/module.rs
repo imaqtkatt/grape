@@ -26,12 +26,14 @@ use crate::runtime::{Error, Result};
 /// ```
 #[derive(Debug)]
 pub struct Module {
+  pub id: u16,
   /// The module name.
   pub name: Rc<str>,
   /// The constant pool.
   pub constants: Vec<PoolEntry>,
   /// The module functions.
-  pub functions: BTreeMap<Rc<str>, Function>,
+  pub functions_map: BTreeMap<Rc<str>, u16>,
+  pub functions: Vec<Function>,
 }
 
 #[derive(Clone, Debug)]
@@ -55,10 +57,12 @@ impl Module {
   pub const MAGIC: u32 = 0x75_76_61_73;
 
   pub fn fetch_function_with_name(&self, name: &str) -> Result<&Function> {
-    self.functions.get(name).ok_or(Error::FunctionNotFound(name.to_string()))
+    let idx = self.functions_map.get(name).ok_or(Error::FunctionNotFound(name.to_string()))?;
+    Ok(&self.functions[*idx as usize])
   }
 
   pub fn fetch_function_with_name_unchecked(&self, name: &str) -> &Function {
-    &self.functions[name]
+    let idx = self.functions_map[name];
+    &self.functions[idx as usize]
   }
 }

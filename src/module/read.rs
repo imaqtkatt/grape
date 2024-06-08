@@ -15,6 +15,7 @@ impl Module {
 
     let pool_count = rd.read_u16()?;
     let mut constants = Vec::with_capacity(pool_count as usize);
+
     for _ in 0..pool_count {
       let tag = rd.read_u8()?;
       match tag {
@@ -28,13 +29,15 @@ impl Module {
     }
 
     let functions_count = rd.read_u16()?;
-    let mut functions = BTreeMap::new();
-    for _ in 0..functions_count {
+    let mut functions = Vec::with_capacity(functions_count as usize);
+    let mut functions_map = BTreeMap::new();
+
+    for id in 0..functions_count {
       let function = Function::read(rd)?;
-      let name = function.name.clone();
-      functions.insert(name, function);
+      functions_map.insert(function.name.clone(), id);
+      functions.push(function);
     }
 
-    Ok(Self { name, constants, functions })
+    Ok(Self { id: u16::MAX, name, constants, functions_map, functions })
   }
 }

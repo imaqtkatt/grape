@@ -4,7 +4,7 @@ use core::fmt;
 use std::cell::RefCell;
 
 use crate::{
-  context::Context,
+  context::RuntimeContext,
   function::{Code, Function},
   heap::Heap,
   local::Local,
@@ -16,7 +16,7 @@ use crate::{
 
 pub struct Runtime<'c> {
   ip: RefCell<usize>,
-  ctx: &'c mut Context<'c>,
+  ctx: &'c mut RuntimeContext<'c>,
   local: Local,
   module: &'c Module,
   function: &'c Function,
@@ -49,13 +49,13 @@ const IP_INIT: usize = 0;
 const GC_TICK: usize = 100_000_000;
 
 pub struct BootOptions<'c> {
-  pub entrypoint_module: Option<String>,
-  pub context: &'c mut Context<'c>,
+  pub entrypoint_module: Option<&'c String>,
+  pub context: &'c mut RuntimeContext<'c>,
 }
 
 impl<'c> Runtime<'c> {
   fn new(
-    ctx: &'c mut Context<'c>,
+    ctx: &'c mut RuntimeContext<'c>,
     local: Local,
     module: &'c Module,
     function: &'c Function,
@@ -73,32 +73,32 @@ impl<'c> Runtime<'c> {
     }
   }
 
-  pub fn boot(opts: BootOptions<'c>) -> Result<Runtime<'c>> {
+  pub fn boot(
+    entrypoint_module: Option<&String>,
+    ctx: &'c mut RuntimeContext<'c>,
+  ) -> Result<Runtime<'c>> {
     let module: &'c Module;
-    if let Some(entrypoint_module) = opts.entrypoint_module {
-      module = opts.context.fetch_module(&entrypoint_module)?;
+    if let Some(entrypoint_module) = entrypoint_module {
+      module = ctx.fetch_module(entrypoint_module)?;
     } else {
-      module = opts.context.fetch_module(MAIN)?;
+      module = ctx.fetch_module(MAIN)?;
     }
     let function = module.fetch_function_with_name(MAIN)?;
     assert!(function.arguments == 0);
-    opts.context.load_eager(&module.name)?;
 
     let local = Local::new(function.locals as usize);
 
-    Ok(Runtime::new(opts.context, local, module, function))
+    Ok(Runtime::new(ctx, local, module, function))
   }
 
-  fn call(&mut self, module_name: &str, function_name: &str) -> Result<()> {
-    let module: &Module;
-    let function: &Function;
-    if *module_name == *self.module.name {
-      module = self.module;
-      function = module.fetch_function_with_name_unchecked(function_name);
+  fn call(&mut self, module_name: usize, function_name: &str) -> Result<()> {
+    // let module = self.ctx.fetch_module_indexed(module_name);
+    let module = if self.module.id == module_name as u16 {
+      self.module
     } else {
-      module = self.ctx.fetch_module(module_name)?;
-      function = module.fetch_function_with_name_unchecked(function_name);
-    }
+      self.ctx.fetch_module_indexed(module_name)
+    };
+    let function = module.fetch_function_with_name_unchecked(function_name);
 
     let frame = self.local.push_frame(function.locals as usize);
 
@@ -177,15 +177,15 @@ impl<'c> Runtime<'c> {
               let indexes = self.fetch_4(program);
               let module_index = indexes >> 16;
               let function_index = indexes & 0xFF;
-              if let PoolEntry::Module(module_name) = &self.module.constants[module_index] {
-                if let PoolEntry::Function(function_name) = &self.module.constants[function_index] {
-                  self.call(module_name, function_name)?
-                } else {
-                  Err(Error::InvalidEntry(function_index))?
-                }
+              // if let PoolEntry::Module(_module_name) = &self.module.constants[module_index] {
+              if let PoolEntry::Function(function_name) = &self.module.constants[function_index] {
+                self.call(module_index, function_name)?
               } else {
-                Err(Error::InvalidEntry(module_index))?
+                Err(Error::InvalidEntry(function_index))?
               }
+              // } else {
+              //   Err(Error::InvalidEntry(module_index))?
+              // }
             }
 
             opcode::LOADCONST => {

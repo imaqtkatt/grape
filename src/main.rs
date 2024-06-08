@@ -1,7 +1,6 @@
 use context::{Context, ContextArena};
 use function::builder::FunctionBuilder;
 use module::builder::ModuleBuilder;
-use runtime::BootOptions;
 
 use crate::{
   module::PoolEntry,
@@ -37,13 +36,20 @@ fn run() -> Result<()> {
     )
     .get_matches();
 
-  let ctx_arena = ContextArena::default();
-  let ctx = &mut Context::new(&ctx_arena);
+  let entrypoint_module = matches.get_one("entrypoint").map(|e: &String| e.to_string());
+  let entrypoint_module = entrypoint_module.as_ref();
 
-  let mut runtime = Runtime::boot(BootOptions {
-    entrypoint_module: matches.get_one("entrypoint").map(|e: &String| e.to_string()),
-    context: ctx,
-  })?;
+  let mut ctx_ = Context::new();
+  if let Some(n) = entrypoint_module {
+    ctx_.load_eager(n)?;
+  } else {
+    ctx_.load_eager("main")?;
+  }
+  ctx_.resolve_global_modules()?;
+
+  let ctx_arena = ContextArena::new(ctx_.modules.len());
+  let ctx = &mut ctx_.to_runtime_context(&ctx_arena);
+  let mut runtime = Runtime::boot(entrypoint_module, ctx)?;
   if let Err(e) = runtime.run() {
     eprintln!("Error: {e}");
     runtime.accept(runtime::stack_trace::StackTrace);
@@ -81,22 +87,22 @@ fn main_tcp() -> module::Module {
         .with_arguments(0)
         .with_locals(2)
         .with_bytecode(&[
-          LOADCONST, 0x1,
-          CALL, 0, 3, 0, 4,
+          LOADCONST, 0x1,   // 127.0.0.1:8080
+          CALL, 0, 3, 0, 4, // tcp:new_listener
           STORE_0,
-          // loop
+          // ~loop
           LOAD_0,
-          CALL, 0, 3, 0, 5,
+          CALL, 0, 3, 0, 5,  // tcp:accept
           STORE_1,
           LOAD_1,
-          CALL, 0, 3, 0, 6,
-          CALL, 0, 7, 0, 8,
+          CALL, 0, 3, 0, 6,  // tcp:recv_string
+          CALL, 0, 7, 0, 8,  // std:out:print
           LOAD_1,
-          LOADCONST, 0x2,
-          CALL, 0, 3, 0, 9,
+          LOADCONST, 0x2,    // HTTP/1.1 200 OK\r\n\r\noi kkkk
+          CALL, 0, 3, 0, 9,  // tcp:send_string
           LOAD_1,
-          CALL, 0, 3, 0, 10,
-          GOTO, 0, 8, // loop
+          CALL, 0, 3, 0, 10, // tcp:destroy
+          GOTO, 0, 8,        // ~loop
           //
           HALT,
         ])

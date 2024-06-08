@@ -32,7 +32,7 @@ impl Module {
 
     wr.write_u16(self.functions.len() as u16)?;
 
-    for function in self.functions.values() {
+    for function in self.functions.iter() {
       function.write(wr)?;
     }
 

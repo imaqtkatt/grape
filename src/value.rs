@@ -54,7 +54,7 @@ impl Value {
 
   #[inline(always)]
   pub const fn mk_reference(r#ref: usize) -> Self {
-    Self((Self::TAG_REFERENCE << TAG_DISPLACER) | r#ref as u64)
+    Self::new(Self::TAG_REFERENCE, r#ref as u64)
   }
 
   #[inline(always)]
