@@ -229,6 +229,12 @@ pub const NEW_BYTES: u8 = 0x4B;
 /// Push byte to bytes object.
 pub const BYTES_PUSH: u8 = 0x4C;
 
+pub const NEW: u8 = 0x4D;
+
+pub const CALL_METHOD: u8 = 0x4E;
+
+pub const PUT_FIELD: u8 = 0x4F;
+
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
   "RET",
@@ -308,4 +314,7 @@ pub const TO_STR: &[&str] = &[
   "BNEG",
   "NEW_BYTES",
   "BYTES_PUSH",
+  "NEW",
+  "CALL_METHOD",
+  "PUT_FIELD",
 ];

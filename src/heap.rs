@@ -28,6 +28,18 @@ impl Heap {
   }
 
   #[inline(always)]
+  pub fn class(&mut self, fields: usize) -> Value {
+    self
+      .alloc(Object::new(ObjectType::Class(ObjClass { fields: vec![Value::NULL; fields].into() })))
+  }
+
+  #[inline(always)]
+  pub fn put_field(&mut self, r#ref: Reference, offset: u8, value: Value) {
+    let ObjectType::Class(class) = &mut *self.memory[r#ref].value else { panic!() };
+    class.fields[offset as usize] = value;
+  }
+
+  #[inline(always)]
   pub fn get_field(&self, obj_ref: Reference, field: Value) -> Value {
     let ObjectType::Map(map) = &*self.memory[obj_ref].value else { panic!("Is not an object") };
     map.fields[&field]
@@ -144,6 +156,12 @@ pub enum ObjectType {
   Array(ObjArray),
   Bytes(ObjBytes),
   Native(Box<dyn std::any::Any>),
+  Class(ObjClass),
+}
+
+#[derive(Debug)]
+pub struct ObjClass {
+  pub(crate) fields: Box<[Value]>,
 }
 
 #[derive(Debug)]
@@ -189,6 +207,11 @@ impl ObjectType {
       }
       ObjectType::Array(arr) => arr
         .arr
+        .iter()
+        .filter_map(|v| if v.is_not_null() { Some(v.reference()) } else { None })
+        .collect(),
+      ObjectType::Class(class) => class
+        .fields
         .iter()
         .filter_map(|v| if v.is_not_null() { Some(v.reference()) } else { None })
         .collect(),

@@ -18,11 +18,15 @@ impl Module {
           wr.write_u8(PoolEntry::TAG_FLOAT)?;
           wr.write_all(&f.to_be_bytes())?;
         }
-        PoolEntry::String(s) | PoolEntry::Module(s) | PoolEntry::Function(s) => {
+        PoolEntry::String(s)
+        | PoolEntry::Module(s)
+        | PoolEntry::Function(s)
+        | PoolEntry::Class(s) => {
           match element {
             PoolEntry::String(..) => wr.write_u8(PoolEntry::TAG_STRING)?,
             PoolEntry::Module(..) => wr.write_u8(PoolEntry::TAG_MODULE)?,
             PoolEntry::Function(..) => wr.write_u8(PoolEntry::TAG_FUNCTION)?,
+            PoolEntry::Class(..) => todo!(),
             _ => unreachable!(),
           }
           wr.write_str(s)?;

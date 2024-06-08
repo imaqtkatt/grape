@@ -1,6 +1,8 @@
+use std::collections::BTreeMap;
+
 use context::{Context, ContextArena};
 use function::builder::FunctionBuilder;
-use module::builder::ModuleBuilder;
+use module::{builder::ModuleBuilder, Class};
 use runtime::BootOptions;
 
 use crate::{
@@ -39,6 +41,26 @@ fn run() -> Result<()> {
 
   let ctx_arena = ContextArena::default();
   let ctx = &mut Context::new(&ctx_arena);
+  ctx.add_module(main_class())?;
+  let box_class = Class {
+    name: std::rc::Rc::from("Box"),
+    constants: vec![PoolEntry::Class("Box".into()), PoolEntry::String("value".into())],
+    fields: BTreeMap::from([(std::rc::Rc::from("value"), 0)]),
+    methods: BTreeMap::from([(std::rc::Rc::from("new"), function::Function {
+        name: std::rc::Rc::from("new"),
+        locals: 2,
+        arguments: 1,
+        code: function::Code::Bytecode(vec![
+          LOAD_0,
+          LOAD_1,
+          PUT_FIELD, 0, 0, 0, 1,
+          LOAD_0,
+          RETURN,
+        ].into()),
+    })]),
+  };
+  ctx.add_class(box_class)?;
+  // ctx.classes.insert(c.name.clone(), c);
 
   let mut runtime = Runtime::boot(BootOptions {
     entrypoint_module: matches.get_one("entrypoint").map(|e: &String| e.to_string()),
@@ -59,6 +81,29 @@ fn main() {
 }
 
 // TODO: move this
+
+#[rustfmt::skip]
+fn main_class() -> module::Module {
+  ModuleBuilder::new()
+    .with_name("main")
+    .with_constant(PoolEntry::Class("Box".to_string()))
+    .with_constant(PoolEntry::Module("std:out".to_string()))
+    .with_constant(PoolEntry::Function("println".to_string()))
+    .with_function(
+      FunctionBuilder::new()
+        .with_name("main")
+        .with_arguments(0)
+        .with_locals(1)
+        .with_bytecode(&[
+          I_PUSH_BYTE, 42,
+          NEW, 0, 1,
+          CALL, 0, 2, 0, 3,
+          HALT,
+        ])
+        .build()
+    )
+    .build()
+}
 
 #[rustfmt::skip]
 #[allow(unused)]

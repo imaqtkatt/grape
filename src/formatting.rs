@@ -49,5 +49,9 @@ pub fn display_object(o: usize, heap: &Heap) -> impl fmt::Display + '_ {
       write!(f, ">>")
     }
     ObjectType::Native(_) => write!(f, "<native>"),
+    ObjectType::Class(class) => {
+      println!("{:?}", class.fields);
+      write!(f, "<class@{:012X}>", o)
+    }
   })
 }

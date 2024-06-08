@@ -32,6 +32,11 @@ impl ModuleBuilder {
 
   pub fn build(self) -> Module {
     let functions = self.functions.into_iter().map(|f| (f.name.clone(), f)).collect();
-    Module { name: std::rc::Rc::from(self.name), constants: self.constants, functions }
+    Module {
+      name: std::rc::Rc::from(self.name),
+      constants: self.constants,
+      functions,
+      classes: Default::default(),
+    }
   }
 }

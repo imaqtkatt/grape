@@ -35,6 +35,6 @@ impl Module {
       functions.insert(name, function);
     }
 
-    Ok(Self { name, constants, functions })
+    Ok(Self { name, constants, functions, classes: Default::default() })
   }
 }

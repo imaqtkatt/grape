@@ -5,6 +5,7 @@ pub mod std_out;
 pub mod tcp;
 pub mod write;
 
+use std::any::Any;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
@@ -32,6 +33,63 @@ pub struct Module {
   pub constants: Vec<PoolEntry>,
   /// The module functions.
   pub functions: BTreeMap<Rc<str>, Function>,
+  /// The module classes.
+  pub classes: BTreeMap<Rc<str>, Class>,
+}
+
+#[derive(Debug)]
+pub struct Class {
+  /// The class name.
+  pub name: Rc<str>,
+  /// The constant pool.
+  pub constants: Vec<PoolEntry>,
+  /// The class fields.
+  pub fields: BTreeMap<Rc<str>, u8>,
+  /// The class methods.
+  pub methods: BTreeMap<Rc<str>, Function>,
+}
+
+pub trait Callable {
+  fn as_any(&self) -> &dyn Any;
+  fn name(&self) -> &str;
+  fn fetch_function_with_name_unchecked(&self, function_name: &str) -> &Function;
+  fn fetch_constant(&self, index: usize) -> &PoolEntry;
+}
+
+impl Callable for Module {
+  fn name(&self) -> &str {
+    &self.name
+  }
+
+  fn fetch_function_with_name_unchecked(&self, function_name: &str) -> &Function {
+    &self.functions[function_name]
+  }
+
+  fn as_any(&self) -> &dyn Any {
+    self
+  }
+
+  fn fetch_constant(&self, index: usize) -> &PoolEntry {
+    &self.constants[index]
+  }
+}
+
+impl Callable for Class {
+  fn as_any(&self) -> &dyn Any {
+    self
+  }
+
+  fn name(&self) -> &str {
+    &self.name
+  }
+
+  fn fetch_function_with_name_unchecked(&self, function_name: &str) -> &Function {
+    &self.methods[function_name]
+  }
+
+  fn fetch_constant(&self, index: usize) -> &PoolEntry {
+    &self.constants[index]
+  }
 }
 
 #[derive(Clone, Debug)]
@@ -41,6 +99,7 @@ pub enum PoolEntry {
   Module(String),
   Float(f32),
   Function(String),
+  Class(String),
 }
 
 impl PoolEntry {
@@ -56,9 +115,5 @@ impl Module {
 
   pub fn fetch_function_with_name(&self, name: &str) -> Result<&Function> {
     self.functions.get(name).ok_or(Error::FunctionNotFound(name.to_string()))
-  }
-
-  pub fn fetch_function_with_name_unchecked(&self, name: &str) -> &Function {
-    &self.functions[name]
   }
 }

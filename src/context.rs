@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-  module::Module,
+  module::{Class, Module},
   module_path,
   runtime::{Error, Result},
 };
@@ -13,11 +13,13 @@ use crate::{
 #[derive(Default)]
 pub struct ContextArena {
   modules: typed_arena::Arena<Module>,
+  classes: typed_arena::Arena<Class>,
 }
 
 pub struct Context<'c> {
   arena: &'c ContextArena,
   modules: BTreeMap<Rc<str>, &'c Module>,
+  pub(crate) classes: BTreeMap<Rc<str>, &'c Class>,
 }
 
 impl<'c> Context<'c> {
@@ -29,13 +31,20 @@ impl<'c> Context<'c> {
     modules.insert(Rc::from("std:out"), std_out);
     modules.insert(Rc::from("file"), file);
     modules.insert(Rc::from("tcp"), tcp);
-    Self { arena, modules }
+    Self { arena, modules, classes: Default::default() }
   }
 
   pub fn add_module(&mut self, module: Module) -> Result<&'c Module> {
     match self.modules.entry(module.name.clone()) {
-      Entry::Occupied(o) => Err(Error::ModuleAlreadyExists(o.get().name.to_string())),
       Entry::Vacant(v) => Ok(v.insert(self.arena.modules.alloc(module))),
+      Entry::Occupied(o) => Err(Error::ModuleAlreadyExists(o.get().name.to_string())),
+    }
+  }
+
+  pub fn add_class(&mut self, class: Class) -> Result<&'c Class> {
+    match self.classes.entry(class.name.clone()) {
+      Entry::Vacant(v) => Ok(v.insert(self.arena.classes.alloc(class))),
+      Entry::Occupied(_) => todo!(),
     }
   }
 
@@ -43,6 +52,13 @@ impl<'c> Context<'c> {
     match self.modules.get(module_name) {
       Some(module) => Ok(module),
       None => self.read_module(module_name),
+    }
+  }
+
+  pub fn fetch_class(&self, class_name: &str) -> Result<&'c Class> {
+    match self.classes.get(class_name) {
+      Some(class) => Ok(class),
+      None => todo!(),
     }
   }
 
