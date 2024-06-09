@@ -18,7 +18,7 @@ pub struct ContextArena {
 
 pub struct Context<'c> {
   arena: &'c ContextArena,
-  modules: BTreeMap<Rc<str>, &'c Module>,
+  pub(crate) modules: BTreeMap<Rc<str>, &'c Module>,
   pub(crate) classes: BTreeMap<Rc<str>, &'c Class>,
 }
 
@@ -51,22 +51,21 @@ impl<'c> Context<'c> {
   pub fn fetch_module(&mut self, module_name: &str) -> Result<&'c Module> {
     match self.modules.get(module_name) {
       Some(module) => Ok(module),
-      None => self.read_module(module_name),
+      None => Err(Error::ModuleNotFound(module_name.to_string())),
     }
   }
 
   pub fn fetch_class(&self, class_name: &str) -> Result<&'c Class> {
     match self.classes.get(class_name) {
       Some(class) => Ok(class),
-      None => todo!(),
+      None => Err(Error::ClassNotFound(class_name.to_string())),
     }
   }
 
   fn read_module(&mut self, module_name: &str) -> Result<&'c Module> {
     let mut file = File::open(module_path::from(module_name))
       .map_err(|_| Error::ModuleNotFound(module_name.to_string()))?;
-    let module = Module::read(&mut file).map_err(Error::other)?;
-    self.add_module(module)
+    Module::read(&mut file).map_err(Error::other).and_then(|module| self.add_module(module))
   }
 
   pub fn load_eager(&mut self, module_name: &str) -> Result<()> {
@@ -74,7 +73,10 @@ impl<'c> Context<'c> {
     let mut to_load = vec![module_name];
 
     while let Some(name) = to_load.pop() {
-      let module = self.fetch_module(name)?;
+      if self.modules.contains_key(name) {
+        continue;
+      }
+      let module = self.read_module(name)?;
       for constant in module.constants.iter() {
         if let crate::module::PoolEntry::Module(name) = constant {
           if loaded.insert(name) {

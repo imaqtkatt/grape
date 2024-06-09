@@ -39,6 +39,11 @@ fn run() -> Result<()> {
     )
     .get_matches();
 
+  // let m = main_module();
+  // let mut f = std::fs::File::options().create_new(true).write(true).open("./main.grape").unwrap();
+  // m.write(&mut f).unwrap();
+  // panic!();
+
   let ctx_arena = ContextArena::default();
   let ctx = &mut Context::new(&ctx_arena);
   // ctx.add_module(main_class())?;
@@ -279,7 +284,7 @@ fn main_bytes() -> module::Module {
 #[allow(unused)]
 fn main_module() -> module::Module {
   ModuleBuilder::new()
-    .with_name("main")
+    .with_name("bytecodes:main")
     .with_constant(PoolEntry::String("oioiiooiiioioioiiiooiio".to_string()))
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_constant(PoolEntry::String("rec fib(35):".to_string()))
