@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::{
-  heap::{Heap, ObjArray, ObjBytes, ObjMap, ObjString, ObjectType},
+  heap::{Heap, ObjArray, ObjBytes, ObjDict, ObjString, ObjectType},
   value::Value,
 };
 
@@ -27,7 +27,7 @@ pub fn display_object(o: usize, heap: &Heap) -> impl fmt::Display + '_ {
   Formatting(move |f| match &*heap.get(o).value {
     ObjectType::Null => write!(f, "null"),
     ObjectType::String(ObjString { contents }) => write!(f, "{contents}"),
-    ObjectType::Map(ObjMap { fields }) => {
+    ObjectType::Dict(ObjDict { fields }) => {
       writeln!(f, "{{")?;
       for (k, v) in fields.iter() {
         writeln!(f, "  {} -> {}", display_value(k, heap), display_value(v, heap))?

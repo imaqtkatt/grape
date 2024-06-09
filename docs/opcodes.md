@@ -21,9 +21,9 @@ This file provides an overview of the operation codes (opcodes) supported by the
 | GOTO     | 0xE, index1, index2         |          | Always branch, u16 index |
 | CALL     | 0xF, mod_index1, mod_index2, fun_index1, fun_index2 | args... -> | Call function, u16 indexes, module and function should point to a valid Module/Function entry in the constant pool |
 | LOADCONST | 0x10, index         |          | Load and push item from constant pool |
-| NEW_OBJECT | 0x11               |          | Create new object, push a reference to the stack |
-| SET_FIELD  | 0x12               | ref, field, value -> | Set a value in the object field  |
-| GET_FIELD  | 0x13               | ref, field -> value  | Get value from object field  |
+| NEW_DICT | 0x11               |          | Create new dict, push a reference to the stack |
+| SET_DICT  | 0x12               | ref, field, value -> | Set a value in the dict field  |
+| GET_DICT  | 0x13               | ref, field -> value  | Get value from dict field  |
 | I_PUSH_BYTE  | 0x14, byte           |        | Push 1 byte long integer |
 | I_PUSH_SHORT | 0x15, short1, short2 |        | Push 2 byte long integer |
 | POP          | 0x16                 |        | Pop 1 value from stack |
@@ -81,3 +81,7 @@ This file provides an overview of the operation codes (opcodes) supported by the
 | BNEG | 0x4A | value -> result          | Negate byte |
 | NEW_BYTES | 0x4B, len1, len2 | bytes... -> | Create bytes object |
 | BYTES_PUSH | 0x4C | ref, byte -> | Push byte to bytes object |
+| NEW         | 0x4D, class1, class2 | args... ->      | Create new class object |
+| CALL_METHOD | 0x4E, class1, class2, method1, method2 | ref, args... -> | Call method from class object |
+| SET_FIELD   | 0x4F, field1, field2 | ref, value ->   | Set field to class object |
+| GET_FIELD   | 0x50, field1, field2 | ref -> | Get field from class object |

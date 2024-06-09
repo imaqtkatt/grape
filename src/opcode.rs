@@ -49,14 +49,14 @@ pub const CALL: u8 = 0xF;
 /// Push item from constant pool.
 pub const LOADCONST: u8 = 0x10;
 
-/// Create new object, push reference.
-pub const NEW_OBJECT: u8 = 0x11;
+/// Create new dict, push reference.
+pub const NEW_DICT: u8 = 0x11;
 
-/// Set object field.
-pub const SET_FIELD: u8 = 0x12;
+/// Set dict field.
+pub const SET_DICT: u8 = 0x12;
 
-/// Get object field.
-pub const GET_FIELD: u8 = 0x13;
+/// Get dict field.
+pub const GET_DICT: u8 = 0x13;
 
 /// Push 1 byte long integer.
 pub const I_PUSH_BYTE: u8 = 0x14;
@@ -229,11 +229,17 @@ pub const NEW_BYTES: u8 = 0x4B;
 /// Push byte to bytes object.
 pub const BYTES_PUSH: u8 = 0x4C;
 
+/// Create new class object.
 pub const NEW: u8 = 0x4D;
 
+/// Call method from class object.
 pub const CALL_METHOD: u8 = 0x4E;
 
-pub const PUT_FIELD: u8 = 0x4F;
+/// Set field to class object.
+pub const SET_FIELD: u8 = 0x4F;
+
+/// Get field from class object.
+pub const GET_FIELD: u8 = 0x50;
 
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
@@ -316,5 +322,6 @@ pub const TO_STR: &[&str] = &[
   "BYTES_PUSH",
   "NEW",
   "CALL_METHOD",
-  "PUT_FIELD",
+  "SET_FIELD",
+  "GET_FIELD",
 ];

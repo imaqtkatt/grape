@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use context::{Context, ContextArena};
 use function::builder::FunctionBuilder;
-use module::{builder::ModuleBuilder, Class};
+use module::{builder::ModuleBuilder, Class, Field};
 use runtime::BootOptions;
 
 use crate::{
@@ -44,8 +44,8 @@ fn run() -> Result<()> {
   ctx.add_module(main_class())?;
   let box_class = Class {
     name: std::rc::Rc::from("Box"),
-    constants: vec![PoolEntry::Class("Box".into()), PoolEntry::String("value".into())],
-    fields: BTreeMap::from([(std::rc::Rc::from("value"), 0)]),
+    constants: vec![PoolEntry::Class("Box".into()), PoolEntry::Field("value".into(), 0)],
+    fields: BTreeMap::from([(std::rc::Rc::from("value"), Field { vis: Field::PRIVATE, offset: 0 })]),
     methods: BTreeMap::from([(std::rc::Rc::from("new"), function::Function {
         name: std::rc::Rc::from("new"),
         locals: 2,
@@ -53,7 +53,7 @@ fn run() -> Result<()> {
         code: function::Code::Bytecode(vec![
           LOAD_0,
           LOAD_1,
-          PUT_FIELD, 0, 0, 0, 1,
+          SET_FIELD, 0, 1,
           LOAD_0,
           RETURN,
         ].into()),
@@ -89,6 +89,7 @@ fn main_class() -> module::Module {
     .with_constant(PoolEntry::Class("Box".to_string()))
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_constant(PoolEntry::Function("println".to_string()))
+    .with_constant(PoolEntry::Field("value".to_string(), 1))
     .with_function(
       FunctionBuilder::new()
         .with_name("main")
@@ -97,7 +98,11 @@ fn main_class() -> module::Module {
         .with_bytecode(&[
           I_PUSH_BYTE, 42,
           NEW, 0, 1,
+          STORE_0,
+          LOAD_0,
           CALL, 0, 2, 0, 3,
+          LOAD_0,
+          GET_FIELD, 0, 4,
           HALT,
         ])
         .build()

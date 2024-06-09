@@ -44,9 +44,20 @@ pub struct Class {
   /// The constant pool.
   pub constants: Vec<PoolEntry>,
   /// The class fields.
-  pub fields: BTreeMap<Rc<str>, u8>,
+  pub fields: BTreeMap<Rc<str>, Field>,
   /// The class methods.
   pub methods: BTreeMap<Rc<str>, Function>,
+}
+
+#[derive(Debug)]
+pub struct Field {
+  pub vis: u8,
+  pub offset: u8,
+}
+
+impl Field {
+  pub const PRIVATE: u8 = 0x0;
+  pub const PUBLIC: u8 = 0x1;
 }
 
 pub trait Callable {
@@ -57,16 +68,16 @@ pub trait Callable {
 }
 
 impl Callable for Module {
+  fn as_any(&self) -> &dyn Any {
+    self
+  }
+
   fn name(&self) -> &str {
     &self.name
   }
 
   fn fetch_function_with_name_unchecked(&self, function_name: &str) -> &Function {
     &self.functions[function_name]
-  }
-
-  fn as_any(&self) -> &dyn Any {
-    self
   }
 
   fn fetch_constant(&self, index: usize) -> &PoolEntry {
@@ -100,6 +111,7 @@ pub enum PoolEntry {
   Float(f32),
   Function(String),
   Class(String),
+  Field(String, u16),
 }
 
 impl PoolEntry {

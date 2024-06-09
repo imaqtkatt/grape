@@ -18,7 +18,7 @@ pub struct Runtime<'c> {
   ip: RefCell<usize>,
   ctx: &'c mut Context<'c>,
   local: Local,
-  module: &'c dyn crate::module::Callable,
+  callable: &'c dyn Callable,
   function: &'c Function,
   heap: Heap,
   stack: Stack<STACK_SIZE>,
@@ -33,13 +33,13 @@ pub trait RuntimeVisitor {
 struct Frame<'c> {
   return_address: RefCell<usize>,
   local_frame: usize,
-  module: &'c dyn crate::module::Callable,
+  callable: &'c dyn Callable,
   function: &'c Function,
 }
 
 impl fmt::Debug for Frame<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}:{}", self.module.name(), self.function.name)
+    write!(f, "{}:{}", self.callable.name(), self.function.name)
   }
 }
 
@@ -64,8 +64,8 @@ impl<'c> Runtime<'c> {
       ip: RefCell::new(IP_INIT),
       ctx,
       local,
-      module,
       function,
+      callable: module,
       heap: Heap::new(),
       stack: Stack::<STACK_SIZE>::new(),
       call_stack: Vec::new(),
@@ -90,10 +90,10 @@ impl<'c> Runtime<'c> {
   }
 
   fn call(&mut self, module_name: &str, function_name: &str) -> Result<()> {
-    let module: &dyn crate::module::Callable;
+    let module: &dyn Callable;
     let function: &Function;
-    if *module_name == *self.module.name() {
-      module = self.module;
+    if *module_name == *self.callable.name() {
+      module = self.callable;
       function = module.fetch_function_with_name_unchecked(function_name);
     } else {
       module = self.ctx.fetch_module(module_name)?;
@@ -110,7 +110,7 @@ impl<'c> Runtime<'c> {
     self.call_stack.push(Frame {
       return_address: std::mem::replace(&mut self.ip, RefCell::new(IP_INIT)),
       local_frame: frame,
-      module: std::mem::replace(&mut self.module, module),
+      callable: std::mem::replace(&mut self.callable, module),
       function: std::mem::replace(&mut self.function, function),
     });
 
@@ -178,14 +178,10 @@ impl<'c> Runtime<'c> {
               let module_index = indexes >> 16;
               let function_index = indexes & 0xFF;
 
-              // let module = self
-              //   .module
-              //   .as_any()
-              //   .downcast_ref::<Module>()
-              //   .ok_or(Error::InvalidEntry(module_index))?;
-              let module = self.module.as_any().downcast_ref::<Module>().unwrap();
-              if let PoolEntry::Module(module_name) = &module.constants[module_index] {
-                if let PoolEntry::Function(function_name) = &module.constants[function_index] {
+              if let PoolEntry::Module(module_name) = self.callable.fetch_constant(module_index) {
+                if let PoolEntry::Function(function_name) =
+                  self.callable.fetch_constant(function_index)
+                {
                   self.call(module_name, function_name)?
                 } else {
                   Err(Error::InvalidEntry(function_index))?
@@ -197,31 +193,28 @@ impl<'c> Runtime<'c> {
 
             opcode::LOADCONST => {
               let entry_index = self.fetch(program) as usize;
-              let module = self.module.as_any().downcast_ref::<Module>().unwrap();
-              match &module.constants[entry_index] {
+              match self.callable.fetch_constant(entry_index) {
                 PoolEntry::String(s) => self.stack.push(self.heap.new_string(s.clone())),
                 PoolEntry::Integer(i) => self.stack.push(Value::mk_integer(*i)),
                 PoolEntry::Float(f) => self.stack.push(Value::mk_float(*f)),
-                PoolEntry::Module(_) | PoolEntry::Function(_) | PoolEntry::Class(_) => {
-                  Err(Error::InvalidEntry(entry_index))?
-                }
+                _ => Err(Error::InvalidEntry(entry_index))?,
               }
             }
 
-            opcode::NEW_OBJECT => self.stack.push(self.heap.new_object()),
-            opcode::SET_FIELD => {
+            opcode::NEW_DICT => self.stack.push(self.heap.new_dict()),
+            opcode::SET_DICT => {
               self.stack.check_underflow(3)?;
               let value = self.stack.pop_unchecked();
               let field = self.stack.pop_unchecked();
               let obj_ref: Reference = self.stack.pop_unchecked().into();
 
-              self.heap.set_field(obj_ref, field, value);
+              self.heap.set_dict(obj_ref, field, value);
             }
-            opcode::GET_FIELD => {
+            opcode::GET_DICT => {
               self.stack.check_underflow(2)?;
               let field = self.stack.pop_unchecked();
               let obj_ref: Reference = self.stack.pop_unchecked().into();
-              self.stack.push(self.heap.get_field(obj_ref, field));
+              self.stack.push(self.heap.get_dict(obj_ref, field));
             }
 
             opcode::I_PUSH_BYTE => {
@@ -405,42 +398,44 @@ impl<'c> Runtime<'c> {
 
             opcode::NEW => {
               let class_index = self.fetch_2(program);
-              let module = self.module.as_any().downcast_ref::<Module>().unwrap();
-              if let PoolEntry::Class(class_name) = &module.constants[class_index as usize] {
+              if let PoolEntry::Class(class_name) =
+                self.callable.fetch_constant(class_index as usize)
+              {
                 let class = self.ctx.fetch_class(class_name)?;
                 let fields = class.fields.len();
+
                 let class_ref = self.heap.class(fields);
 
-                let function = class.fetch_function_with_name_unchecked("new");
+                let constructor = class.fetch_function_with_name_unchecked("new");
 
-                let frame = self.local.push_frame(function.locals as usize);
+                let frame = self.local.push_frame(constructor.locals as usize);
                 self.local.store(0, class_ref);
 
-                self.stack.check_underflow(function.arguments as usize)?;
-                for index in (1..function.arguments + 1).rev() {
+                self.stack.check_underflow(constructor.arguments as usize)?;
+                for index in (1..constructor.arguments + 1).rev() {
                   self.local.store(index as usize, self.stack.pop_unchecked());
                 }
 
                 self.call_stack.push(Frame {
                   return_address: std::mem::replace(&mut self.ip, RefCell::new(IP_INIT)),
                   local_frame: frame,
-                  module: std::mem::replace(&mut self.module, class),
-                  function: std::mem::replace(&mut self.function, function),
+                  callable: std::mem::replace(&mut self.callable, class),
+                  function: std::mem::replace(&mut self.function, constructor),
                 });
               }
             }
             opcode::CALL_METHOD => {
-              let class_index = self.fetch_2(program);
-              let method_index = self.fetch_2(program);
+              let class_index = self.fetch_2(program) as usize;
+              let method_index = self.fetch_2(program) as usize;
 
-              let class_ref: Reference = self.stack.pop()?.into();
-
-              let module = self.module.as_any().downcast_ref::<Module>().unwrap();
-              if let PoolEntry::Class(class_name) = &module.constants[class_index as usize] {
-                let class = self.ctx.fetch_class(class_name)?;
-                if let PoolEntry::Function(function_name) = &module.constants[method_index as usize]
+              if let PoolEntry::Class(class_name) = self.callable.fetch_constant(class_index) {
+                if let PoolEntry::Function(function_name) =
+                  self.callable.fetch_constant(method_index)
                 {
+                  let class = self.ctx.fetch_class(class_name)?;
                   let function = class.fetch_function_with_name_unchecked(function_name);
+
+                  let class_ref: Reference = self.stack.pop()?.into();
 
                   let frame = self.local.push_frame(function.locals as usize);
                   self.local.store(0, Value::mk_reference(class_ref));
@@ -453,36 +448,56 @@ impl<'c> Runtime<'c> {
                   self.call_stack.push(Frame {
                     return_address: std::mem::replace(&mut self.ip, RefCell::new(IP_INIT)),
                     local_frame: frame,
-                    module: std::mem::replace(&mut self.module, class),
+                    callable: std::mem::replace(&mut self.callable, class),
                     function: std::mem::replace(&mut self.function, function),
                   });
                 } else {
-                  panic!()
+                  Err(Error::InvalidEntry(method_index))?
                 }
               } else {
-                panic!()
+                Err(Error::InvalidEntry(class_index))?
               }
             }
 
-            opcode::PUT_FIELD => {
-              let class_index = self.fetch_2(program);
-              let field_index = self.fetch_2(program);
+            opcode::SET_FIELD => {
+              let field_index = self.fetch_2(program) as usize;
 
-              // let module = self.module.as_any().downcast_ref::<Module>().unwrap();
-              if let PoolEntry::Class(class_name) =
-                &self.module.fetch_constant(class_index as usize)
+              if let PoolEntry::Field(field_name, class_index) =
+                self.callable.fetch_constant(field_index)
               {
-                if let PoolEntry::String(field_name) =
-                  self.module.fetch_constant(field_index as usize)
+                if let PoolEntry::Class(class_name) =
+                  self.callable.fetch_constant(*class_index as usize)
                 {
                   let class = self.ctx.fetch_class(class_name)?;
-                  let field_offset = class.fields[field_name.as_str()];
+                  let field = &class.fields[field_name.as_str()];
+
                   let value = self.stack.pop()?;
                   let class_ref: Reference = self.stack.pop()?.into();
-                  self.heap.put_field(class_ref, field_offset, value);
+
+                  self.heap.put_field(class_ref, field.offset, value);
+                }
+              }
+            }
+
+            opcode::GET_FIELD => {
+              let field_index = self.fetch_2(program) as usize;
+
+              let class_ref: Reference = self.stack.pop()?.into();
+              if let PoolEntry::Field(field_name, class_index) =
+                self.callable.fetch_constant(field_index)
+              {
+                if let PoolEntry::Class(class_name) =
+                  self.callable.fetch_constant(*class_index as usize)
+                {
+                  let class = self.ctx.fetch_class(class_name)?;
+                  let field = &class.fields[field_name.as_str()];
+
+                  self.stack.push(self.heap.get_field(class_ref, field.offset));
+                } else {
+                  Err(Error::InvalidEntry(*class_index as usize))?
                 }
               } else {
-                panic!()
+                Err(Error::InvalidEntry(field_index))?
               }
             }
 
@@ -497,7 +512,7 @@ impl<'c> Runtime<'c> {
   fn pop_frame(&mut self) {
     if let Some(frame) = self.call_stack.pop() {
       self.ip = frame.return_address;
-      self.module = frame.module;
+      self.callable = frame.callable;
       self.function = frame.function;
       self.local.pop_frame(frame.local_frame);
     }

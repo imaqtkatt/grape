@@ -31,6 +31,7 @@ impl Module {
           }
           wr.write_str(s)?;
         }
+        PoolEntry::Field(_field_name, _class_index) => todo!(),
       }
     }
 

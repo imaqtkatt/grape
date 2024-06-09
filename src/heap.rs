@@ -23,11 +23,6 @@ impl Heap {
   }
 
   #[inline(always)]
-  pub fn new_object(&mut self) -> Value {
-    self.alloc(Object::new(ObjectType::Map(ObjMap { fields: Default::default() })))
-  }
-
-  #[inline(always)]
   pub fn class(&mut self, fields: usize) -> Value {
     self
       .alloc(Object::new(ObjectType::Class(ObjClass { fields: vec![Value::NULL; fields].into() })))
@@ -40,15 +35,26 @@ impl Heap {
   }
 
   #[inline(always)]
-  pub fn get_field(&self, obj_ref: Reference, field: Value) -> Value {
-    let ObjectType::Map(map) = &*self.memory[obj_ref].value else { panic!("Is not an object") };
-    map.fields[&field]
+  pub fn get_field(&self, r#ref: Reference, offset: u8) -> Value {
+    let ObjectType::Class(class) = &*self.memory[r#ref].value else { panic!() };
+    class.fields[offset as usize]
   }
 
   #[inline(always)]
-  pub fn set_field(&mut self, obj_ref: Reference, field: Value, value: Value) {
-    if let ObjectType::Map(map) = &mut *self.memory[obj_ref].value {
-      map.fields.insert(field, value);
+  pub fn new_dict(&mut self) -> Value {
+    self.alloc(Object::new(ObjectType::Dict(ObjDict { fields: Default::default() })))
+  }
+
+  #[inline(always)]
+  pub fn get_dict(&self, r#ref: Reference, field: Value) -> Value {
+    let ObjectType::Dict(dict) = &*self.memory[r#ref].value else { panic!("Is not an object") };
+    dict.fields[&field]
+  }
+
+  #[inline(always)]
+  pub fn set_dict(&mut self, r#ref: Reference, field: Value, value: Value) {
+    if let ObjectType::Dict(dict) = &mut *self.memory[r#ref].value {
+      dict.fields.insert(field, value);
     } else {
       panic!("Is not an object")
     }
@@ -67,8 +73,8 @@ impl Heap {
   }
 
   #[inline(always)]
-  pub fn array_get(&mut self, array_ref: Reference, index: i32) -> Value {
-    let arr = &mut self.memory[array_ref];
+  pub fn array_get(&mut self, r#ref: Reference, index: i32) -> Value {
+    let arr = &mut self.memory[r#ref];
     let index = index as usize;
     let ObjectType::Array(ObjArray { arr }) = &*arr.value else { panic!() };
     if index > arr.len() {
@@ -79,8 +85,8 @@ impl Heap {
   }
 
   #[inline(always)]
-  pub fn array_set(&mut self, array_ref: Reference, index: i32, value: Value) {
-    let arr = &mut self.memory[array_ref];
+  pub fn array_set(&mut self, r#ref: Reference, index: i32, value: Value) {
+    let arr = &mut self.memory[r#ref];
     let index = index as usize;
     let ObjectType::Array(ObjArray { arr }) = &mut *arr.value else { panic!() };
     if index > arr.len() {
@@ -96,8 +102,8 @@ impl Heap {
   }
 
   #[inline(always)]
-  pub fn bytes_push(&mut self, bytes_ref: Reference, byte: u8) {
-    let bytes = &mut self.memory[bytes_ref];
+  pub fn bytes_push(&mut self, r#ref: Reference, byte: u8) {
+    let bytes = &mut self.memory[r#ref];
     let ObjectType::Bytes(ObjBytes { bytes }) = &mut *bytes.value else { panic!() };
     bytes.push(byte);
   }
@@ -152,7 +158,7 @@ impl Object {
 pub enum ObjectType {
   Null,
   String(ObjString),
-  Map(ObjMap),
+  Dict(ObjDict),
   Array(ObjArray),
   Bytes(ObjBytes),
   Native(Box<dyn std::any::Any>),
@@ -170,7 +176,7 @@ pub struct ObjString {
 }
 
 #[derive(Debug)]
-pub struct ObjMap {
+pub struct ObjDict {
   pub fields: BTreeMap<Value, Value>,
 }
 
@@ -193,7 +199,7 @@ impl Default for Heap {
 impl ObjectType {
   pub fn refs(&self) -> BTreeSet<Reference> {
     match self {
-      ObjectType::Map(map) => {
+      ObjectType::Dict(map) => {
         let mut set = BTreeSet::new();
         for (key, value) in map.fields.iter() {
           if key.is_not_null() {
