@@ -41,26 +41,41 @@ fn run() -> Result<()> {
 
   let ctx_arena = ContextArena::default();
   let ctx = &mut Context::new(&ctx_arena);
-  ctx.add_module(main_class())?;
-  let box_class = Class {
-    name: std::rc::Rc::from("Box"),
-    constants: vec![PoolEntry::Class("Box".into()), PoolEntry::Field("value".into(), 0)],
-    fields: BTreeMap::from([(std::rc::Rc::from("value"), Field { vis: Field::PRIVATE, offset: 0 })]),
-    methods: BTreeMap::from([(std::rc::Rc::from("new"), function::Function {
-        name: std::rc::Rc::from("new"),
-        locals: 2,
-        arguments: 1,
-        code: function::Code::Bytecode(vec![
-          LOAD_0,
-          LOAD_1,
-          SET_FIELD, 0, 1,
-          LOAD_0,
-          RETURN,
-        ].into()),
-    })]),
-  };
-  ctx.add_class(box_class)?;
-  // ctx.classes.insert(c.name.clone(), c);
+  // ctx.add_module(main_class())?;
+  // let box_class = Class {
+  //   name: std::rc::Rc::from("Box"),
+  //   constants: vec![
+  //     PoolEntry::Class("Box".into()),
+  //     PoolEntry::Field("value".into(), 0),
+  //     PoolEntry::Module("std:out".into()),
+  //     PoolEntry::Function("println".into()),
+  //   ],
+  //   fields: BTreeMap::from([(std::rc::Rc::from("value"), Field { vis: Field::PRIVATE, offset: 0 })]),
+  //   methods: BTreeMap::from([(std::rc::Rc::from("new"), function::Function {
+  //       name: std::rc::Rc::from("new"),
+  //       locals: 2,
+  //       arguments: 1,
+  //       code: function::Code::Bytecode(vec![
+  //         LOAD_0,
+  //         LOAD_1,
+  //         SET_FIELD, 0, 1,
+  //         LOAD_0,
+  //         RETURN,
+  //       ].into()),
+  //   }),
+  //   (std::rc::Rc::from("show"), function::Function {
+  //       name: std::rc::Rc::from("show"),
+  //       locals: 1,
+  //       arguments: 0,
+  //       code: function::Code::Bytecode(vec![
+  //         LOAD_0,
+  //         GET_FIELD, 0, 1,
+  //         CALL, 0, 2, 0, 3,
+  //         RETURN,
+  //       ].into()),
+  //   })]),
+  // };
+  // ctx.add_class(box_class)?;
 
   let mut runtime = Runtime::boot(BootOptions {
     entrypoint_module: matches.get_one("entrypoint").map(|e: &String| e.to_string()),
@@ -90,6 +105,7 @@ fn main_class() -> module::Module {
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_constant(PoolEntry::Function("println".to_string()))
     .with_constant(PoolEntry::Field("value".to_string(), 1))
+    .with_constant(PoolEntry::Function("show".to_string()))
     .with_function(
       FunctionBuilder::new()
         .with_name("main")
@@ -103,6 +119,8 @@ fn main_class() -> module::Module {
           CALL, 0, 2, 0, 3,
           LOAD_0,
           GET_FIELD, 0, 4,
+          LOAD_0,
+          CALL_METHOD, 0, 1, 0, 5,
           HALT,
         ])
         .build()

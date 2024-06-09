@@ -135,6 +135,10 @@ impl From<Value> for Float32 {
 impl From<Value> for Reference {
   fn from(value: Value) -> Self {
     assert!(value.tag() == Value::TAG_REFERENCE);
+    // let tag = value.tag();
+    // if !(tag == Value::TAG_REFERENCE) {
+    //   panic!("{tag} - {}", value.raw())
+    // }
     value.raw() as Reference
   }
 }

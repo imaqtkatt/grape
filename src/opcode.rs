@@ -243,7 +243,7 @@ pub const GET_FIELD: u8 = 0x50;
 
 /// Opcode repr table.
 pub const TO_STR: &[&str] = &[
-  "RET",
+  "HALT",
   "RETURN",
   "ICONST_0",
   "ICONST_1",

@@ -5,7 +5,6 @@ pub mod std_out;
 pub mod tcp;
 pub mod write;
 
-use std::any::Any;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
@@ -60,46 +59,15 @@ impl Field {
   pub const PUBLIC: u8 = 0x1;
 }
 
-pub trait Callable {
-  fn as_any(&self) -> &dyn Any;
-  fn name(&self) -> &str;
-  fn fetch_function_with_name_unchecked(&self, function_name: &str) -> &Function;
-  fn fetch_constant(&self, index: usize) -> &PoolEntry;
-}
-
-impl Callable for Module {
-  fn as_any(&self) -> &dyn Any {
-    self
-  }
-
-  fn name(&self) -> &str {
-    &self.name
-  }
-
-  fn fetch_function_with_name_unchecked(&self, function_name: &str) -> &Function {
+impl Module {
+  pub fn fetch_function_with_name_unchecked(&self, function_name: &str) -> &Function {
     &self.functions[function_name]
   }
-
-  fn fetch_constant(&self, index: usize) -> &PoolEntry {
-    &self.constants[index]
-  }
 }
 
-impl Callable for Class {
-  fn as_any(&self) -> &dyn Any {
-    self
-  }
-
-  fn name(&self) -> &str {
-    &self.name
-  }
-
-  fn fetch_function_with_name_unchecked(&self, function_name: &str) -> &Function {
+impl Class {
+  pub fn fetch_function_with_name_unchecked(&self, function_name: &str) -> &Function {
     &self.methods[function_name]
-  }
-
-  fn fetch_constant(&self, index: usize) -> &PoolEntry {
-    &self.constants[index]
   }
 }
 
