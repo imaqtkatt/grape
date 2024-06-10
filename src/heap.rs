@@ -29,7 +29,7 @@ impl Heap {
   }
 
   #[inline(always)]
-  pub fn put_field(&mut self, r#ref: Reference, offset: u8, value: Value) {
+  pub fn set_field(&mut self, r#ref: Reference, offset: u8, value: Value) {
     let ObjectType::Class(class) = &mut *self.memory[r#ref].value else { panic!() };
     class.fields[offset as usize] = value;
   }

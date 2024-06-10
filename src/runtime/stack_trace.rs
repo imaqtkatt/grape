@@ -1,31 +1,31 @@
-use super::{Runtime, RuntimeVisitor};
+use super::{Current, Runtime, RuntimeVisitor};
 
 pub struct StackTrace;
 
 impl RuntimeVisitor for StackTrace {
   fn visit(&self, rt: &Runtime) {
     match rt.current {
-      super::Current::Module => {
-        println!("At {}:{}%{}", unsafe { &*rt.module }.name, rt.function.name, rt.ip.borrow());
+      Current::Module(module) => {
+        println!("At {}:{}%{}", unsafe { &*module }.name, rt.function.name, rt.ip.borrow());
       }
-      super::Current::Class => {
-        println!("At {}:{}%{}", unsafe { &*rt.class }.name, rt.function.name, rt.ip.borrow());
+      Current::Class(class) => {
+        println!("At {}:{}%{}", unsafe { &*class }.name, rt.function.name, rt.ip.borrow());
       }
     }
     for frame in rt.call_stack.iter().rev() {
-      match frame.returning_to {
-        super::Current::Module => {
+      match frame.current {
+        Current::Module(module) => {
           println!(
             "  ~{}:{}%{}",
-            unsafe { &*frame.module }.name,
+            unsafe { &*module }.name,
             frame.function.name,
             frame.return_address.borrow()
           );
         }
-        super::Current::Class => {
+        Current::Class(class) => {
           println!(
             "  ~{}:{}%{}",
-            unsafe { &*frame.class }.name,
+            unsafe { &*class }.name,
             frame.function.name,
             frame.return_address.borrow()
           );

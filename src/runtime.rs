@@ -19,10 +19,6 @@ pub struct Runtime<'c> {
   ctx: &'c mut Context<'c>,
   local: Local,
   current: Current,
-  // module: Option<&'c Module>,
-  module: *const Module,
-  class: *const Class,
-  // class: Option<&'c Class>,
   function: &'c Function,
   heap: Heap,
   stack: Stack<STACK_SIZE>,
@@ -31,10 +27,15 @@ pub struct Runtime<'c> {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
 pub enum Current {
-  Module = 0,
-  Class,
+  Module(*const Module),
+  Class(*const Class),
+}
+
+impl Current {
+  pub const fn is_module(&self) -> bool {
+    matches!(self, Current::Module(..))
+  }
 }
 
 pub trait RuntimeVisitor {
@@ -44,19 +45,15 @@ pub trait RuntimeVisitor {
 struct Frame<'c> {
   return_address: RefCell<usize>,
   local_frame: usize,
-  returning_to: Current,
-  // module: Option<&'c Module>,
-  module: *const Module,
-  // class: Option<&'c Class>,
-  class: *const Class,
+  current: Current,
   function: &'c Function,
 }
 
 impl fmt::Debug for Frame<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.returning_to {
-      Current::Module => write!(f, "{}:{}", unsafe { &(*self.module).name }, self.function.name),
-      Current::Class => write!(f, "{}:{}", unsafe { &(*self.class).name }, self.function.name),
+    match self.current {
+      Current::Module(module) => write!(f, "{}:{}", unsafe { &(*module).name }, self.function.name),
+      Current::Class(class) => write!(f, "{}:{}", unsafe { &(*class).name }, self.function.name),
     }
   }
 }
@@ -83,9 +80,7 @@ impl<'c> Runtime<'c> {
       ctx,
       local,
       function,
-      module,
-      class: std::ptr::null(),
-      current: Current::Module,
+      current: Current::Module(module),
       heap: Heap::new(),
       stack: Stack::<STACK_SIZE>::new(),
       call_stack: Vec::new(),
@@ -112,12 +107,15 @@ impl<'c> Runtime<'c> {
   fn call(&mut self, module_name: &str, function_name: &str) -> Result<()> {
     let module: *const Module;
     let function: &Function;
-    if self.current == Current::Module && module_name == &*unsafe { &*self.module }.name {
-      module = self.module;
-      function = unsafe { &*module }.fetch_function_with_name_unchecked(function_name);
-    } else {
-      module = self.ctx.fetch_module(module_name)?;
-      function = unsafe { &*module }.fetch_function_with_name_unchecked(function_name);
+    match self.current {
+      Current::Module(current) if &*unsafe { &*current }.name == module_name => {
+        module = current;
+        function = unsafe { &*module }.fetch_function_with_name_unchecked(function_name);
+      }
+      _ => {
+        module = self.ctx.fetch_module(module_name)?;
+        function = unsafe { &*module }.fetch_function_with_name_unchecked(function_name);
+      }
     }
 
     let frame = self.local.push_frame(function.locals as usize);
@@ -127,7 +125,7 @@ impl<'c> Runtime<'c> {
       self.local.store(index as usize, self.stack.pop_unchecked());
     }
 
-    self.push_frame(frame, Current::Module, module, std::ptr::null(), function);
+    self.push_frame(frame, Current::Module(module), function);
 
     Ok(())
   }
@@ -135,8 +133,8 @@ impl<'c> Runtime<'c> {
   #[inline(always)]
   pub fn fetch_constant(&self, entry_index: usize) -> &'c PoolEntry {
     match self.current {
-      Current::Module => &unsafe { &*self.module }.constants[entry_index],
-      Current::Class => &unsafe { &*self.class }.constants[entry_index],
+      Current::Module(module) => &unsafe { &*module }.constants[entry_index],
+      Current::Class(class) => &unsafe { &*class }.constants[entry_index],
     }
   }
 
@@ -434,19 +432,19 @@ impl<'c> Runtime<'c> {
                   self.local.store(index as usize, self.stack.pop_unchecked());
                 }
 
-                self.push_frame(frame, Current::Class, std::ptr::null(), class, constructor);
+                self.push_frame(frame, Current::Class(class), constructor);
               }
             }
             opcode::CALL_METHOD => {
               let class_index = self.fetch_2(program) as usize;
               let method_index = self.fetch_2(program) as usize;
 
-              let class_ref: Reference = self.stack.pop()?.into();
-
               if let PoolEntry::Class(class_name) = self.fetch_constant(class_index) {
                 if let PoolEntry::Function(function_name) = self.fetch_constant(method_index) {
                   let class = self.ctx.fetch_class(class_name)?;
                   let function = class.fetch_function_with_name_unchecked(function_name);
+
+                  let class_ref: Reference = self.stack.pop()?.into();
 
                   let frame = self.local.push_frame(function.locals as usize);
                   self.local.store(0, Value::mk_reference(class_ref));
@@ -456,7 +454,7 @@ impl<'c> Runtime<'c> {
                     self.local.store(index as usize, self.stack.pop_unchecked());
                   }
 
-                  self.push_frame(frame, Current::Class, std::ptr::null(), class, function);
+                  self.push_frame(frame, Current::Class(class), function);
                 } else {
                   Err(Error::InvalidEntry(method_index))?
                 }
@@ -473,10 +471,11 @@ impl<'c> Runtime<'c> {
                   let class = self.ctx.fetch_class(class_name)?;
                   let field = &class.fields[field_name.as_str()];
 
-                  let value = self.stack.pop()?;
-                  let class_ref: Reference = self.stack.pop()?.into();
+                  self.stack.check_underflow(2)?;
+                  let value = self.stack.pop_unchecked();
+                  let class_ref: Reference = self.stack.pop_unchecked().into();
 
-                  self.heap.put_field(class_ref, field.offset, value);
+                  self.heap.set_field(class_ref, field.offset, value);
                 }
               }
             }
@@ -507,20 +506,11 @@ impl<'c> Runtime<'c> {
   }
 
   #[inline(always)]
-  fn push_frame(
-    &mut self,
-    frame: usize,
-    current: Current,
-    module: *const Module,
-    class: *const Class,
-    function: &'c Function,
-  ) {
+  fn push_frame(&mut self, frame: usize, current: Current, function: &'c Function) {
     self.call_stack.push(Frame {
       return_address: std::mem::replace(&mut self.ip, RefCell::new(IP_INIT)),
       local_frame: frame,
-      returning_to: std::mem::replace(&mut self.current, current),
-      module: std::mem::replace(&mut self.module, module),
-      class: std::mem::replace(&mut self.class, class),
+      current: std::mem::replace(&mut self.current, current),
       function: std::mem::replace(&mut self.function, function),
     });
   }
@@ -529,9 +519,7 @@ impl<'c> Runtime<'c> {
   fn pop_frame(&mut self) {
     if let Some(frame) = self.call_stack.pop() {
       self.ip = frame.return_address;
-      self.module = frame.module;
-      self.class = frame.class;
-      self.current = frame.returning_to;
+      self.current = frame.current;
       self.function = frame.function;
       self.local.pop_frame(frame.local_frame);
     }
