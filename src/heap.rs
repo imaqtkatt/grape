@@ -7,6 +7,8 @@ use std::{
 
 use crate::value::{Reference, Value};
 
+const HEAP_MEMORY: usize = 1 << 13;
+
 pub struct Heap {
   memory: Vec<Object>,
   free: HashSet<Reference, nohash_hasher::BuildNoHashHasher<Reference>>,
@@ -14,12 +16,11 @@ pub struct Heap {
 }
 
 impl Heap {
+  #[inline(always)]
   pub fn new() -> Self {
-    Self {
-      memory: vec![Object::marked(ObjectType::Null)],
-      free: Default::default(),
-      freed: Vec::new(),
-    }
+    let mut memory = vec![Object::marked(ObjectType::Null)];
+    memory.reserve_exact(HEAP_MEMORY);
+    Self { memory, free: Default::default(), freed: Vec::new() }
   }
 
   #[inline(always)]

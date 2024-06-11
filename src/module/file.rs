@@ -11,7 +11,7 @@ use crate::{
 use super::{builder::ModuleBuilder, Module};
 
 fn read_to_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  let file_string: Reference = local.load_0().into();
+  let file_string: Reference = local.load(0).into();
   let ObjectType::String(ObjString { contents: path }) = &*heap.get(file_string).value else {
     panic!();
   };
@@ -22,7 +22,7 @@ fn read_to_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
 }
 
 fn read_to_bytes(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  let file_string: Reference = local.load_0().into();
+  let file_string: Reference = local.load(0).into();
   let ObjectType::String(ObjString { contents: path }) = &*heap.get(file_string).value else {
     panic!();
   };

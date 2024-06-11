@@ -34,7 +34,11 @@ impl<'c> Context<'c> {
     Self { arena, modules, classes: Default::default() }
   }
 
-  pub fn add_module(&mut self, module: Module) -> Result<&'c Module> {
+  pub fn add_module(&mut self, mut module: Module) -> Result<&'c Module> {
+    let classes = std::mem::replace(&mut module.classes, BTreeMap::new());
+    for class in classes.into_values() {
+      self.add_class(class)?;
+    }
     match self.modules.entry(module.name.clone()) {
       Entry::Vacant(v) => Ok(v.insert(self.arena.modules.alloc(module))),
       Entry::Occupied(o) => Err(Error::ModuleAlreadyExists(o.get().name.to_string())),
@@ -44,7 +48,7 @@ impl<'c> Context<'c> {
   pub fn add_class(&mut self, class: Class) -> Result<&'c Class> {
     match self.classes.entry(class.name.clone()) {
       Entry::Vacant(v) => Ok(v.insert(self.arena.classes.alloc(class))),
-      Entry::Occupied(_) => todo!(),
+      Entry::Occupied(o) => Err(Error::ClassAlreadyExists(o.get().name.to_string())),
     }
   }
 

@@ -14,7 +14,7 @@ use crate::{
 use super::{builder::ModuleBuilder, Module};
 
 fn new_listener(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  let addr: Reference = local.load_0().into();
+  let addr: Reference = local.load(0).into();
 
   let ObjectType::String(ObjString { contents: addr }) = &*heap.get(addr).value else {
     panic!();
@@ -27,13 +27,13 @@ fn new_listener(local: &mut Local, heap: &mut Heap) -> NativeRet {
 }
 
 fn destroy(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  let listener: Reference = local.load_0().into();
+  let listener: Reference = local.load(0).into();
   heap.free(listener);
   Ok(None)
 }
 
 fn accept(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  let listener: Reference = local.load_0().into();
+  let listener: Reference = local.load(0).into();
 
   let ObjectType::Native(nat) = &*heap.get(listener).value else { panic!() };
   match nat.downcast_ref::<TcpListener>() {
@@ -47,7 +47,7 @@ fn accept(local: &mut Local, heap: &mut Heap) -> NativeRet {
 }
 
 fn recv_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  let stream: Reference = local.load_0().into();
+  let stream: Reference = local.load(0).into();
 
   let ObjectType::Native(nat) = &*heap.get(stream).value else { panic!() };
   match nat.downcast_ref::<TcpStream>() {
@@ -62,8 +62,8 @@ fn recv_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
 }
 
 fn send_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  let stream: Reference = local.load_0().into();
-  let string: Reference = local.load_1().into();
+  let stream: Reference = local.load(0).into();
+  let string: Reference = local.load(1).into();
 
   let ObjectType::Native(stream) = &*heap.get(stream).value else { panic!() };
   let ObjectType::String(ObjString { contents: send }) = &*heap.get(string).value else { panic!() };

@@ -8,22 +8,22 @@ use crate::{
 use super::{builder::ModuleBuilder, Module};
 
 fn println(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  println!("{}", formatting::display_value(&local.load_0(), heap));
+  println!("{}", formatting::display_value(&local.load(0), heap));
   Ok(None)
 }
 
 fn print(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  print!("{}", formatting::display_value(&local.load_0(), heap));
+  print!("{}", formatting::display_value(&local.load(0), heap));
   Ok(None)
 }
 
 fn debug(local: &mut Local, _: &mut Heap) -> NativeRet {
-  println!("{:?}", local.load_0());
+  println!("{:?}", local.load(0));
   Ok(None)
 }
 
 fn eprintln(local: &mut Local, heap: &mut Heap) -> NativeRet {
-  eprintln!("{}", formatting::display_value(&local.load_0(), heap));
+  eprintln!("{}", formatting::display_value(&local.load(0), heap));
   Ok(None)
 }
 

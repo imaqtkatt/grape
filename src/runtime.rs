@@ -69,6 +69,7 @@ pub struct BootOptions<'c> {
 }
 
 impl<'c> Runtime<'c> {
+  #[inline(always)]
   fn new(
     ctx: &'c mut Context<'c>,
     local: Local,
@@ -88,6 +89,7 @@ impl<'c> Runtime<'c> {
     }
   }
 
+  #[inline(always)]
   pub fn boot(opts: BootOptions<'c>) -> Result<Runtime<'c>> {
     let module = if let Some(entrypoint_module) = opts.entrypoint_module {
       opts.context.load_eager(&entrypoint_module)?;
@@ -104,6 +106,7 @@ impl<'c> Runtime<'c> {
     Ok(Runtime::new(opts.context, local, module, function))
   }
 
+  #[inline(always)]
   fn call(&mut self, module_name: &str, function_name: &str) -> Result<()> {
     let module: *const Module;
     let function: &Function;
@@ -138,7 +141,7 @@ impl<'c> Runtime<'c> {
     }
   }
 
-  #[inline(always)]
+  // #[inline(always)]
   pub fn run(&mut self) -> Result<()> {
     loop {
       let tick = self.tick.get_mut();
@@ -183,10 +186,10 @@ impl<'c> Runtime<'c> {
             opcode::FCONST_0 => self.stack.fconst_0(),
             opcode::FCONST_1 => self.stack.fconst_1(),
 
-            opcode::LOAD_0 => self.stack.push(self.local.load_0()),
-            opcode::LOAD_1 => self.stack.push(self.local.load_1()),
-            opcode::LOAD_2 => self.stack.push(self.local.load_2()),
-            opcode::LOAD_3 => self.stack.push(self.local.load_3()),
+            opcode::LOAD_0 => self.stack.push(self.local.load(0)),
+            opcode::LOAD_1 => self.stack.push(self.local.load(1)),
+            opcode::LOAD_2 => self.stack.push(self.local.load(2)),
+            opcode::LOAD_3 => self.stack.push(self.local.load(3)),
 
             opcode::I2F => self.stack.i2f()?,
             opcode::F2I => self.stack.f2i()?,
@@ -567,6 +570,7 @@ pub enum Error {
   ModuleAlreadyExists(String),
   FunctionNotFound(String),
   ClassNotFound(String),
+  ClassAlreadyExists(String),
   InvalidEntry(usize),
   Other(Box<dyn std::error::Error + 'static>),
 }
@@ -587,6 +591,7 @@ impl fmt::Display for Error {
       Error::ModuleAlreadyExists(name) => write!(f, "Module '{name}' already exists."),
       Error::FunctionNotFound(name) => write!(f, "Function '{name}' not found."),
       Error::ClassNotFound(name) => write!(f, "Class '{name}' not found."),
+      Error::ClassAlreadyExists(name) => write!(f, "Class '{name}' already exists."),
       Error::InvalidEntry(index) => write!(f, "Invalid constant pool entry '{index}'."),
       Error::Other(e) => write!(f, "{e}"),
     }
