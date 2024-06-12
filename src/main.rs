@@ -2,15 +2,16 @@ use std::collections::BTreeMap;
 
 use context::{Context, ContextArena};
 use function::builder::FunctionBuilder;
-use module::{builder::ModuleBuilder, Class, Field};
+use module::builder::ModuleBuilder;
+use pool_entry::PoolEntry;
 use runtime::BootOptions;
 
 use crate::{
-  module::PoolEntry,
   opcode::*,
   runtime::{Result, Runtime},
 };
 
+pub mod class;
 pub mod context;
 pub mod formatting;
 pub mod function;
@@ -19,6 +20,7 @@ pub mod local;
 pub mod module;
 pub mod module_path;
 pub mod opcode;
+pub mod pool_entry;
 pub mod read_bytes;
 pub mod runtime;
 pub mod stack;

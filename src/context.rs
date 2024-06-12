@@ -5,7 +5,8 @@ use std::{
 };
 
 use crate::{
-  module::{Class, Module},
+  class::Class,
+  module::Module,
   module_path,
   runtime::{Error, Result},
 };
@@ -34,11 +35,7 @@ impl<'c> Context<'c> {
     Self { arena, modules, classes: Default::default() }
   }
 
-  pub fn add_module(&mut self, mut module: Module) -> Result<&'c Module> {
-    let classes = std::mem::replace(&mut module.classes, BTreeMap::new());
-    for class in classes.into_values() {
-      self.add_class(class)?;
-    }
+  pub fn add_module(&mut self, module: Module) -> Result<&'c Module> {
     match self.modules.entry(module.name.clone()) {
       Entry::Vacant(v) => Ok(v.insert(self.arena.modules.alloc(module))),
       Entry::Occupied(o) => Err(Error::ModuleAlreadyExists(o.get().name.to_string())),
@@ -66,10 +63,10 @@ impl<'c> Context<'c> {
     }
   }
 
-  fn read_module(&mut self, module_name: &str) -> Result<&'c Module> {
+  fn read_module(&mut self, module_name: &str) -> Result<Module> {
     let mut file = File::open(module_path::from(module_name))
       .map_err(|_| Error::ModuleNotFound(module_name.to_string()))?;
-    Module::read(&mut file).map_err(Error::other).and_then(|module| self.add_module(module))
+    Module::read(&mut file).map_err(Error::other)
   }
 
   pub fn load_eager(&mut self, module_name: &str) -> Result<()> {
@@ -80,9 +77,16 @@ impl<'c> Context<'c> {
       if self.modules.contains_key(name) {
         continue;
       }
-      let module = self.read_module(name)?;
+      let mut module = self.read_module(name)?;
+
+      let classes = std::mem::replace(&mut module.classes, BTreeMap::new());
+      for class in classes.into_values() {
+        self.add_class(class)?;
+      }
+
+      let module = self.add_module(module)?;
       for constant in module.constants.iter() {
-        if let crate::module::PoolEntry::Module(name) = constant {
+        if let crate::pool_entry::PoolEntry::Module(name) = constant {
           if loaded.insert(name) {
             to_load.push(name);
           }

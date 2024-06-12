@@ -4,12 +4,14 @@ use core::fmt;
 use std::cell::RefCell;
 
 use crate::{
+  class::Class,
   context::Context,
   function::{Code, Function},
   heap::Heap,
   local::Local,
-  module::{Class, Module, PoolEntry},
+  module::Module,
   opcode,
+  pool_entry::PoolEntry,
   stack::Stack,
   value::{Byte8, Int32, Reference, Value},
 };
