@@ -1,9 +1,12 @@
+pub mod builder;
 pub mod read;
 pub mod write;
 
 use std::{collections::BTreeMap, rc::Rc};
 
 use crate::{function::Function, pool_entry::PoolEntry};
+
+pub use builder::ClassBuilder;
 
 #[derive(Debug)]
 pub struct Field {
