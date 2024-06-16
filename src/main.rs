@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 
-use context::{Context, ContextArena};
+// use context::Context;
 use function::builder::FunctionBuilder;
+use loader::{Loader, LoaderArena};
 use module::builder::ModuleBuilder;
 use pool_entry::PoolEntry;
 use runtime::BootOptions;
@@ -16,6 +17,7 @@ pub mod context;
 pub mod formatting;
 pub mod function;
 pub mod heap;
+pub mod loader;
 pub mod local;
 pub mod module;
 pub mod module_path;
@@ -44,10 +46,17 @@ fn run() -> Result<()> {
   // let m = main_module();
   // let mut f = std::fs::File::options().create_new(true).write(true).open("./main.grape").unwrap();
   // m.write(&mut f).unwrap();
-  // panic!();
 
-  let ctx_arena = ContextArena::default();
-  let ctx = &mut Context::new(&ctx_arena);
+  let entrypoint_module = matches.get_one("entrypoint").map(|e: &String| e.to_string());
+
+  let loader_arena = LoaderArena::default();
+  let mut loader = Loader::new(&loader_arena);
+  if let Some(entrypoint) = &entrypoint_module {
+    loader.load_path(entrypoint)?;
+  } else {
+    loader.load_path("main")?;
+  }
+  let context = &mut loader.to_context();
   // ctx.add_module(main_class())?;
   // let box_class = Class {
   //   name: std::rc::Rc::from("Box"),
@@ -84,10 +93,7 @@ fn run() -> Result<()> {
   // };
   // ctx.add_class(box_class)?;
 
-  let mut runtime = Runtime::boot(BootOptions {
-    entrypoint_module: matches.get_one("entrypoint").map(|e: &String| e.to_string()),
-    context: ctx,
-  })?;
+  let mut runtime = Runtime::boot(BootOptions { entrypoint_module, context })?;
   if let Err(e) = runtime.run() {
     eprintln!("Error: {e}");
     runtime.accept(runtime::stack_trace::StackTrace);
@@ -105,6 +111,7 @@ fn main() {
 // TODO: move this
 
 #[rustfmt::skip]
+#[allow(unused)]
 fn main_class() -> module::Module {
   ModuleBuilder::new()
     .with_name("main")

@@ -94,10 +94,8 @@ impl<'c> Runtime<'c> {
   #[inline(always)]
   pub fn boot(opts: BootOptions<'c>) -> Result<Runtime<'c>> {
     let module = if let Some(entrypoint_module) = opts.entrypoint_module {
-      opts.context.load_eager(&entrypoint_module)?;
       opts.context.fetch_module(&entrypoint_module)?
     } else {
-      opts.context.load_eager(MAIN)?;
       opts.context.fetch_module(MAIN)?
     };
     let function = module.fetch_function_with_name(MAIN)?;
