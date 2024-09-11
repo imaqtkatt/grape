@@ -34,12 +34,6 @@ pub enum Current {
   Class(*const Class),
 }
 
-impl Current {
-  pub const fn is_module(&self) -> bool {
-    matches!(self, Current::Module(..))
-  }
-}
-
 pub trait RuntimeVisitor {
   fn visit(&self, rt: &Runtime);
 }

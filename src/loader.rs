@@ -76,7 +76,7 @@ impl<'c> Loader<'c> {
   fn add_module(&mut self, module: Module) -> Result<&'c Module> {
     match self.modules.entry(module.name.clone()) {
       Entry::Vacant(v) => Ok(v.insert(self.arena.modules.alloc(module))),
-      Entry::Occupied(o) => Err(Error::ModuleAlreadyExists(o.get().name.to_string())),
+      Entry::Occupied(_) => Err(Error::ModuleAlreadyExists(module.name.to_string())),
     }
   }
 
@@ -86,7 +86,7 @@ impl<'c> Loader<'c> {
         v.insert(self.arena.classes.alloc(class));
         Ok(())
       }
-      Entry::Occupied(o) => Err(Error::ClassAlreadyExists(o.get().name.to_string())),
+      Entry::Occupied(_) => Err(Error::ClassAlreadyExists(class.name.to_string())),
     }
   }
 }

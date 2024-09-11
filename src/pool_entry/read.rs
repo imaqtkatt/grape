@@ -12,6 +12,8 @@ impl PoolEntry {
       PoolEntry::TAG_MODULE => PoolEntry::Module(rd.read_string()?),
       PoolEntry::TAG_FLOAT => PoolEntry::Float(rd.read_f32()?),
       PoolEntry::TAG_FUNCTION => PoolEntry::Function(rd.read_string()?),
+      PoolEntry::TAG_CLASS => PoolEntry::Class(rd.read_string()?),
+      PoolEntry::TAG_FIELD => PoolEntry::Field(rd.read_string()?, rd.read_u16()?),
       _ => unreachable!(),
     };
     Ok(result)

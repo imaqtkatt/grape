@@ -20,12 +20,16 @@ impl PoolEntry {
           PoolEntry::String(..) => wr.write_u8(PoolEntry::TAG_STRING)?,
           PoolEntry::Module(..) => wr.write_u8(PoolEntry::TAG_MODULE)?,
           PoolEntry::Function(..) => wr.write_u8(PoolEntry::TAG_FUNCTION)?,
-          PoolEntry::Class(..) => todo!(),
+          PoolEntry::Class(..) => wr.write_u8(PoolEntry::TAG_CLASS)?,
           _ => unreachable!(),
         }
         wr.write_str(s)?;
       }
-      PoolEntry::Field(_field_name, _class_index) => todo!(),
+      PoolEntry::Field(field_name, class_index) => {
+        wr.write_u8(PoolEntry::TAG_FIELD)?;
+        wr.write_str(field_name)?;
+        wr.write_u16(*class_index)?;
+      }
     }
     Ok(())
   }
