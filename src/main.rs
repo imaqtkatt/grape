@@ -1,5 +1,8 @@
 // use std::collections::BTreeMap;
 
+use std::collections::BTreeMap;
+
+use class::{Class, Field};
 // use context::Context;
 use function::builder::FunctionBuilder;
 use loader::{Loader, LoaderArena};
@@ -51,47 +54,48 @@ fn run() -> Result<()> {
 
   let loader_arena = LoaderArena::default();
   let mut loader = Loader::new(&loader_arena);
-  if let Some(entrypoint) = &entrypoint_module {
-    loader.load_path(entrypoint)?;
-  } else {
-    loader.load_path("main")?;
-  }
+  loader.add_module(main_class()).unwrap();
+  let box_class = Class {
+    name: std::rc::Rc::from("Box"),
+    constants: vec![
+      PoolEntry::Class("Box".into()),
+      PoolEntry::Field("value".into()),
+      PoolEntry::Module("std:out".into()),
+      PoolEntry::Function("println".into()),
+    ],
+    fields: BTreeMap::from([(std::rc::Rc::from("value"), Field { vis: Field::PRIVATE, offset: 0 })]),
+    methods: BTreeMap::from([(std::rc::Rc::from("new"), function::Function {
+        name: std::rc::Rc::from("new"),
+        locals: 2,
+        arguments: 1,
+        code: function::Code::Bytecode(vec![
+          LOAD_0,
+          LOAD_1,
+          SET_FIELD, 0, 1,
+          LOAD_0,
+          RETURN,
+        ].into()),
+    }),
+    (std::rc::Rc::from("show"), function::Function {
+        name: std::rc::Rc::from("show"),
+        locals: 1,
+        arguments: 0,
+        code: function::Code::Bytecode(vec![
+          LOAD_0,
+          GET_FIELD, 0, 1,
+          CALL, 0, 2, 0, 3,
+          RETURN,
+        ].into()),
+    })]),
+  };
+  loader.add_class(box_class).unwrap();
+  // if let Some(entrypoint) = &entrypoint_module {
+  //   loader.load_path(entrypoint)?;
+  // } else {
+  //   loader.load_path("main")?;
+  // }
   let context = &mut loader.to_context();
   // ctx.add_module(main_class())?;
-  // let box_class = Class {
-  //   name: std::rc::Rc::from("Box"),
-  //   constants: vec![
-  //     PoolEntry::Class("Box".into()),
-  //     PoolEntry::Field("value".into(), 0),
-  //     PoolEntry::Module("std:out".into()),
-  //     PoolEntry::Function("println".into()),
-  //   ],
-  //   fields: BTreeMap::from([(std::rc::Rc::from("value"), Field { vis: Field::PRIVATE, offset: 0 })]),
-  //   methods: BTreeMap::from([(std::rc::Rc::from("new"), function::Function {
-  //       name: std::rc::Rc::from("new"),
-  //       locals: 2,
-  //       arguments: 1,
-  //       code: function::Code::Bytecode(vec![
-  //         LOAD_0,
-  //         LOAD_1,
-  //         SET_FIELD, 0, 1,
-  //         LOAD_0,
-  //         RETURN,
-  //       ].into()),
-  //   }),
-  //   (std::rc::Rc::from("show"), function::Function {
-  //       name: std::rc::Rc::from("show"),
-  //       locals: 1,
-  //       arguments: 0,
-  //       code: function::Code::Bytecode(vec![
-  //         LOAD_0,
-  //         GET_FIELD, 0, 1,
-  //         CALL, 0, 2, 0, 3,
-  //         RETURN,
-  //       ].into()),
-  //   })]),
-  // };
-  // ctx.add_class(box_class)?;
 
   let mut runtime = Runtime::boot(BootOptions { entrypoint_module, context })?;
   if let Err(e) = runtime.run() {
@@ -118,7 +122,7 @@ fn main_class() -> module::Module {
     .with_constant(PoolEntry::Class("Box".to_string()))
     .with_constant(PoolEntry::Module("std:out".to_string()))
     .with_constant(PoolEntry::Function("println".to_string()))
-    .with_constant(PoolEntry::Field("value".to_string(), 1))
+    .with_constant(PoolEntry::Field("value".to_string()))
     .with_constant(PoolEntry::Function("show".to_string()))
     .with_function(
       FunctionBuilder::new()

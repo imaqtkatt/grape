@@ -24,21 +24,42 @@ impl Heap {
   }
 
   #[inline(always)]
-  pub fn class(&mut self, fields: usize) -> Value {
-    self
-      .alloc(Object::new(ObjectType::Class(ObjClass { fields: vec![Value::NULL; fields].into() })))
+  pub fn class(&mut self, fields: usize, class_ref: *const crate::class::Class) -> Value {
+    self.alloc(Object::new(ObjectType::Class(ObjClass {
+      fields: vec![Value::NULL; fields].into(),
+      class_ref,
+    })))
+  }
+
+  pub fn get_method(&mut self, r#ref: Reference, name: &str) -> &crate::function::Function {
+    let ObjectType::Class(class) = &*self.memory[r#ref].value else { panic!() };
+    unsafe { (*class.class_ref).fetch_function_with_name_unchecked(name) }
   }
 
   #[inline(always)]
-  pub fn set_field(&mut self, r#ref: Reference, offset: u8, value: Value) {
+  pub fn set_field_with_offset(&mut self, r#ref: Reference, offset: u8, value: Value) {
     let ObjectType::Class(class) = &mut *self.memory[r#ref].value else { panic!() };
     class.fields[offset as usize] = value;
   }
 
   #[inline(always)]
-  pub fn get_field(&self, r#ref: Reference, offset: u8) -> Value {
+  pub fn set_field2(&mut self, r#ref: Reference, field_name: &str, value: Value) {
+    let ObjectType::Class(class) = &mut *self.memory[r#ref].value else { panic!() };
+    let field = &unsafe { &*(class.class_ref) }.fields[field_name];
+    class.fields[field.offset as usize] = value;
+  }
+
+  #[inline(always)]
+  pub fn get_field_with_offset(&self, r#ref: Reference, offset: u8) -> Value {
     let ObjectType::Class(class) = &*self.memory[r#ref].value else { panic!() };
     class.fields[offset as usize]
+  }
+
+  #[inline(always)]
+  pub(crate) fn get_field2(&self, r#ref: Reference, field_name: &str) -> Value {
+    let ObjectType::Class(class) = &*self.memory[r#ref].value else { panic!() };
+    let field = &unsafe { &*(class.class_ref) }.fields[field_name];
+    class.fields[field.offset as usize]
   }
 
   #[inline(always)]
@@ -169,6 +190,7 @@ pub enum ObjectType {
 #[derive(Debug)]
 pub struct ObjClass {
   pub(crate) fields: Box<[Value]>,
+  pub(crate) class_ref: *const crate::class::Class,
 }
 
 #[derive(Debug)]

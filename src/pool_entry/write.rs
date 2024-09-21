@@ -25,10 +25,9 @@ impl PoolEntry {
         }
         wr.write_str(s)?;
       }
-      PoolEntry::Field(field_name, class_index) => {
+      PoolEntry::Field(field_name) => {
         wr.write_u8(PoolEntry::TAG_FIELD)?;
         wr.write_str(field_name)?;
-        wr.write_u16(*class_index)?;
       }
     }
     Ok(())

@@ -9,7 +9,7 @@ pub enum PoolEntry {
   Float(f32),
   Function(String),
   Class(String),
-  Field(String, u16),
+  Field(String),
 }
 
 impl PoolEntry {

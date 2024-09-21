@@ -417,7 +417,7 @@ impl<'c> Runtime<'c> {
                 let class = self.ctx.fetch_class(class_name)?;
                 let fields = class.fields.len();
 
-                let class_ref = self.heap.class(fields);
+                let class_ref = self.heap.class(fields, class);
 
                 let constructor = class.fetch_function_with_name_unchecked("new");
 
@@ -463,33 +463,21 @@ impl<'c> Runtime<'c> {
             opcode::SET_FIELD => {
               let field_index = self.fetch_2(program) as usize;
 
-              if let PoolEntry::Field(field_name, class_index) = self.fetch_constant(field_index) {
-                if let PoolEntry::Class(class_name) = self.fetch_constant(*class_index as usize) {
-                  let class = self.ctx.fetch_class(class_name)?;
-                  let field = &class.fields[field_name.as_str()];
+              if let PoolEntry::Field(field_name) = self.fetch_constant(field_index) {
+                self.stack.check_underflow(2)?;
+                let value = self.stack.pop_unchecked();
+                let class_ref: Reference = self.stack.pop_unchecked().into();
 
-                  self.stack.check_underflow(2)?;
-                  let value = self.stack.pop_unchecked();
-                  let class_ref: Reference = self.stack.pop_unchecked().into();
-
-                  self.heap.set_field(class_ref, field.offset, value);
-                }
+                self.heap.set_field2(class_ref, field_name, value);
               }
             }
 
             opcode::GET_FIELD => {
               let field_index = self.fetch_2(program) as usize;
 
-              let class_ref: Reference = self.stack.pop()?.into();
-              if let PoolEntry::Field(field_name, class_index) = self.fetch_constant(field_index) {
-                if let PoolEntry::Class(class_name) = self.fetch_constant(*class_index as usize) {
-                  let class = self.ctx.fetch_class(class_name)?;
-                  let field = &class.fields[field_name.as_str()];
-
-                  self.stack.push(self.heap.get_field(class_ref, field.offset));
-                } else {
-                  Err(Error::InvalidEntry(*class_index as usize))?
-                }
+              if let PoolEntry::Field(field_name) = self.fetch_constant(field_index) {
+                let class_ref: Reference = self.stack.pop()?.into();
+                self.stack.push(self.heap.get_field2(class_ref, field_name));
               } else {
                 Err(Error::InvalidEntry(field_index))?
               }

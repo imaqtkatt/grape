@@ -73,14 +73,14 @@ impl<'c> Loader<'c> {
     Module::read(&mut file).map_err(Error::other)
   }
 
-  fn add_module(&mut self, module: Module) -> Result<&'c Module> {
+  pub(crate) fn add_module(&mut self, module: Module) -> Result<&'c Module> {
     match self.modules.entry(module.name.clone()) {
       Entry::Vacant(v) => Ok(v.insert(self.arena.modules.alloc(module))),
       Entry::Occupied(_) => Err(Error::ModuleAlreadyExists(module.name.to_string())),
     }
   }
 
-  fn add_class(&mut self, class: Class) -> Result<()> {
+  pub(crate) fn add_class(&mut self, class: Class) -> Result<()> {
     match self.classes.entry(class.name.clone()) {
       Entry::Vacant(v) => {
         v.insert(self.arena.classes.alloc(class));
