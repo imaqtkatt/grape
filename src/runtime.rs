@@ -433,30 +433,24 @@ impl<'c> Runtime<'c> {
               }
             }
             opcode::CALL_METHOD => {
-              let class_index = self.fetch_2(program) as usize;
               let method_index = self.fetch_2(program) as usize;
 
-              if let PoolEntry::Class(class_name) = self.fetch_constant(class_index) {
-                if let PoolEntry::Function(function_name) = self.fetch_constant(method_index) {
-                  let class = self.ctx.fetch_class(class_name)?;
-                  let function = class.fetch_function_with_name_unchecked(function_name);
+              if let PoolEntry::Function(function_name) = self.fetch_constant(method_index) {
+                let class_ref: Reference = self.stack.pop()?.into();
 
-                  let class_ref: Reference = self.stack.pop()?.into();
+                let (class, function) = self.heap.call_method(class_ref, function_name)?;
 
-                  let frame = self.local.push_frame(function.locals as usize);
-                  self.local.store(0, Value::mk_reference(class_ref));
+                let frame = self.local.push_frame(unsafe { (*function).locals as usize });
+                self.local.store(0, Value::mk_reference(class_ref));
 
-                  self.stack.check_underflow(function.arguments as usize)?;
-                  for index in (1..function.arguments + 1).rev() {
-                    self.local.store(index as usize, self.stack.pop_unchecked());
-                  }
-
-                  self.push_frame(frame, Current::Class(class), function);
-                } else {
-                  Err(Error::InvalidEntry(method_index))?
+                self.stack.check_underflow(unsafe { (*function).arguments as usize })?;
+                for index in (1..unsafe { (*function).arguments + 1 }).rev() {
+                  self.local.store(index as usize, self.stack.pop_unchecked());
                 }
+
+                self.push_frame(frame, Current::Class(class), unsafe { &*function });
               } else {
-                Err(Error::InvalidEntry(class_index))?
+                Err(Error::InvalidEntry(method_index))?
               }
             }
 
@@ -548,6 +542,7 @@ impl Runtime<'_> {
 /// A runtime error.
 pub enum Error {
   StackUnderflow,
+  FieldAccessError,
   ModuleNotFound(String),
   ModuleAlreadyExists(String),
   FunctionNotFound(String),
@@ -569,6 +564,7 @@ impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Error::StackUnderflow => write!(f, "Stack Underflow"),
+      Error::FieldAccessError => write!(f, "Field Access Error"),
       Error::ModuleNotFound(name) => write!(f, "Module '{name}' not found."),
       Error::ModuleAlreadyExists(name) => write!(f, "Module '{name}' already exists."),
       Error::FunctionNotFound(name) => write!(f, "Function '{name}' not found."),

@@ -1,9 +1,3 @@
-// use std::collections::BTreeMap;
-
-use std::collections::BTreeMap;
-
-use class::{Class, Field};
-// use context::Context;
 use function::builder::FunctionBuilder;
 use loader::{Loader, LoaderArena};
 use module::builder::ModuleBuilder;
@@ -54,46 +48,11 @@ fn run() -> Result<()> {
 
   let loader_arena = LoaderArena::default();
   let mut loader = Loader::new(&loader_arena);
-  loader.add_module(main_class()).unwrap();
-  let box_class = Class {
-    name: std::rc::Rc::from("Box"),
-    constants: vec![
-      PoolEntry::Class("Box".into()),
-      PoolEntry::Field("value".into()),
-      PoolEntry::Module("std:out".into()),
-      PoolEntry::Function("println".into()),
-    ],
-    fields: BTreeMap::from([(std::rc::Rc::from("value"), Field { vis: Field::PRIVATE, offset: 0 })]),
-    methods: BTreeMap::from([(std::rc::Rc::from("new"), function::Function {
-        name: std::rc::Rc::from("new"),
-        locals: 2,
-        arguments: 1,
-        code: function::Code::Bytecode(vec![
-          LOAD_0,
-          LOAD_1,
-          SET_FIELD, 0, 1,
-          LOAD_0,
-          RETURN,
-        ].into()),
-    }),
-    (std::rc::Rc::from("show"), function::Function {
-        name: std::rc::Rc::from("show"),
-        locals: 1,
-        arguments: 0,
-        code: function::Code::Bytecode(vec![
-          LOAD_0,
-          GET_FIELD, 0, 1,
-          CALL, 0, 2, 0, 3,
-          RETURN,
-        ].into()),
-    })]),
-  };
-  loader.add_class(box_class).unwrap();
-  // if let Some(entrypoint) = &entrypoint_module {
-  //   loader.load_path(entrypoint)?;
-  // } else {
-  //   loader.load_path("main")?;
-  // }
+  if let Some(entrypoint) = &entrypoint_module {
+    loader.load_path(entrypoint)?;
+  } else {
+    loader.load_path("main")?;
+  }
   let context = &mut loader.to_context();
   // ctx.add_module(main_class())?;
 

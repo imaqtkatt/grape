@@ -5,7 +5,10 @@ use std::{
   collections::{BTreeMap, BTreeSet, HashSet},
 };
 
-use crate::value::{Reference, Value};
+use crate::{
+  runtime::{Error, Result},
+  value::{Reference, Value},
+};
 
 const HEAP_MEMORY: usize = 1 << 13;
 
@@ -153,6 +156,17 @@ impl Heap {
     self.memory[r#ref] = Object::null();
     self.free.insert(r#ref);
     self.freed.push(r#ref);
+  }
+
+  pub(crate) fn call_method(
+    &self,
+    class_ref: usize,
+    function_name: &str,
+  ) -> Result<(*const crate::class::Class, *const crate::function::Function)> {
+    let ObjectType::Class(class) = &*self.memory[class_ref].value else { panic!() };
+    let function =
+      unsafe { (&*class.class_ref).methods.get(function_name).ok_or(Error::FieldAccessError) };
+    Ok((class.class_ref, function?))
   }
 }
 
