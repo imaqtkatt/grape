@@ -3,7 +3,7 @@ use super::{Current, Runtime, RuntimeVisitor};
 pub struct StackTrace;
 
 impl RuntimeVisitor for StackTrace {
-  fn visit(&self, rt: &Runtime) {
+  fn visit(&self, rt: &mut Runtime) {
     match rt.current {
       Current::Module(module) => {
         println!("At {}:{}%{}", unsafe { &*module }.name, rt.function.name, rt.ip.borrow());

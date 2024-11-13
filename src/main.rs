@@ -60,7 +60,9 @@ fn run() -> Result<()> {
   if let Err(e) = runtime.run() {
     eprintln!("Error: {e}");
     runtime.accept(runtime::stack_trace::StackTrace);
+    runtime.accept(runtime::gc::RunGc);
   }
+  runtime.accept(runtime::gc::RunGc);
 
   Ok(())
 }

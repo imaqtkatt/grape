@@ -1,3 +1,4 @@
+pub mod gc;
 pub mod stack_trace;
 
 use core::fmt;
@@ -13,7 +14,7 @@ use crate::{
   opcode,
   pool_entry::PoolEntry,
   stack::Stack,
-  value::{Byte8, Int32, Reference, Value},
+  value::{Int32, Reference, Value},
 };
 
 pub struct Runtime<'c> {
@@ -35,7 +36,7 @@ pub enum Current {
 }
 
 pub trait RuntimeVisitor {
-  fn visit(&self, rt: &Runtime);
+  fn visit(&self, rt: &mut Runtime);
 }
 
 struct Frame<'c> {
@@ -209,14 +210,16 @@ impl<'c> Runtime<'c> {
             opcode::LOADCONST => {
               let entry_index = self.fetch(program) as usize;
               match self.fetch_constant(entry_index) {
-                PoolEntry::String(s) => self.stack.push(self.heap.new_string(s.clone())),
+                // PoolEntry::String(s) => self.stack.push(self.heap.new_string(s.clone())),
+                PoolEntry::String(s) => self.stack.push(self.heap.alloc_string(s.clone())),
                 PoolEntry::Integer(i) => self.stack.push(Value::mk_integer(*i)),
                 PoolEntry::Float(f) => self.stack.push(Value::mk_float(*f)),
                 _ => Err(Error::InvalidEntry(entry_index))?,
               }
             }
 
-            opcode::NEW_DICT => self.stack.push(self.heap.new_dict()),
+            // opcode::NEW_DICT => self.stack.push(self.heap.new_dict()),
+            opcode::NEW_DICT => self.stack.push(self.heap.alloc_dict()),
             opcode::SET_DICT => {
               self.stack.check_underflow(3)?;
               let value = self.stack.pop_unchecked();
@@ -306,7 +309,8 @@ impl<'c> Runtime<'c> {
             opcode::NEW_ARRAY => {
               self.stack.check_underflow(1)?;
               let size: Int32 = self.stack.pop_unchecked().into();
-              self.stack.push(self.heap.new_array(size));
+              // self.stack.push(self.heap.new_array(size));
+              self.stack.push(self.heap.alloc_array(size));
             }
 
             opcode::ARRAY_GET => {
@@ -393,22 +397,24 @@ impl<'c> Runtime<'c> {
             opcode::BNEG => self.stack.bneg()?,
 
             opcode::NEW_BYTES => {
-              let len = self.fetch_2(program) as usize;
-              self.stack.check_underflow(len)?;
-              let mut bytes_vec = Vec::with_capacity(len);
-              let mut len = len;
-              while len > 0 {
-                len -= 1;
-                bytes_vec.insert(0, self.stack.pop_unchecked().into());
-              }
-              self.stack.push(self.heap.new_bytes(bytes_vec));
+              panic!()
+              // let len = self.fetch_2(program) as usize;
+              // self.stack.check_underflow(len)?;
+              // let mut bytes_vec = Vec::with_capacity(len);
+              // let mut len = len;
+              // while len > 0 {
+              //   len -= 1;
+              //   bytes_vec.insert(0, self.stack.pop_unchecked().into());
+              // }
+              // self.stack.push(self.heap.new_bytes(bytes_vec));
             }
 
             opcode::BYTES_PUSH => {
-              self.stack.check_underflow(2)?;
-              let byte: Byte8 = self.stack.pop_unchecked().into();
-              let bytes_ref: Reference = self.stack.pop_unchecked().into();
-              self.heap.bytes_push(bytes_ref, byte);
+              panic!()
+              // self.stack.check_underflow(2)?;
+              // let byte: Byte8 = self.stack.pop_unchecked().into();
+              // let bytes_ref: Reference = self.stack.pop_unchecked().into();
+              // self.heap.bytes_push(bytes_ref, byte);
             }
 
             opcode::NEW => {
@@ -533,7 +539,7 @@ impl<'c> Runtime<'c> {
 }
 
 impl Runtime<'_> {
-  pub fn accept(&self, visitor: impl RuntimeVisitor) {
+  pub fn accept(&mut self, visitor: impl RuntimeVisitor) {
     visitor.visit(self);
   }
 }

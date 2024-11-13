@@ -23,6 +23,10 @@ impl<const SIZE: usize> Stack<SIZE> {
     Self::default()
   }
 
+  pub fn clear(&mut self) {
+    self.memory = [Value::NULL; SIZE];
+  }
+
   pub(crate) fn iter(&self) -> Iter<Value> {
     self.memory.iter()
   }

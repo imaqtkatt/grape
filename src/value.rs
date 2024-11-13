@@ -9,7 +9,7 @@ pub type Float32 = f32;
 /// Grape reference type.
 pub type Reference = usize;
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 #[must_use]
 pub struct Value(pub u64);
@@ -24,6 +24,9 @@ impl Value {
   pub const TAG_BYTE: u64 = 0x1;
   pub const TAG_INTEGER: u64 = 0x2;
   pub const TAG_FLOAT: u64 = 0x3;
+  pub const TAG_STRING: u64 = 0x4;
+  pub const TAG_DICT: u64 = 0x5;
+  pub const TAG_ARRAY: u64 = 0x6;
 
   pub const NULL: Value = Self(Self::TAG_REFERENCE);
 
@@ -106,6 +109,9 @@ impl fmt::Debug for Value {
       Self::TAG_BYTE => write!(f, "{}", self.byte()),
       Self::TAG_INTEGER => write!(f, "{}", self.integer()),
       Self::TAG_FLOAT => write!(f, "{}", self.float()),
+      Self::TAG_STRING => write!(f, "@{:012x}", self.reference()),
+      Self::TAG_DICT => write!(f, "@{:012x}", self.reference()),
+      Self::TAG_ARRAY => write!(f, "@{:012x}", self.reference()),
       _ => unreachable!(),
     }
   }
@@ -134,7 +140,12 @@ impl From<Value> for Float32 {
 
 impl From<Value> for Reference {
   fn from(value: Value) -> Self {
-    assert!(value.tag() == Value::TAG_REFERENCE);
+    assert!(
+      value.tag() == Value::TAG_REFERENCE
+        || value.tag() == Value::TAG_STRING
+        || value.tag() == Value::TAG_DICT
+        || value.tag() == Value::TAG_ARRAY
+    );
     // let tag = value.tag();
     // if !(tag == Value::TAG_REFERENCE) {
     //   panic!("{tag} - {}", value.raw())

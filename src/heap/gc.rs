@@ -1,43 +1,80 @@
 use crate::{local::Local, stack::Stack};
 
-use super::{Heap, Object};
+use super::{Heap, ObjArray, ObjDict};
 
 impl Heap {
   pub fn gc<const SIZE: usize>(&mut self, local: &Local, stack: &Stack<SIZE>) {
-    let stack_and_local = stack.iter().chain(local.iter());
-    for value in stack_and_local {
-      if value.is_not_null() {
-        let got = &mut self.memory[value.reference()];
-        *got.marked.get_mut() = true;
+    let mut stack_and_local = stack.iter().chain(local.iter()).collect::<Vec<_>>();
+    while let Some(value) = stack_and_local.pop() {
+      if value.tag() == crate::value::Value::TAG_STRING {
+        self.marked.insert(*value);
+        continue;
+      }
+      if value.tag() == crate::value::Value::TAG_DICT {
+        self.marked.insert(*value);
+        let ptr = value.reference() as *mut ObjDict;
 
-        let mut refs = got.value.refs();
+        let refs = unsafe { (*ptr).refs() };
+        stack_and_local.extend(refs);
+        continue;
+      }
+      if value.tag() == crate::value::Value::TAG_ARRAY {
+        self.marked.insert(*value);
+        let ptr = value.reference() as *mut ObjArray;
 
-        while let Some(r#ref) = refs.pop_first() {
-          let got = &mut self.memory[r#ref];
-          *got.marked.get_mut() = true;
-          let value_refs = got.value.refs();
-          refs.extend(value_refs);
-        }
+        let refs = unsafe { (*ptr).refs() };
+        stack_and_local.extend(refs);
+        continue;
       }
     }
 
-    let mut to_free = Vec::new();
-    for i in 1..self.memory.len() {
-      let obj = &mut self.memory[i];
-      if !obj.marked.get() && self.free.insert(i) {
-        to_free.push(i);
-      } else {
-        *obj.marked.get_mut() = false;
+    self.roots.retain(|root| {
+      if self.marked.contains(root) {
+        return true;
       }
-    }
 
-    if to_free.is_empty() {
-      return;
-    }
+      match root.tag() {
+        crate::value::Value::TAG_STRING => unsafe {
+          std::alloc::dealloc(
+            root.reference() as *mut _,
+            std::alloc::Layout::new::<super::ObjString>(),
+          );
+        },
+        crate::value::Value::TAG_DICT => unsafe {
+          std::alloc::dealloc(
+            root.reference() as *mut _,
+            std::alloc::Layout::new::<super::ObjDict>(),
+          );
+        },
+        crate::value::Value::TAG_ARRAY => unsafe {
+          std::alloc::dealloc(
+            root.reference() as *mut _,
+            std::alloc::Layout::new::<super::ObjArray>(),
+          );
+        },
+        _ => unreachable!(),
+      }
 
-    for r#ref in to_free {
-      self.freed.push(r#ref);
-      self.memory[r#ref] = Object::null();
-    }
+      // if root.tag() == crate::value::Value::TAG_STRING {}
+      // if root.tag() == crate::value::Value::TAG_DICT {
+      //   unsafe {
+      //     std::alloc::dealloc(
+      //       root.reference() as *mut _,
+      //       std::alloc::Layout::new::<super::ObjDict>(),
+      //     );
+      //   }
+      // }
+      // if root.tag() == crate::value::Value::TAG_ARRAY {
+      //   unsafe {
+      //     std::alloc::dealloc(
+      //       root.reference() as *mut _,
+      //       std::alloc::Layout::new::<super::ObjArray>(),
+      //     );
+      //   }
+      // }
+      return false;
+    });
+
+    self.marked.clear();
   }
 }
