@@ -1,3 +1,4 @@
+use class::ClassBuilder;
 use function::builder::FunctionBuilder;
 use loader::{Loader, LoaderArena};
 use module::builder::ModuleBuilder;
@@ -99,7 +100,7 @@ fn main_class() -> module::Module {
           LOAD_0,
           GET_FIELD, 0, 4,
           LOAD_0,
-          CALL_METHOD, 0, 1, 0, 5,
+          CALL_METHOD, 0, 5,
           HALT,
         ])
         .build()

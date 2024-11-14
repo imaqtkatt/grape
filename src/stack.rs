@@ -249,7 +249,11 @@ impl<const SIZE: usize> Stack<SIZE> {
       Value::TAG_BYTE => self.push(Value::mk_byte(if value.byte() == 0 { 1 } else { 0 })),
       Value::TAG_INTEGER => self.push(Value::mk_integer(if value.integer() == 0 { 1 } else { 0 })),
       Value::TAG_FLOAT => self.push(Value::mk_float(if value.float() == 0. { 1. } else { 0. })),
-      Value::TAG_REFERENCE => panic!("Invalid argument"),
+      Value::TAG_NULL
+      | Value::TAG_STRING
+      | Value::TAG_DICT
+      | Value::TAG_ARRAY
+      | Value::TAG_CLASS => panic!("Invalid argument"),
       _ => unreachable!(),
     }
     Ok(())

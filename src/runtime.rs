@@ -14,7 +14,7 @@ use crate::{
   opcode,
   pool_entry::PoolEntry,
   stack::Stack,
-  value::{Int32, Reference, Value},
+  value::{self, Int32, Reference, Value},
 };
 
 pub struct Runtime<'c> {
@@ -210,7 +210,6 @@ impl<'c> Runtime<'c> {
             opcode::LOADCONST => {
               let entry_index = self.fetch(program) as usize;
               match self.fetch_constant(entry_index) {
-                // PoolEntry::String(s) => self.stack.push(self.heap.new_string(s.clone())),
                 PoolEntry::String(s) => self.stack.push(self.heap.alloc_string(s.clone())),
                 PoolEntry::Integer(i) => self.stack.push(Value::mk_integer(*i)),
                 PoolEntry::Float(f) => self.stack.push(Value::mk_float(*f)),
@@ -218,21 +217,20 @@ impl<'c> Runtime<'c> {
               }
             }
 
-            // opcode::NEW_DICT => self.stack.push(self.heap.new_dict()),
             opcode::NEW_DICT => self.stack.push(self.heap.alloc_dict()),
             opcode::SET_DICT => {
               self.stack.check_underflow(3)?;
               let value = self.stack.pop_unchecked();
               let field = self.stack.pop_unchecked();
-              let obj_ref: Reference = self.stack.pop_unchecked().into();
+              let obj_ref: value::Dict = self.stack.pop_unchecked().into();
 
-              self.heap.set_dict(obj_ref, field, value);
+              Heap::set_dict(obj_ref, field, value);
             }
             opcode::GET_DICT => {
               self.stack.check_underflow(2)?;
               let field = self.stack.pop_unchecked();
-              let obj_ref: Reference = self.stack.pop_unchecked().into();
-              self.stack.push(self.heap.get_dict(obj_ref, field));
+              let obj_ref: value::Dict = self.stack.pop_unchecked().into();
+              self.stack.push(Heap::get_dict(obj_ref, field));
             }
 
             opcode::I_PUSH_BYTE => {
@@ -309,25 +307,24 @@ impl<'c> Runtime<'c> {
             opcode::NEW_ARRAY => {
               self.stack.check_underflow(1)?;
               let size: Int32 = self.stack.pop_unchecked().into();
-              // self.stack.push(self.heap.new_array(size));
               self.stack.push(self.heap.alloc_array(size));
             }
 
             opcode::ARRAY_GET => {
               self.stack.check_underflow(2)?;
               let index: Int32 = self.stack.pop_unchecked().into();
-              let array_ref: Reference = self.stack.pop_unchecked().into();
+              let array_ref: value::Array = self.stack.pop_unchecked().into();
 
-              self.stack.push(self.heap.array_get(array_ref, index));
+              self.stack.push(Heap::array_get(array_ref, index));
             }
 
             opcode::ARRAY_SET => {
               self.stack.check_underflow(3)?;
               let value = self.stack.pop_unchecked();
               let index: Int32 = self.stack.pop_unchecked().into();
-              let array_ref: Reference = self.stack.pop_unchecked().into();
+              let array_ref: value::Array = self.stack.pop_unchecked().into();
 
-              self.heap.array_set(array_ref, index, value);
+              Heap::array_set(array_ref, index, value);
             }
 
             opcode::IINC => {
@@ -396,26 +393,9 @@ impl<'c> Runtime<'c> {
             opcode::BSHR => self.stack.bshr()?,
             opcode::BNEG => self.stack.bneg()?,
 
-            opcode::NEW_BYTES => {
-              panic!()
-              // let len = self.fetch_2(program) as usize;
-              // self.stack.check_underflow(len)?;
-              // let mut bytes_vec = Vec::with_capacity(len);
-              // let mut len = len;
-              // while len > 0 {
-              //   len -= 1;
-              //   bytes_vec.insert(0, self.stack.pop_unchecked().into());
-              // }
-              // self.stack.push(self.heap.new_bytes(bytes_vec));
-            }
-
-            opcode::BYTES_PUSH => {
-              panic!()
-              // self.stack.check_underflow(2)?;
-              // let byte: Byte8 = self.stack.pop_unchecked().into();
-              // let bytes_ref: Reference = self.stack.pop_unchecked().into();
-              // self.heap.bytes_push(bytes_ref, byte);
-            }
+            // todo: remove
+            opcode::NEW_BYTES => panic!(),
+            opcode::BYTES_PUSH => panic!(),
 
             opcode::NEW => {
               let class_index = self.fetch_2(program) as usize;
@@ -442,12 +422,12 @@ impl<'c> Runtime<'c> {
               let method_index = self.fetch_2(program) as usize;
 
               if let PoolEntry::Function(function_name) = self.fetch_constant(method_index) {
-                let class_ref: Reference = self.stack.pop()?.into();
+                let class_ref: value::Class = self.stack.pop()?.into();
 
-                let (class, function) = self.heap.call_method(class_ref, function_name)?;
+                let (class, function) = Heap::call_method(class_ref, function_name)?;
 
                 let frame = self.local.push_frame(unsafe { (*function).locals as usize });
-                self.local.store(0, Value::mk_reference(class_ref));
+                self.local.store(0, Value::new(Value::TAG_CLASS, class_ref as u64));
 
                 self.stack.check_underflow(unsafe { (*function).arguments as usize })?;
                 for index in (1..unsafe { (*function).arguments + 1 }).rev() {
@@ -466,9 +446,9 @@ impl<'c> Runtime<'c> {
               if let PoolEntry::Field(field_name) = self.fetch_constant(field_index) {
                 self.stack.check_underflow(2)?;
                 let value = self.stack.pop_unchecked();
-                let class_ref: Reference = self.stack.pop_unchecked().into();
+                let class_ref: value::Class = self.stack.pop_unchecked().into();
 
-                self.heap.set_field2(class_ref, field_name, value);
+                Heap::set_field2(class_ref, field_name, value);
               }
             }
 
@@ -476,8 +456,8 @@ impl<'c> Runtime<'c> {
               let field_index = self.fetch_2(program) as usize;
 
               if let PoolEntry::Field(field_name) = self.fetch_constant(field_index) {
-                let class_ref: Reference = self.stack.pop()?.into();
-                self.stack.push(self.heap.get_field2(class_ref, field_name));
+                let class_ref: value::Class = self.stack.pop()?.into();
+                self.stack.push(Heap::get_field2(class_ref, field_name));
               } else {
                 Err(Error::InvalidEntry(field_index))?
               }

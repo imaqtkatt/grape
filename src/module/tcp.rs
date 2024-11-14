@@ -38,7 +38,7 @@ fn destroy(local: &mut Local, _heap: &mut Heap) -> NativeRet {
   todo!()
 }
 
-fn accept(local: &mut Local, heap: &mut Heap) -> NativeRet {
+fn accept(local: &mut Local, _heap: &mut Heap) -> NativeRet {
   let listener: Reference = local.load(0).into();
 
   todo!()
@@ -54,7 +54,7 @@ fn accept(local: &mut Local, heap: &mut Heap) -> NativeRet {
   // }
 }
 
-fn recv_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
+fn recv_string(local: &mut Local, _heap: &mut Heap) -> NativeRet {
   let stream: Reference = local.load(0).into();
 
   todo!()
@@ -70,7 +70,7 @@ fn recv_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
   // }
 }
 
-fn send_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
+fn send_string(local: &mut Local, _heap: &mut Heap) -> NativeRet {
   let stream: Reference = local.load(0).into();
   let string: Reference = local.load(1).into();
 

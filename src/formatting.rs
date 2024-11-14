@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::{
-  heap::{Heap, ObjArray, ObjDict, ObjString},
+  heap::{Heap, ObjArray, ObjClass, ObjDict, ObjString},
   value::Value,
 };
 
@@ -18,8 +18,7 @@ pub fn display_value<'a>(v: &'a Value, _heap: &'a Heap) -> impl fmt::Display + '
     Value::TAG_BYTE => write!(f, "{}", v.byte()),
     Value::TAG_INTEGER => write!(f, "{}", v.integer()),
     Value::TAG_FLOAT => write!(f, "{}", v.float()),
-    // Value::TAG_REFERENCE => write!(f, "{}", display_object(v.raw() as usize, heap)),
-    Value::TAG_REFERENCE => write!(f, "NULL"),
+    Value::TAG_NULL => write!(f, "null"),
     Value::TAG_STRING => {
       let ptr = v.reference() as *mut ObjString;
       write!(f, "{}", unsafe { &(*ptr).contents })
@@ -32,6 +31,7 @@ pub fn display_value<'a>(v: &'a Value, _heap: &'a Heap) -> impl fmt::Display + '
       let ptr = v.reference() as *mut ObjArray;
       write!(f, "array({:?})", unsafe { &(*ptr).arr })
     }
+    Value::TAG_CLASS => write!(f, "class({:?})", v),
     _ => unreachable!(),
   })
 }

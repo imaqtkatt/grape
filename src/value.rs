@@ -8,6 +8,14 @@ pub type Int32 = i32;
 pub type Float32 = f32;
 /// Grape reference type.
 pub type Reference = usize;
+/// Grape string reference.
+pub type String = usize;
+/// Grape dict reference.
+pub type Dict = usize;
+/// Grape array reference.
+pub type Array = usize;
+/// Grape class reference.
+pub type Class = usize;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -20,15 +28,16 @@ pub(crate) const VALUE_MASK: u64 = (1 << (64 - TAG_BITS)) - 1;
 pub(crate) const TAG_MASK: u64 = !VALUE_MASK;
 
 impl Value {
-  pub const TAG_REFERENCE: u64 = 0x0;
+  pub const TAG_NULL: u64 = 0x0;
   pub const TAG_BYTE: u64 = 0x1;
   pub const TAG_INTEGER: u64 = 0x2;
   pub const TAG_FLOAT: u64 = 0x3;
   pub const TAG_STRING: u64 = 0x4;
   pub const TAG_DICT: u64 = 0x5;
   pub const TAG_ARRAY: u64 = 0x6;
+  pub const TAG_CLASS: u64 = 0x7;
 
-  pub const NULL: Value = Self(Self::TAG_REFERENCE);
+  pub const NULL: Value = Self(Self::TAG_NULL);
 
   #[inline(always)]
   pub const fn tag(&self) -> u64 {
@@ -37,7 +46,7 @@ impl Value {
 
   #[inline(always)]
   pub const fn is_not_null(&self) -> bool {
-    self.tag() == Self::TAG_REFERENCE && self.raw() != 0
+    self.tag() == Self::TAG_NULL && self.raw() != 0
   }
 
   #[inline(always)]
@@ -57,7 +66,7 @@ impl Value {
 
   #[inline(always)]
   pub const fn mk_reference(r#ref: usize) -> Self {
-    Self((Self::TAG_REFERENCE << TAG_DISPLACER) | r#ref as u64)
+    Self((Self::TAG_NULL << TAG_DISPLACER) | r#ref as u64)
   }
 
   #[inline(always)]
@@ -105,13 +114,13 @@ impl Value {
 impl fmt::Debug for Value {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.tag() {
-      Self::TAG_REFERENCE => write!(f, "@{:012x}", self.reference()),
+      Self::TAG_NULL => write!(f, "@{:012x}", self.reference()),
       Self::TAG_BYTE => write!(f, "{}", self.byte()),
       Self::TAG_INTEGER => write!(f, "{}", self.integer()),
       Self::TAG_FLOAT => write!(f, "{}", self.float()),
-      Self::TAG_STRING => write!(f, "@{:012x}", self.reference()),
-      Self::TAG_DICT => write!(f, "@{:012x}", self.reference()),
-      Self::TAG_ARRAY => write!(f, "@{:012x}", self.reference()),
+      Self::TAG_STRING | Self::TAG_DICT | Self::TAG_ARRAY | Self::TAG_CLASS => {
+        write!(f, "@{:012x}", self.reference())
+      }
       _ => unreachable!(),
     }
   }
@@ -141,15 +150,11 @@ impl From<Value> for Float32 {
 impl From<Value> for Reference {
   fn from(value: Value) -> Self {
     assert!(
-      value.tag() == Value::TAG_REFERENCE
-        || value.tag() == Value::TAG_STRING
+      value.tag() == Value::TAG_STRING
         || value.tag() == Value::TAG_DICT
         || value.tag() == Value::TAG_ARRAY
+        || value.tag() == Value::TAG_CLASS
     );
-    // let tag = value.tag();
-    // if !(tag == Value::TAG_REFERENCE) {
-    //   panic!("{tag} - {}", value.raw())
-    // }
     value.raw() as Reference
   }
 }
