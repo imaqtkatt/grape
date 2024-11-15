@@ -46,17 +46,7 @@ impl Value {
 
   #[inline(always)]
   pub const fn is_not_null(&self) -> bool {
-    self.tag() == Self::TAG_NULL && self.raw() != 0
-  }
-
-  #[inline(always)]
-  pub const fn raw(&self) -> u64 {
-    self.0 & VALUE_MASK
-  }
-
-  #[inline(always)]
-  pub fn raw_mut(&mut self) -> &mut u64 {
-    &mut self.0
+    self.tag() == Self::TAG_NULL
   }
 
   #[inline(always)]
@@ -114,7 +104,7 @@ impl Value {
 impl fmt::Debug for Value {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.tag() {
-      Self::TAG_NULL => write!(f, "@{:012x}", self.reference()),
+      Self::TAG_NULL => write!(f, "null"),
       Self::TAG_BYTE => write!(f, "{}", self.byte()),
       Self::TAG_INTEGER => write!(f, "{}", self.integer()),
       Self::TAG_FLOAT => write!(f, "{}", self.float()),
@@ -155,6 +145,6 @@ impl From<Value> for Reference {
         || value.tag() == Value::TAG_ARRAY
         || value.tag() == Value::TAG_CLASS
     );
-    value.raw() as Reference
+    value.reference()
   }
 }

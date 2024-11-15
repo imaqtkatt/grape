@@ -8,7 +8,7 @@ use crate::{
   class::Class,
   context::Context,
   function::{Code, Function},
-  heap::Heap,
+  gc::Gc,
   local::Local,
   module::Module,
   opcode,
@@ -23,7 +23,7 @@ pub struct Runtime<'c> {
   local: Local,
   current: Current,
   function: &'c Function,
-  heap: Heap,
+  gc: Gc,
   stack: Stack<STACK_SIZE>,
   call_stack: Vec<Frame<'c>>,
   tick: RefCell<usize>,
@@ -79,7 +79,7 @@ impl<'c> Runtime<'c> {
       local,
       function,
       current: Current::Module(module),
-      heap: Heap::new(),
+      gc: Gc::new(),
       stack: Stack::<STACK_SIZE>::new(),
       call_stack: Vec::new(),
       tick: RefCell::new(0),
@@ -143,11 +143,11 @@ impl<'c> Runtime<'c> {
       *tick += 1;
       if *tick == GC_TICK {
         *tick = 0;
-        self.heap.gc(&self.local, &self.stack);
+        self.gc.mark_sweep(&self.local, &self.stack);
       }
       match self.function.code {
         Code::Native(ref native) => {
-          if let Some(value) = native(&mut self.local, &mut self.heap)? {
+          if let Some(value) = native(&mut self.local, &mut self.gc)? {
             self.stack.push(value);
           }
           self.pop_frame();
@@ -210,27 +210,27 @@ impl<'c> Runtime<'c> {
             opcode::LOADCONST => {
               let entry_index = self.fetch(program) as usize;
               match self.fetch_constant(entry_index) {
-                PoolEntry::String(s) => self.stack.push(self.heap.alloc_string(s.clone())),
+                PoolEntry::String(s) => self.stack.push(self.gc.alloc_string(s.clone())),
                 PoolEntry::Integer(i) => self.stack.push(Value::mk_integer(*i)),
                 PoolEntry::Float(f) => self.stack.push(Value::mk_float(*f)),
                 _ => Err(Error::InvalidEntry(entry_index))?,
               }
             }
 
-            opcode::NEW_DICT => self.stack.push(self.heap.alloc_dict()),
+            opcode::NEW_DICT => self.stack.push(self.gc.alloc_dict()),
             opcode::SET_DICT => {
               self.stack.check_underflow(3)?;
               let value = self.stack.pop_unchecked();
               let field = self.stack.pop_unchecked();
               let obj_ref: value::Dict = self.stack.pop_unchecked().into();
 
-              Heap::set_dict(obj_ref, field, value);
+              Gc::set_dict(obj_ref, field, value);
             }
             opcode::GET_DICT => {
               self.stack.check_underflow(2)?;
               let field = self.stack.pop_unchecked();
               let obj_ref: value::Dict = self.stack.pop_unchecked().into();
-              self.stack.push(Heap::get_dict(obj_ref, field));
+              self.stack.push(Gc::get_dict(obj_ref, field));
             }
 
             opcode::I_PUSH_BYTE => {
@@ -307,7 +307,7 @@ impl<'c> Runtime<'c> {
             opcode::NEW_ARRAY => {
               self.stack.check_underflow(1)?;
               let size: Int32 = self.stack.pop_unchecked().into();
-              self.stack.push(self.heap.alloc_array(size));
+              self.stack.push(self.gc.alloc_array(size));
             }
 
             opcode::ARRAY_GET => {
@@ -315,7 +315,7 @@ impl<'c> Runtime<'c> {
               let index: Int32 = self.stack.pop_unchecked().into();
               let array_ref: value::Array = self.stack.pop_unchecked().into();
 
-              self.stack.push(Heap::array_get(array_ref, index));
+              self.stack.push(Gc::array_get(array_ref, index));
             }
 
             opcode::ARRAY_SET => {
@@ -324,7 +324,7 @@ impl<'c> Runtime<'c> {
               let index: Int32 = self.stack.pop_unchecked().into();
               let array_ref: value::Array = self.stack.pop_unchecked().into();
 
-              Heap::array_set(array_ref, index, value);
+              Gc::array_set(array_ref, index, value);
             }
 
             opcode::IINC => {
@@ -403,7 +403,7 @@ impl<'c> Runtime<'c> {
                 let class = self.ctx.fetch_class(class_name)?;
                 let fields = class.fields.len();
 
-                let class_ref = self.heap.class(fields, class);
+                let class_ref = self.gc.class(fields, class);
 
                 let constructor = class.fetch_function_with_name_unchecked("new");
 
@@ -424,7 +424,7 @@ impl<'c> Runtime<'c> {
               if let PoolEntry::Function(function_name) = self.fetch_constant(method_index) {
                 let class_ref: value::Class = self.stack.pop()?.into();
 
-                let (class, function) = Heap::call_method(class_ref, function_name)?;
+                let (class, function) = Gc::call_method(class_ref, function_name)?;
 
                 let frame = self.local.push_frame(unsafe { (*function).locals as usize });
                 self.local.store(0, Value::new(Value::TAG_CLASS, class_ref as u64));
@@ -448,7 +448,7 @@ impl<'c> Runtime<'c> {
                 let value = self.stack.pop_unchecked();
                 let class_ref: value::Class = self.stack.pop_unchecked().into();
 
-                Heap::set_field2(class_ref, field_name, value);
+                Gc::set_field2(class_ref, field_name, value);
               }
             }
 
@@ -457,7 +457,7 @@ impl<'c> Runtime<'c> {
 
               if let PoolEntry::Field(field_name) = self.fetch_constant(field_index) {
                 let class_ref: value::Class = self.stack.pop()?.into();
-                self.stack.push(Heap::get_field2(class_ref, field_name));
+                self.stack.push(Gc::get_field2(class_ref, field_name));
               } else {
                 Err(Error::InvalidEntry(field_index))?
               }

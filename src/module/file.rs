@@ -2,7 +2,7 @@ use std::{fs, io::Read};
 
 use crate::{
   function::{Function, NativeRet},
-  heap::{Heap, ObjString},
+  gc::{Gc, ObjString},
   local::Local,
   runtime::Error,
   value::Reference,
@@ -10,7 +10,7 @@ use crate::{
 
 use super::{builder::ModuleBuilder, Module};
 
-fn read_to_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
+fn read_to_string(local: &mut Local, heap: &mut Gc) -> NativeRet {
   let file_string: Reference = local.load(0).into();
   let path = file_string as *mut ObjString;
   unsafe {
@@ -22,7 +22,7 @@ fn read_to_string(local: &mut Local, heap: &mut Heap) -> NativeRet {
   }
 }
 
-fn read_to_bytes(_local: &mut Local, _heap: &mut Heap) -> NativeRet {
+fn read_to_bytes(_local: &mut Local, _heap: &mut Gc) -> NativeRet {
   todo!()
   // let file_string: Reference = local.load(0).into();
   // let ObjectType::String(ObjString { contents: path }) = &*heap.get(file_string).value else {

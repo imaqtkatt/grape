@@ -1,11 +1,11 @@
-use super::RuntimeVisitor;
+use super::{Runtime, RuntimeVisitor};
 
-pub struct RunGc;
+pub struct CleanGc;
 
-impl RuntimeVisitor for RunGc {
-  fn visit(&self, rt: &mut super::Runtime) {
+impl RuntimeVisitor for CleanGc {
+  fn visit(&self, rt: &mut Runtime) {
     rt.local.local.clear();
     rt.stack.clear();
-    rt.heap.gc(&rt.local, &rt.stack);
+    rt.gc.mark_sweep(&rt.local, &rt.stack);
   }
 }

@@ -1,28 +1,28 @@
 use crate::{
   formatting,
   function::{Function, NativeRet},
-  heap::Heap,
+  gc::Gc,
   local::Local,
 };
 
 use super::{builder::ModuleBuilder, Module};
 
-fn println(local: &mut Local, heap: &mut Heap) -> NativeRet {
+fn println(local: &mut Local, heap: &mut Gc) -> NativeRet {
   println!("{}", formatting::display_value(&local.load(0), heap));
   Ok(None)
 }
 
-fn print(local: &mut Local, heap: &mut Heap) -> NativeRet {
+fn print(local: &mut Local, heap: &mut Gc) -> NativeRet {
   print!("{}", formatting::display_value(&local.load(0), heap));
   Ok(None)
 }
 
-fn debug(local: &mut Local, _: &mut Heap) -> NativeRet {
+fn debug(local: &mut Local, _: &mut Gc) -> NativeRet {
   println!("{:?}", local.load(0));
   Ok(None)
 }
 
-fn eprintln(local: &mut Local, heap: &mut Heap) -> NativeRet {
+fn eprintln(local: &mut Local, heap: &mut Gc) -> NativeRet {
   eprintln!("{}", formatting::display_value(&local.load(0), heap));
   Ok(None)
 }

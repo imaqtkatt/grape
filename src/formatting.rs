@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::{
-  heap::{Heap, ObjArray, ObjClass, ObjDict, ObjString},
+  gc::{Gc, ObjArray, ObjDict, ObjString},
   value::Value,
 };
 
@@ -13,7 +13,7 @@ impl<F: Fn(&mut fmt::Formatter) -> fmt::Result> fmt::Display for Formatting<F> {
   }
 }
 
-pub fn display_value<'a>(v: &'a Value, _heap: &'a Heap) -> impl fmt::Display + 'a {
+pub fn display_value<'a>(v: &'a Value, _heap: &'a Gc) -> impl fmt::Display + 'a {
   Formatting(move |f| match v.tag() {
     Value::TAG_BYTE => write!(f, "{}", v.byte()),
     Value::TAG_INTEGER => write!(f, "{}", v.integer()),

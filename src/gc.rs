@@ -1,4 +1,4 @@
-pub mod gc;
+pub mod mark_sweep;
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 
@@ -7,12 +7,24 @@ use crate::{
   value::{Reference, Value},
 };
 
-pub struct Heap {
+pub struct Gc {
   roots: Vec<Value>,
   marked: HashSet<Value>,
 }
 
-impl Heap {
+impl Gc {
+  #[inline(always)]
+  pub fn track(&mut self, value: Value) {
+    self.roots.push(value)
+  }
+
+  #[inline(always)]
+  pub fn mark(&mut self, value: Value) -> bool {
+    self.marked.insert(value)
+  }
+}
+
+impl Gc {
   #[inline(always)]
   pub fn new() -> Self {
     Self { roots: Vec::new(), marked: HashSet::new() }
@@ -29,7 +41,7 @@ impl Heap {
     };
     let addr = ptr as usize;
     let value = Value::new(Value::TAG_CLASS, addr as u64);
-    self.roots.push(value);
+    self.track(value);
     value
   }
 
@@ -97,7 +109,7 @@ impl Heap {
     };
     let addr = ptr as usize;
     let value = Value::new(Value::TAG_ARRAY, addr as u64);
-    self.roots.push(value);
+    self.track(value);
     value
   }
 
@@ -150,7 +162,7 @@ impl Heap {
 
     let addr = ptr as usize;
     let value = Value::new(Value::TAG_STRING, addr as u64);
-    self.roots.push(value);
+    self.track(value);
     value
   }
 
@@ -165,7 +177,7 @@ impl Heap {
 
     let addr = ptr as usize;
     let value = Value::new(Value::TAG_DICT, addr as u64);
-    self.roots.push(value);
+    self.track(value);
     value
   }
 }
@@ -223,7 +235,7 @@ impl ObjClass {
   }
 }
 
-impl Default for Heap {
+impl Default for Gc {
   fn default() -> Self {
     Self::new()
   }

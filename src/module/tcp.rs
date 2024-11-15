@@ -5,7 +5,7 @@
 
 use crate::{
   function::{Function, NativeRet},
-  heap::{Heap, ObjString},
+  gc::{Gc, ObjString},
   local::Local,
   runtime::Error,
   value::Reference,
@@ -13,7 +13,7 @@ use crate::{
 
 use super::{builder::ModuleBuilder, Module};
 
-fn new_listener(local: &mut Local, _heap: &mut Heap) -> NativeRet {
+fn new_listener(local: &mut Local, _heap: &mut Gc) -> NativeRet {
   let addr: Reference = local.load(0).into();
 
   unsafe {
@@ -31,14 +31,14 @@ fn new_listener(local: &mut Local, _heap: &mut Heap) -> NativeRet {
   }
 }
 
-fn destroy(local: &mut Local, _heap: &mut Heap) -> NativeRet {
+fn destroy(local: &mut Local, _heap: &mut Gc) -> NativeRet {
   // let listener: Reference = local.load(0).into();
   // heap.free(listener);
   // Ok(None)
   todo!()
 }
 
-fn accept(local: &mut Local, _heap: &mut Heap) -> NativeRet {
+fn accept(local: &mut Local, _heap: &mut Gc) -> NativeRet {
   let listener: Reference = local.load(0).into();
 
   todo!()
@@ -54,7 +54,7 @@ fn accept(local: &mut Local, _heap: &mut Heap) -> NativeRet {
   // }
 }
 
-fn recv_string(local: &mut Local, _heap: &mut Heap) -> NativeRet {
+fn recv_string(local: &mut Local, _heap: &mut Gc) -> NativeRet {
   let stream: Reference = local.load(0).into();
 
   todo!()
@@ -70,7 +70,7 @@ fn recv_string(local: &mut Local, _heap: &mut Heap) -> NativeRet {
   // }
 }
 
-fn send_string(local: &mut Local, _heap: &mut Heap) -> NativeRet {
+fn send_string(local: &mut Local, _heap: &mut Gc) -> NativeRet {
   let stream: Reference = local.load(0).into();
   let string: Reference = local.load(1).into();
 

@@ -1,4 +1,3 @@
-use class::ClassBuilder;
 use function::builder::FunctionBuilder;
 use loader::{Loader, LoaderArena};
 use module::builder::ModuleBuilder;
@@ -14,7 +13,7 @@ pub mod class;
 pub mod context;
 pub mod formatting;
 pub mod function;
-pub mod heap;
+pub mod gc;
 pub mod loader;
 pub mod local;
 pub mod module;
@@ -61,9 +60,9 @@ fn run() -> Result<()> {
   if let Err(e) = runtime.run() {
     eprintln!("Error: {e}");
     runtime.accept(runtime::stack_trace::StackTrace);
-    runtime.accept(runtime::gc::RunGc);
+    runtime.accept(runtime::gc::CleanGc);
   }
-  runtime.accept(runtime::gc::RunGc);
+  runtime.accept(runtime::gc::CleanGc);
 
   Ok(())
 }
